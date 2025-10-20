@@ -1,0 +1,73 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper presents the first comprehensive benchmark of derivative estimation methods across the full range of practical derivative orders (0--7) and noise levels ($10^{-8}$ to $5 \times 10^{-2}$). We evaluated 24 methods from 6 categories on 56 configurations, providing fine-grained performance maps to guide method selection.
+
+\subsection{Key Findings}
+
+\textbf{1. Gaussian Process regression (GP-Julia-AD) is the most reliable all-around choice}
+
+GP-Julia-AD achieved the best overall performance (mean nRMSE = 0.257 across all configurations) with no catastrophic failures. It maintains usable accuracy even at extreme challenges (orders 6--7 with high noise), though nRMSE $\approx 0.5$--$1.0$ indicates fundamental difficulty limits.
+
+\textbf{2. AAA rational approximation fails catastrophically at high orders}
+
+Contrary to literature expectations based on interpolation performance, AAA-HighPrec exhibits catastrophic failure (nRMSE $> 10^7$) at orders $\geq 3$, even at near-perfect noise levels ($10^{-8}$). This failure persists despite high-precision (BigFloat) arithmetic, indicating an algorithmic limitation rather than numerical precision issue. \textbf{Recommendation:} Restrict AAA use to orders 0--2 at noise $\leq 10^{-8}$ only.
+
+\textbf{3. Fourier spectral methods are strong alternatives for smooth signals}
+
+Fourier-Interp (rank 5, nRMSE = 0.44) achieves competitive accuracy at 10--20$\times$ speedup compared to GP methods, particularly effective at high orders (5--7) where many methods fail. Proper filtering (filter\_frac = 0.4) is critical to prevent noise amplification.
+
+\textbf{4. Derivative order is the dominant difficulty factor}
+
+Performance degrades systematically for all methods as derivative order increases, with order 3 representing a critical transition point where many methods begin failing. High-order derivatives (6--7) remain extremely challenging even for best methods—all evaluated methods exhibit nRMSE $> 0.5$ at these orders with noise $\geq 10^{-2}$.
+
+\textbf{5. Implementation quality is a method characteristic}
+
+Three methods (GP-Julia-SE, TVRegDiff\_Python, SavitzkyGolay\_Python) were excluded due to $> 50\times$ performance discrepancies between Julia and Python implementations despite parameter parity attempts. This finding highlights that algorithmic excellence alone is insufficient—robust, numerically stable implementation is essential.
+
+\subsection{Practical Impact}
+
+\textbf{For practitioners:} Section~\ref{sec:recommendations} provides immediately actionable guidance:
+\begin{itemize}
+    \item Master recommendation table (Table~\ref{tab:recommendations}) maps (derivative order, noise level) $\to$ optimal method(s)
+    \item Decision framework balances accuracy, speed, and problem size constraints
+    \item Common pitfalls documented to avoid catastrophic failures
+\end{itemize}
+
+\textbf{For researchers:} This study identifies fundamental performance limitations and unexpected failure modes, suggesting directions for algorithmic improvements:
+\begin{itemize}
+    \item High-order rational approximation differentiation remains an open problem
+    \item Efficient GP approximations for large-scale problems ($n > 1000$) needed
+    \item Adaptive spectral filtering strategies could improve noise robustness
+\end{itemize}
+
+\subsection{Limitations and Generalization}
+
+Results are derived from a single test system (Lotka-Volterra) with additive Gaussian noise and n=3 trials—sufficient for exploratory method comparison but not definitive statistical ranking. Key caveats:
+
+\begin{itemize}
+    \item \textbf{Signal-specific:} Lotka-Volterra is smooth and periodic, favoring spectral methods. Rough/discontinuous signals may yield different rankings.
+    \item \textbf{Noise-model-specific:} Results assume additive Gaussian noise. Multiplicative, Poisson, or heavy-tailed noise may favor different methods.
+    \item \textbf{Statistical uncertainty:} n=3 trials provides only descriptive evidence. Methods differing by $<2\times$ in nRMSE should be considered comparable.
+\end{itemize}
+
+\textbf{Critical recommendation:} Use this benchmark as a starting point to identify 2--3 candidate methods, then validate on \textit{your specific data} using cross-validation or hold-out testing before production deployment.
+
+\subsection{Future Directions}
+
+Highest-priority extensions (Section~\ref{sec:future_work}):
+\begin{enumerate}
+    \item Test on diverse signals (chaotic systems, discontinuous functions, experimental data)
+    \item Increase to n $\geq$ 10 trials for statistical rigor
+    \item Evaluate alternative noise models (multiplicative, Poisson, heavy-tailed)
+    \item Scale study across problem sizes ($n \in \{50, 100, 500, 1000, 5000\}$)
+    \item Multivariate extensions (gradients, Hessians for $f: \mathbb{R}^d \to \mathbb{R}$)
+\end{enumerate}
+
+\subsection{Closing Remarks}
+
+Derivative estimation from noisy data is fundamentally ill-posed, and this challenge intensifies exponentially with derivative order. No universal "best" method exists—optimal choice depends on derivative order, noise level, computational budget, and signal characteristics.
+
+This benchmark provides the first systematic performance map across the parameter space, revealing both opportunities (GP methods remain viable even at order 7) and fundamental limits (all methods struggle beyond order 5 with noise $> 10^{-2}$). We hope these findings guide practitioners toward appropriate method selection and inspire researchers to develop next-generation algorithms addressing identified performance gaps.
+
+\textbf{Data and code availability:} All experimental data, method implementations, and analysis scripts are available at \TODO{Add repository URL upon publication}.

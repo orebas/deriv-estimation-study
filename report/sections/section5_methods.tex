@@ -1,0 +1,352 @@
+\section{Methods Evaluated}
+\label{sec:methods}
+
+This section describes the 24 derivative estimation methods analyzed in this study. Three additional methods were evaluated but excluded from final analysis due to implementation failures documented in Section~\ref{sec:exclusions}.
+
+\subsection{Summary}
+\label{sec:methods_summary}
+
+Table~\ref{tab:methods_summary} lists all 24 methods with key characteristics.
+
+\begin{table}[htbp]
+\centering
+\caption{Methods Evaluated (24 methods from 27 candidates; 3 excluded per Section~\ref{sec:exclusions})}
+\label{tab:methods_summary}
+\small
+\begin{tabular}{llllcc}
+\toprule
+Method & Category & Language & Key Parameter(s) & Complexity & Coverage \\
+\midrule
+GP-Julia-AD & Gaussian Process & Julia & Length scale (MLE) & $O(n^3)$ & 56/56 \\
+GP\_RBF\_Python & Gaussian Process & Python & Length scale (MLE) & $O(n^3)$ & 56/56 \\
+GP\_RBF\_Iso\_Python & Gaussian Process & Python & Length scale (MLE) & $O(n^3)$ & 56/56 \\
+gp\_rbf\_mean & Gaussian Process & Python & Length scale (MLE) & $O(n^3)$ & 56/56 \\
+AAA-HighPrec & Rational & Julia & Tolerance=$10^{-13}$ & $O(n^2)$ & 56/56 \\
+AAA-LowPrec & Rational & Julia & Tolerance=$10^{-13}$ & $O(n^2)$ & 56/56 \\
+Fourier-Interp & Spectral & Julia & Filter frac=0.4 & $O(n \log n)$ & 56/56 \\
+Dierckx-5 & Spline & Julia & Smoothing (GCV) & $O(n)$ & 42/56 \\
+\multicolumn{6}{l}{\small (Table continues with remaining 16 methods; see full version in supplementary materials)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Coverage notes:}
+\begin{itemize}
+    \item Full coverage (56/56): Tested across all 8 derivative orders $\times$ 7 noise levels
+    \item Partial coverage: Missing high orders (typically 6--7) or restricted to orders 0--1 due to library/implementation limitations
+\end{itemize}
+
+\subsection{Gaussian Process Methods}
+\label{sec:gp_methods}
+
+Gaussian Process (GP) regression provides a principled Bayesian framework for function approximation and derivative estimation. GPs place a prior over functions and compute posterior distributions conditioned on observed data. Derivatives are obtained by differentiating the GP posterior mean.
+
+\subsubsection{GP-Julia-AD}
+
+\textbf{Mathematical Formulation:}
+
+A Gaussian Process defines a distribution over functions $f \sim \text{GP}(m(x), k(x,x'))$ where $m$ is the mean function (typically 0) and $k$ is the covariance kernel. Given observations $y = f(x) + \varepsilon$ with noise $\varepsilon \sim \mathcal{N}(0, \sigma^2_n)$, the posterior predictive distribution is:
+
+\begin{align}
+f(x^*) | y &\sim \mathcal{N}(\mu^*(x^*), (\sigma^*)^2(x^*)) \\
+\mu^*(x^*) &= k_*(K + \sigma^2_n I)^{-1} y \\
+(\sigma^*)^2(x^*) &= k_{**} - k_*^T(K + \sigma^2_n I)^{-1} k_*
+\end{align}
+
+where $K_{ij} = k(x_i, x_j)$, $k_* = [k(x^*, x_1), \ldots, k(x^*, x_n)]^T$, and $k_{**} = k(x^*, x^*)$.
+
+\textbf{Derivative estimation:} The $n$-th derivative of the posterior mean is obtained by differentiating the kernel function:
+
+\begin{equation}
+\frac{d^n \mu^*(x^*)}{dx^{*n}} = \left[\frac{d^n k(x^*, x_1)}{dx^{*n}}, \ldots, \frac{d^n k(x^*, x_n)}{dx^{*n}}\right] (K + \sigma^2_n I)^{-1} y
+\end{equation}
+
+\textbf{Kernel:} Squared Exponential (SE) / RBF kernel:
+\begin{equation}
+k(x, x') = \sigma^2_f \exp\left(-\frac{(x - x')^2}{2\ell^2}\right)
+\end{equation}
+where $\sigma^2_f$ is signal variance and $\ell$ is length scale controlling smoothness.
+
+\textbf{Hyperparameter optimization:} Length scale $\ell$, signal variance $\sigma^2_f$, and noise variance $\sigma^2_n$ optimized via Maximum Likelihood Estimation (MLE) using L-BFGS-B with 3 random restarts (seeded deterministically per trial; Section~\ref{sec:hyperparameters}).
+
+\textbf{Implementation:} GaussianProcesses.jl with ForwardDiff.jl for automatic differentiation of kernel derivatives up to order 7.
+
+\textbf{Computational note:} For high-order derivatives ($n \geq 5$), ForwardDiff uses nested dual numbers, increasing per-point evaluation cost. \TODO{Verify if input/output normalization and jitter term $(K + \sigma^2I + \varepsilon_{\text{jitter}} \cdot I)$ were used for numerical stability}
+
+\textbf{Built-in uncertainty:} Predictive variance $(\sigma^*)^2(x)$ quantifies confidence in derivative estimates (not evaluated in this benchmark).
+
+\textbf{Computational complexity:} $O(n^3)$ for training (Cholesky factorization of $K + \sigma^2I$), $O(n)$ per prediction point (vector-matrix products)
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\subsubsection{Other GP Variants}
+
+\textbf{GP\_RBF\_Python, GP\_RBF\_Iso\_Python, gp\_rbf\_mean:} Implementations using scikit-learn. \TODO{Clarify derivative computation method --- scikit-learn GPR does not natively provide derivative predictions. Specify if finite-difference approximation of predictive mean was used (step size, scheme) or if kernel derivatives were manually implemented}
+
+Coverage: Full (56/56 configurations)
+
+\subsection{Rational Approximation Methods}
+\label{sec:rational_methods}
+
+Rational approximation represents functions as ratios of polynomials: $r(x) = p(x)/q(x)$. Unlike polynomial interpolation, rational functions can capture singularities and exhibit better convergence for smooth functions.
+
+\subsubsection{AAA-HighPrec (Adaptive Antoulas-Anderson Algorithm)}
+
+\textbf{Mathematical Formulation:}
+
+The AAA algorithm constructs a rational interpolant in barycentric form:
+
+\begin{equation}
+r(z) = \frac{\sum_i w_i f_i / (z - z_i)}{\sum_i w_i / (z - z_i)}
+\end{equation}
+
+where $\{z_i, f_i\}$ are support points (subset of data) and $\{w_i\}$ are weights.
+
+\textbf{Algorithm (simplified):}
+\begin{enumerate}
+    \item Initialize support set with point having maximum residual
+    \item Iteration $k$:
+    \begin{itemize}
+        \item Solve least-squares problem (typically via SVD of Loewner matrix) for weights $w_i$ minimizing $\|r(z_j) - f_j\|$ over non-support points
+        \item Add point with maximum residual to support set
+    \end{itemize}
+    \item Terminate when max residual $< $ tolerance ($10^{-13}$)
+    \item Differentiate analytically: $dr/dz$ computed via quotient rule on barycentric form
+\end{enumerate}
+
+\textbf{Key implementation detail:} Uses BigFloat (256-bit) arithmetic throughout.
+
+\textbf{Strengths:}
+\begin{itemize}
+    \item Deterministic (no stochastic optimization)
+    \item Adaptive complexity (automatically selects number of support points $m$)
+\end{itemize}
+
+\textbf{Potential failure modes:}
+\begin{itemize}
+    \item Spurious poles can appear near evaluation points
+    \item High-order rational function derivatives may accumulate error
+\end{itemize}
+
+\textbf{Computational complexity:} $O(n m^2)$ where $m$ is number of support points (typically $m \ll n$); reported as $O(n^2)$ heuristically
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\subsection{Spectral Methods}
+\label{sec:spectral_methods}
+
+Spectral methods represent functions in terms of global basis functions (Fourier, Chebyshev, or trigonometric polynomials) and compute derivatives by differentiating the basis functions.
+
+\subsubsection{Fourier-Interp (FFT-Based Spectral Differentiation)}
+
+\textbf{Mathematical Formulation:}
+
+Represent signal as Fourier series on domain $[a,b]$ with $N$ points:
+\begin{equation}
+f(x) \approx \sum_{k=-N/2}^{N/2} c_k \exp(i k \omega x)
+\end{equation}
+where $\omega = 2\pi / (b-a)$ is the fundamental frequency.
+
+Derivatives via differentiation in frequency domain:
+\begin{equation}
+\frac{d^n f}{dx^n} = \sum (i k \omega)^n c_k \exp(i k \omega x)
+\end{equation}
+
+\textbf{Algorithm:}
+\begin{enumerate}
+    \item Symmetrically extend signal to enforce periodicity (note: Lotka-Volterra trajectories are oscillatory but not strictly periodic; Section~\ref{sec:controls})
+    \item Compute FFT to obtain Fourier coefficients $\{c_k\}$
+    \item Multiply by $(i k \omega)^n$ for $n$-th derivative
+    \item Apply low-pass filter: retain lower 40\% of frequency spectrum (filter fraction = 0.4; pre-tuned per Section~\ref{sec:hyperparameters})
+    \item Inverse FFT to obtain derivative in spatial domain
+\end{enumerate}
+
+\textbf{Filtering details:} \TODO{Specify passband definition (fraction of Nyquist or absolute $k_{\max}$), taper/roll-off, FFT normalization convention, and extension strategy (even/odd/mirror)}
+
+\textbf{Implementation:} FFTW.jl for fast Fourier transforms
+
+\textbf{Strengths:}
+\begin{itemize}
+    \item Extremely fast: $O(n \log n)$ via FFT
+    \item Suitable for smooth, periodic or near-periodic signals
+\end{itemize}
+
+\textbf{Weaknesses:}
+\begin{itemize}
+    \item Periodicity assumption may introduce edge artifacts for non-periodic signals
+    \item Fixed pre-tuned filter fraction (Section~\ref{sec:hyperparameters} documents potential advantage over per-dataset tuning)
+\end{itemize}
+
+\textbf{Computational complexity:} $O(n \log n)$
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\subsection{Finite Difference Methods}
+\label{sec:fd_methods}
+
+Finite difference methods approximate derivatives using linear combinations of function values on a stencil.
+
+\subsubsection{Central-FD (Central Finite Differences)}
+
+\textbf{Mathematical formulation:}
+
+For evenly-spaced grid with spacing $h$, central difference stencils approximate derivatives:
+
+\textbf{First derivative (3-point stencil):}
+\begin{equation}
+f'(x) \approx \frac{f(x+h) - f(x-h)}{2h}
+\end{equation}
+Truncation error: $O(h^2)$
+
+\textbf{Second derivative (3-point stencil):}
+\begin{equation}
+f''(x) \approx \frac{f(x+h) - 2f(x) + f(x-h)}{h^2}
+\end{equation}
+
+\textbf{Higher orders:} Require wider stencils; $n$-th derivative requires $\geq (n+1)$ points
+
+\textbf{Implementation:} Julia implementation using standard central difference stencils
+
+\textbf{Critical limitation:} Library/implementation provides stencils only up to 1st order. Coverage restricted to orders 0--1.
+
+\textbf{Strengths:}
+\begin{itemize}
+    \item Simple, well-understood
+    \item Fast: $O(n)$
+    \item No hyperparameters
+\end{itemize}
+
+\textbf{Weaknesses:}
+\begin{itemize}
+    \item Noise amplification: For additive noise with standard deviation $\sigma$, the 3-point central difference amplifies noise to $O(\sigma/h)$ in the derivative estimate
+    \item Boundary treatment requires asymmetric stencils or extrapolation
+\end{itemize}
+
+\textbf{Coverage:} Partial (14/56 configurations, orders 0--1 only)
+
+\subsection{Spline Methods}
+\label{sec:spline_methods}
+
+Spline methods fit piecewise polynomials with continuity constraints at knots, then differentiate the spline.
+
+\subsubsection{Dierckx-5 (Smoothing Spline with GCV)}
+
+\textbf{Mathematical formulation:}
+
+Minimizes penalized least squares:
+\begin{equation}
+\sum_i (y_i - s(x_i))^2 + \lambda \int (s''(x))^2 dx
+\end{equation}
+where $s(x)$ is a spline of degree $k=5$ and $\lambda$ is the smoothing parameter controlling bias-variance tradeoff.
+
+\textbf{Smoothing parameter selection:} Generalized Cross-Validation (GCV) minimizes predicted mean squared error on held-out data (Section~\ref{sec:hyperparameters})
+
+\textbf{Implementation:} Dierckx.jl (wrapper around FORTRAN FITPACK library)
+
+\textbf{Derivative support:} Degree-5 splines support derivatives up to order 5 (degree-$k$ splines provide well-defined derivatives up to order $k$).
+
+\textbf{Strengths:}
+\begin{itemize}
+    \item Automatic smoothing via GCV
+    \item Fast: $O(n)$ with banded linear systems
+    \item Natural boundary conditions ($d^2s/dx^2 = 0$ at endpoints)
+\end{itemize}
+
+\textbf{Weaknesses:}
+\begin{itemize}
+    \item Limited to orders 0--5 (degree-5 spline maximum for this implementation)
+\end{itemize}
+
+\textbf{Coverage:} Partial (42/56 configurations, orders 0--5 only)
+
+\subsection{Local Polynomial Methods}
+\label{sec:local_poly}
+
+\subsubsection{Savitzky-Golay (Local Polynomial Regression)}
+
+\textbf{Mathematical formulation:}
+
+For each point $x_i$, fit a polynomial of degree $d$ to points within a sliding window of width $w$ via least squares:
+\begin{equation}
+p(x) = \sum_{j=0}^d a_j (x - x_i)^j
+\end{equation}
+
+The derivative is the polynomial derivative evaluated at $x_i$: $f^{(n)}(x_i) \approx n! \, a_n$
+
+\textbf{Closed form:} Can be expressed as discrete convolution with fixed filter coefficients (depends on window width $w$, polynomial degree $d$, and derivative order $n$)
+
+\textbf{Implementation:} Julia implementation
+
+\textbf{Parameter mapping:} \TODO{Specify window size $w$ and polynomial degree $d$ as functions of derivative order $n$ and boundary handling strategy}
+
+\textbf{Strengths:}
+\begin{itemize}
+    \item Fast: $O(n)$ via convolution
+    \item No global optimization
+\end{itemize}
+
+\textbf{Weaknesses:}
+\begin{itemize}
+    \item Fixed window size can be suboptimal
+    \item Boundary handling via window shrinking
+\end{itemize}
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\subsection{Regularization Methods}
+\label{sec:regularization}
+
+\subsubsection{TVRegDiff-Julia (Total Variation Regularized Differentiation)}
+
+\textbf{Mathematical formulation:}
+
+Estimates derivative $u = df/dx$ by minimizing an objective combining data fidelity and total variation regularization.
+
+\textbf{Objective:} \TODO{Define precise objective function --- specify operator $E$ linking derivative to observations, data fidelity term structure (e.g., cumulative sum/integration operator $A$), and boundary conditions. Standard TVRegDiff minimizes $(1/2)\|A u - f\|^2 + \alpha \text{TV}(u)$; clarify if this variant is used or specify the exact formulation}
+
+\textbf{Total variation:} $\text{TV}(u) = \sum_i |u_{i+1} - u_i|$ promotes piecewise constant derivatives
+
+\textbf{Algorithm:} Iterative optimization (ADMM or similar) with automatic tuning of regularization parameter $\alpha$
+
+\textbf{Implementation:} Julia implementation with convergence tolerance $10^{-6}$, max 100 iterations
+
+\textbf{Strengths:}
+\begin{itemize}
+    \item Preserves discontinuities (edges)
+    \item Robust to outliers
+\end{itemize}
+
+\textbf{Weaknesses:}
+\begin{itemize}
+    \item Limited to orders 0--1 in current implementation
+    \item Computationally expensive: $O(n)$ per iteration $\times$ up to 100 iterations
+\end{itemize}
+
+\textbf{Coverage:} Partial (14/56 configurations, orders 0--1 only)
+
+\subsubsection{Trend Filtering (TrendFilter-k2, TrendFilter-k7)}
+
+\textbf{Formulation:} Trend filtering with penalty order $k$ (penalizes $k$-th discrete derivative)
+
+\textbf{Objective:} Minimizes $(1/2)\|y - x\|^2 + \lambda \|D^k x\|_1$ where $D^k$ is $k$-th order discrete difference matrix
+
+\textbf{Implementation:} Convex optimization via \TODO{Specify solver (specialized trend filtering algorithm like PDAS, path algorithm, or generic QP/ADMM) and complexity implications}
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\subsection{Implementation Notes}
+\label{sec:implementation_notes}
+
+\textbf{Cross-language consistency:} Where methods exist in both Julia and Python, parameters were matched to ensure fair comparison (Section~\ref{sec:controls}). Large performance discrepancies despite parameter parity led to exclusion of the inferior implementation (see Section~\ref{sec:exclusions} for detailed documentation and justification).
+
+\textbf{Reproducibility:} All methods use fixed random seeds for any stochastic components (GP hyperparameter initialization, SVR grid search randomization). Julia methods benefit from just-in-time compilation with 1 warm-up run excluded from timing (Section~\ref{sec:controls}).
+
+\textbf{Partial coverage rationale:}
+\begin{itemize}
+    \item \textbf{Orders 6--7 missing for many methods:} Polynomial degree or library limitations (splines require degree $\geq$ order; filters/regularization limited by implementation)
+    \item \textbf{Orders 0--1 only for some:} Implementation design restrictions (TVRegDiff, Central-FD library constraints)
+\end{itemize}
+
+\textbf{Parameter tuning fairness:} All tunable methods received equivalent optimization effort (Section~\ref{sec:hyperparameters}). GPs and splines use per-dataset optimization (MLE/GCV); Fourier methods use pre-tuned fixed parameters, which may confer an advantage (Section~\ref{sec:hyperparameters} discusses this methodological concern).
+
+\textbf{Methodological transparency:} Several method descriptions contain TODO markers indicating implementation details that should be verified from code/documentation before final publication. These do not affect the validity of the experimental results (which depend only on the actual implementations run), but are noted for complete methodological reproducibility.

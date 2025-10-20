@@ -1,0 +1,37 @@
+% nRMSE values for derivative order 3
+\begin{table}
+\caption{Normalized RMSE for derivative order 3}
+\label{tab:nrmse_order_3}
+\begin{tabular}{lllllllll}
+\toprule
+noise_level & 1e-08 & 1e-06 & 1e-04 & 1e-03 & 1e-02 & 2e-02 & 5e-02 & Mean \\
+method &  &  &  &  &  &  &  &  \\
+\midrule
+GP-Julia-AD & 0.01 & 0.01 & 0.02 & 0.08 & 0.22 & 0.33 & 0.47 & 0.16 \\
+GP_RBF_Iso_Python & 0.01 & 0.01 & 0.02 & 0.08 & 0.25 & 0.37 & 0.49 & 0.18 \\
+GP_RBF_Python & 0.01 & 0.01 & 0.02 & 0.08 & 0.25 & 0.37 & 0.49 & 0.18 \\
+gp_rbf_mean & 0.01 & 0.01 & 0.02 & 0.08 & 0.25 & 0.37 & 0.49 & 0.18 \\
+Dierckx-5 & 0.01 & 0.01 & 0.02 & 0.06 & 0.36 & 0.35 & 0.61 & 0.20 \\
+Fourier-Interp & 0.26 & 0.26 & 0.26 & 0.26 & 0.28 & 0.32 & 0.55 & 0.31 \\
+ad_trig & 0.26 & 0.26 & 0.26 & 0.26 & 0.28 & 0.33 & 0.57 & 0.32 \\
+fourier & 0.10 & 0.10 & 0.10 & 0.10 & 0.27 & 0.51 & 1.26 & 0.35 \\
+fourier_continuation & 0.12 & 0.12 & 0.12 & 0.12 & 0.27 & 0.51 & 1.26 & 0.36 \\
+ButterworthSpline_Python & 0.65 & 0.65 & 0.65 & 0.65 & 0.65 & 0.65 & 0.66 & 0.65 \\
+Whittaker_m2_Python & 0.91 & 0.91 & 0.91 & 0.91 & 0.91 & 0.91 & 0.91 & 0.91 \\
+Butterworth_Python & 0.96 & 0.96 & 0.96 & 0.96 & 0.96 & 0.96 & 0.96 & 0.96 \\
+KalmanGrad_Python & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+SVR_Python & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+GP-Julia-SE & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+Savitzky-Golay & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+TrendFilter-k7 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+TrendFilter-k2 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+RKHS_Spline_m2_Python & 0.28 & 0.28 & 0.28 & 0.28 & 0.37 & 1.30 & 5.71 & 1.21 \\
+chebyshev & 1.80 & 1.80 & 1.80 & 1.80 & 1.80 & 1.79 & 1.79 & 1.80 \\
+SpectralTaper_Python & 2.14 & 2.14 & 2.15 & 2.23 & 3.10 & 4.14 & 7.41 & 3.33 \\
+TVRegDiff_Python & 2.00 & 2.33 & 8.41 & 1.15 & 3.28 & 3.68 & 2.74 & 3.37 \\
+SavitzkyGolay_Python & 197 & 197 & 197 & 197 & 206 & 231 & 361 & 226 \\
+AAA-LowPrec & 0.24 & 0.24 & 0.24 & 0.26 & 0.29 & 0.31 & >1e3 & >1e3 \\
+AAA-HighPrec & 0.10 & 743 & 712 & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 \\
+\bottomrule
+\end{tabular}
+\end{table}

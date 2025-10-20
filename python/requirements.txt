@@ -1,0 +1,8 @@
+numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+pandas>=2.0.0
+# AD backend for testing plumbing (lightweight)
+autograd>=1.6.2
+# tvregdiff vendored from GitHub into python/tvregdiff.py (no PyPI package)

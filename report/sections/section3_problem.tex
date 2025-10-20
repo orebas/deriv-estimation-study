@@ -1,0 +1,143 @@
+\section{Problem Formulation}
+\label{sec:problem}
+
+This section formally defines the derivative estimation problem, evaluation metrics, and success criteria used throughout this benchmark study.
+
+\subsection{Mathematical Problem Statement}
+\label{sec:math_problem}
+
+\textbf{Given:}
+\begin{itemize}
+    \item A smooth function $f: \mathbb{R} \to \mathbb{R}$ (unknown analytically)
+    \item Noisy observations $\{(t_i, y_i)\}_{i=1}^n$ where $y_i = f(t_i) + \epsilon_i$
+    \item Noise $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$ (additive Gaussian)
+    \item Uniform grid $t_i \in [t_{\text{min}}, t_{\text{max}}]$ with spacing $h = (t_{\text{max}} - t_{\text{min}})/(n-1)$
+\end{itemize}
+
+\textbf{Objective:}
+
+Estimate the $n$-th order derivative $f^{(n)}(t)$ at evaluation points $t \in \mathcal{T} \subset [t_{\text{min}}, t_{\text{max}}]$ such that:
+\begin{equation}
+\hat{f}^{(n)}(t) \approx f^{(n)}(t) \quad \text{for all } t \in \mathcal{T}
+\end{equation}
+
+\textbf{Constraints:}
+\begin{itemize}
+    \item Derivative orders $n \in \{0, 1, 2, \ldots, 7\}$ (order 0 = smoothing)
+    \item Fixed sample size $n = 101$ points
+    \item Noise levels $\sigma \in \{10^{-8}, 10^{-6}, 10^{-4}, 10^{-3}, 10^{-2}, 2 \times 10^{-2}, 5 \times 10^{-2}\}$ (relative to signal standard deviation)
+    \item Interior evaluation only: $\mathcal{T} = [t_{\text{min}} + 0.1(t_{\text{max}} - t_{\text{min}}), t_{\text{max}} - 0.1(t_{\text{max}} - t_{\text{min}})]$ to avoid boundary effects
+\end{itemize}
+
+\subsection{Evaluation Metrics}
+\label{sec:metrics}
+
+\subsubsection{Primary Metric: Normalized Root Mean Square Error}
+
+\textbf{Definition:}
+\begin{equation}
+\text{nRMSE} = \frac{\sqrt{\frac{1}{|\mathcal{T}|} \sum_{t \in \mathcal{T}} \left(\hat{f}^{(n)}(t) - f^{(n)}_{\text{true}}(t)\right)^2}}{\text{std}(f^{(n)}_{\text{true}})}
+\end{equation}
+
+where $\text{std}(f^{(n)}_{\text{true}})$ is the standard deviation of the true $n$-th derivative over the evaluation domain $\mathcal{T}$.
+
+\textbf{Rationale for normalization:}
+
+Direct RMSE values are \textit{incomparable} across derivative orders because derivative magnitudes vary dramatically. For example, in the Lotka-Volterra system:
+\begin{itemize}
+    \item $\text{std}(f^{(0)}) \approx 0.2$ (function values)
+    \item $\text{std}(f^{(7)}) \approx 10^5$ (seventh derivative)
+\end{itemize}
+
+Normalization by $\text{std}(f^{(n)}_{\text{true}})$ yields a dimensionless, order-comparable metric:
+\begin{itemize}
+    \item nRMSE = 0.1 means 10\% error relative to typical derivative magnitude (good)
+    \item nRMSE = 1.0 means 100\% error relative to typical derivative magnitude (poor)
+    \item nRMSE $> 10$ indicates catastrophic failure
+\end{itemize}
+
+\subsubsection{Secondary Metric: Computation Time}
+
+Median wall-clock time (seconds) over 3 trials, measured for the complete derivative estimation workflow:
+\begin{enumerate}
+    \item Hyperparameter optimization (where applicable)
+    \item Model fitting
+    \item Derivative evaluation at all $|\mathcal{T}|$ test points
+\end{enumerate}
+
+Time measurements include all preprocessing but exclude data loading and ground truth computation.
+
+\subsection{Success Criteria}
+\label{sec:success_criteria}
+
+A method is considered \textbf{successful} for a given (order, noise) configuration if:
+
+\begin{enumerate}
+    \item \textbf{Numerical stability:} Produces finite nRMSE (no NaN/Inf values)
+    \item \textbf{Acceptable accuracy:}
+    \begin{itemize}
+        \item Orders 0--2: nRMSE $< 1.0$ (preferred: nRMSE $< 0.3$)
+        \item Orders 3--5: nRMSE $< 2.0$ (preferred: nRMSE $< 0.5$)
+        \item Orders 6--7: nRMSE $< 5.0$ (preferred: nRMSE $< 1.0$)
+    \end{itemize}
+    \item \textbf{Computational feasibility:} Completes within 10 seconds (liberal threshold for $n=101$ points)
+\end{enumerate}
+
+Methods failing these criteria for a configuration are excluded from that configuration's analysis (partial coverage documented in Section~\ref{sec:coverage}).
+
+\subsection{Ground Truth Derivation}
+\label{sec:ground_truth}
+
+\textbf{Challenge:} Derivative estimation benchmarks require \textit{known} ground truth derivatives, but numerical differentiation of the ODE solution reintroduces the very problem being studied.
+
+\textbf{Our approach:} Symbolic differentiation + augmented ODE system
+
+\begin{enumerate}
+    \item \textbf{Symbolic differentiation:} Derive analytic expressions for $f'(t), f''(t), \ldots, f^{(7)}(t)$ from the Lotka-Volterra ODE:
+    \begin{align}
+    x'(t) &= \alpha x(t) - \beta x(t) y(t) \label{eq:lv_x} \\
+    y'(t) &= \delta x(t) y(t) - \gamma y(t) \label{eq:lv_y}
+    \end{align}
+    
+    Higher derivatives obtained via chain rule and product rule:
+    \begin{align}
+    x''(t) &= \frac{d}{dt}\left[\alpha x(t) - \beta x(t) y(t)\right] \nonumber \\
+           &= \alpha x'(t) - \beta \left[x'(t) y(t) + x(t) y'(t)\right] \label{eq:lv_x2}
+    \end{align}
+    and so on through order 7.
+    
+    \item \textbf{Augmented ODE system:} Solve the $(2 \times 8)$-dimensional system:
+    \begin{equation}
+    \frac{d}{dt} \begin{bmatrix} x \\ y \\ x' \\ y' \\ x'' \\ y'' \\ \vdots \\ x^{(7)} \\ y^{(7)} \end{bmatrix}
+    = \begin{bmatrix} x' \\ y' \\ x'' \\ y'' \\ x''' \\ y''' \\ \vdots \\ x^{(8)} \\ y^{(8)} \end{bmatrix}
+    \end{equation}
+    
+    using a high-accuracy ODE solver (Vern9, adaptive Runge-Kutta, abstol = reltol = $10^{-12}$).
+    
+    \item \textbf{Validation:} Numerical differentiation of $x(t)$ via high-order finite differences agrees with augmented system derivatives to $\approx 10^{-10}$ for orders 0--5, confirming symbolic correctness.
+\end{enumerate}
+
+\textbf{Accuracy claim:} Ground truth derivatives are accurate to $\approx 10^{-10}$ (orders 0--5) and $\approx 10^{-8}$ (orders 6--7), sufficient for nRMSE evaluation given $10^{-8} \leq \sigma \leq 5 \times 10^{-2}$.
+
+\subsection{Scope and Limitations}
+\label{sec:scope}
+
+\textbf{Test signal:}
+\begin{itemize}
+    \item Single dynamical system (Lotka-Volterra predator-prey), prey population $x(t)$ only
+    \item Smooth, periodic, analytic function—favorable for spectral methods
+    \item May not represent performance on rough, discontinuous, or chaotic signals
+\end{itemize}
+
+\textbf{Noise model:}
+\begin{itemize}
+    \item Additive Gaussian only—does not test multiplicative, Poisson, or heteroscedastic noise
+    \item Independent noise across time points—does not test correlated noise
+\end{itemize}
+
+\textbf{Sample size:}
+\begin{itemize}
+    \item Fixed $n=101$ points—modest scale, may not reflect large-data ($n > 1000$) or small-data ($n < 50$) regimes
+\end{itemize}
+
+\textbf{Generalization:} Results should be interpreted as \textit{existence proofs} that certain methods can succeed under specific conditions, not as universal rankings. Practitioners must validate on their specific data (see Section~\ref{sec:recommendations}).

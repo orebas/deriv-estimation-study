@@ -1,0 +1,288 @@
+{
+  "metadata": {
+    "source": "/home/orebas/derivative_estimation_study/results/comprehensive/comprehensive_summary.csv",
+    "generated_by": "automated_pipeline",
+    "warning": "ALL DATA FROM ACTUAL EXPERIMENTS - NO FABRICATION"
+  },
+  "overall_rankings": [
+    {
+      "method": "Central-FD",
+      "mean_nrmse": 0.034034953440070514,
+      "mean_timing": 0.006003970191592213,
+      "category": "Finite Difference",
+      "rank": 1
+    },
+    {
+      "method": "TVRegDiff-Julia",
+      "mean_nrmse": 0.19526576334797566,
+      "mean_timing": 0.1310232253301711,
+      "category": "Regularization",
+      "rank": 2
+    },
+    {
+      "method": "GP-Julia-AD",
+      "mean_nrmse": 0.2574650082682254,
+      "mean_timing": 0.7817172095889137,
+      "category": "Gaussian Process",
+      "rank": 3
+    },
+    {
+      "method": "GP_RBF_Iso_Python",
+      "mean_nrmse": 0.2694344844578702,
+      "mean_timing": 0.2696152641659691,
+      "category": "Gaussian Process",
+      "rank": 4
+    },
+    {
+      "method": "GP_RBF_Python",
+      "mean_nrmse": 0.26943461894709814,
+      "mean_timing": 0.2764020306723458,
+      "category": "Gaussian Process",
+      "rank": 5
+    },
+    {
+      "method": "gp_rbf_mean",
+      "mean_nrmse": 0.2694346545753393,
+      "mean_timing": 0.30439618655613493,
+      "category": "Other",
+      "rank": 6
+    },
+    {
+      "method": "Dierckx-5",
+      "mean_nrmse": 0.2906177032560407,
+      "mean_timing": 0.005102736609322657,
+      "category": "Spline",
+      "rank": 7
+    },
+    {
+      "method": "Fourier-Interp",
+      "mean_nrmse": 0.4405214621246241,
+      "mean_timing": 0.03434822672889341,
+      "category": "Spectral",
+      "rank": 8
+    },
+    {
+      "method": "ad_trig",
+      "mean_nrmse": 0.44733120556067013,
+      "mean_timing": 0.9702361992427281,
+      "category": "Other",
+      "rank": 9
+    },
+    {
+      "method": "ButterworthSpline_Python",
+      "mean_nrmse": 0.511893925834878,
+      "mean_timing": 0.0010869957151866572,
+      "category": "Spline",
+      "rank": 10
+    },
+    {
+      "method": "fourier",
+      "mean_nrmse": 0.584419032722777,
+      "mean_timing": 0.003931874320620543,
+      "category": "Other",
+      "rank": 11
+    },
+    {
+      "method": "fourier_continuation",
+      "mean_nrmse": 0.5953349275561122,
+      "mean_timing": 0.004169021333966886,
+      "category": "Other",
+      "rank": 12
+    },
+    {
+      "method": "Whittaker_m2_Python",
+      "mean_nrmse": 0.7372761723994987,
+      "mean_timing": 0.0010606447855631145,
+      "category": "Other",
+      "rank": 13
+    },
+    {
+      "method": "TrendFilter-k2",
+      "mean_nrmse": 0.7709878637549291,
+      "mean_timing": 0.009006704602922673,
+      "category": "Regularization",
+      "rank": 14
+    },
+    {
+      "method": "TrendFilter-k7",
+      "mean_nrmse": 0.7714832499465604,
+      "mean_timing": 0.04183466093880784,
+      "category": "Regularization",
+      "rank": 15
+    },
+    {
+      "method": "Butterworth_Python",
+      "mean_nrmse": 0.7773681200160237,
+      "mean_timing": 0.002193087623232814,
+      "category": "Other",
+      "rank": 16
+    },
+    {
+      "method": "Savitzky-Golay",
+      "mean_nrmse": 0.8813796291298663,
+      "mean_timing": 0.06822232973007926,
+      "category": "Local Polynomial",
+      "rank": 17
+    },
+    {
+      "method": "KalmanGrad_Python",
+      "mean_nrmse": 0.9025674857756373,
+      "mean_timing": 0.01053621655418753,
+      "category": "Other",
+      "rank": 18
+    },
+    {
+      "method": "SVR_Python",
+      "mean_nrmse": 0.9382971826566475,
+      "mean_timing": 0.002759309042067714,
+      "category": "Other",
+      "rank": 19
+    },
+    {
+      "method": "chebyshev",
+      "mean_nrmse": 1.7541218853821239,
+      "mean_timing": 0.0031652109963552716,
+      "category": "Other",
+      "rank": 20
+    },
+    {
+      "method": "RKHS_Spline_m2_Python",
+      "mean_nrmse": 3.6449720613171723,
+      "mean_timing": 0.0013855184827531429,
+      "category": "Spline",
+      "rank": 21
+    },
+    {
+      "method": "SpectralTaper_Python",
+      "mean_nrmse": 5.118501781457209,
+      "mean_timing": 0.0008831591833204858,
+      "category": "Other",
+      "rank": 22
+    },
+    {
+      "method": "TVRegDiff_Python",
+      "mean_nrmse": 14.186267919243935,
+      "mean_timing": 0.010445140656970744,
+      "category": "Other",
+      "rank": 23
+    },
+    {
+      "method": "SavitzkyGolay_Python",
+      "mean_nrmse": 15443.023114531246,
+      "mean_timing": 0.008921555110386385,
+      "category": "Other",
+      "rank": 24
+    },
+    {
+      "method": "GP-Julia-SE",
+      "mean_nrmse": 38238700.55988739,
+      "mean_timing": 4.615465232304165,
+      "category": "Gaussian Process",
+      "rank": 25
+    },
+    {
+      "method": "AAA-LowPrec",
+      "mean_nrmse": 1.2239507557047954e+18,
+      "mean_timing": 0.0023984909057616854,
+      "category": "Rational",
+      "rank": 26
+    },
+    {
+      "method": "AAA-HighPrec",
+      "mean_nrmse": 1.592792452551975e+21,
+      "mean_timing": 0.47517446109226763,
+      "category": "Rational",
+      "rank": 27
+    }
+  ],
+  "per_order_top_methods": {
+    "order_0": {
+      "best_method": "GP-Julia-AD",
+      "best_nrmse": 0.007303694232738423,
+      "top_5": [
+        "GP-Julia-AD",
+        "GP_RBF_Python",
+        "gp_rbf_mean",
+        "GP_RBF_Iso_Python",
+        "fourier"
+      ]
+    },
+    "order_1": {
+      "best_method": "GP-Julia-AD",
+      "best_nrmse": 0.02495227962586887,
+      "top_5": [
+        "GP-Julia-AD",
+        "GP_RBF_Python",
+        "gp_rbf_mean",
+        "GP_RBF_Iso_Python",
+        "Dierckx-5"
+      ]
+    },
+    "order_2": {
+      "best_method": "GP-Julia-AD",
+      "best_nrmse": 0.0762209902459755,
+      "top_5": [
+        "GP-Julia-AD",
+        "GP_RBF_Python",
+        "GP_RBF_Iso_Python",
+        "gp_rbf_mean",
+        "Dierckx-5"
+      ]
+    },
+    "order_3": {
+      "best_method": "GP-Julia-AD",
+      "best_nrmse": 0.1623009360047424,
+      "top_5": [
+        "GP-Julia-AD",
+        "GP_RBF_Iso_Python",
+        "GP_RBF_Python",
+        "gp_rbf_mean",
+        "Dierckx-5"
+      ]
+    },
+    "order_4": {
+      "best_method": "GP-Julia-AD",
+      "best_nrmse": 0.2750584044068547,
+      "top_5": [
+        "GP-Julia-AD",
+        "GP_RBF_Iso_Python",
+        "GP_RBF_Python",
+        "gp_rbf_mean",
+        "Dierckx-5"
+      ]
+    },
+    "order_5": {
+      "best_method": "GP-Julia-AD",
+      "best_nrmse": 0.3932436977678849,
+      "top_5": [
+        "GP-Julia-AD",
+        "GP_RBF_Iso_Python",
+        "GP_RBF_Python",
+        "gp_rbf_mean",
+        "Fourier-Interp"
+      ]
+    },
+    "order_6": {
+      "best_method": "GP-Julia-AD",
+      "best_nrmse": 0.5008741563533167,
+      "top_5": [
+        "GP-Julia-AD",
+        "GP_RBF_Iso_Python",
+        "GP_RBF_Python",
+        "gp_rbf_mean",
+        "Fourier-Interp"
+      ]
+    },
+    "order_7": {
+      "best_method": "GP-Julia-AD",
+      "best_nrmse": 0.6197659075084215,
+      "top_5": [
+        "GP-Julia-AD",
+        "GP_RBF_Iso_Python",
+        "GP_RBF_Python",
+        "gp_rbf_mean",
+        "Fourier-Interp"
+      ]
+    }
+  }
+}

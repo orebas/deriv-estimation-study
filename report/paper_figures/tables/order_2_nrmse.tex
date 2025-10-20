@@ -1,0 +1,37 @@
+% nRMSE values for derivative order 2
+\begin{table}
+\caption{Normalized RMSE for derivative order 2}
+\label{tab:nrmse_order_2}
+\begin{tabular}{lllllllll}
+\toprule
+noise_level & 1e-08 & 1e-06 & 1e-04 & 1e-03 & 1e-02 & 2e-02 & 5e-02 & Mean \\
+method &  &  &  &  &  &  &  &  \\
+\midrule
+GP-Julia-AD & 0.00 & 0.00 & 0.00 & 0.02 & 0.09 & 0.16 & 0.25 & 0.08 \\
+GP_RBF_Python & 0.00 & 0.00 & 0.01 & 0.02 & 0.11 & 0.17 & 0.27 & 0.08 \\
+GP_RBF_Iso_Python & 0.00 & 0.00 & 0.01 & 0.02 & 0.11 & 0.17 & 0.27 & 0.08 \\
+gp_rbf_mean & 0.00 & 0.00 & 0.01 & 0.02 & 0.11 & 0.17 & 0.27 & 0.08 \\
+Dierckx-5 & 0.00 & 0.00 & 0.00 & 0.02 & 0.13 & 0.17 & 0.33 & 0.09 \\
+fourier & 0.03 & 0.03 & 0.03 & 0.03 & 0.11 & 0.21 & 0.52 & 0.14 \\
+Fourier-Interp & 0.11 & 0.11 & 0.11 & 0.11 & 0.12 & 0.15 & 0.28 & 0.14 \\
+ad_trig & 0.10 & 0.10 & 0.10 & 0.10 & 0.12 & 0.15 & 0.29 & 0.14 \\
+fourier_continuation & 0.04 & 0.04 & 0.04 & 0.04 & 0.11 & 0.21 & 0.52 & 0.14 \\
+ButterworthSpline_Python & 0.43 & 0.43 & 0.43 & 0.43 & 0.43 & 0.43 & 0.44 & 0.43 \\
+RKHS_Spline_m2_Python & 0.13 & 0.13 & 0.13 & 0.13 & 0.13 & 0.44 & 2.07 & 0.45 \\
+chebyshev & 0.74 & 0.74 & 0.74 & 0.74 & 0.74 & 0.74 & 0.75 & 0.74 \\
+Whittaker_m2_Python & 0.77 & 0.77 & 0.77 & 0.77 & 0.77 & 0.77 & 0.77 & 0.77 \\
+Butterworth_Python & 0.84 & 0.84 & 0.84 & 0.84 & 0.84 & 0.84 & 0.84 & 0.84 \\
+TVRegDiff_Python & 0.73 & 0.77 & 1.70 & 0.42 & 0.79 & 0.88 & 0.64 & 0.85 \\
+KalmanGrad_Python & 0.97 & 0.97 & 0.97 & 0.97 & 0.97 & 0.97 & 0.97 & 0.97 \\
+SVR_Python & 0.97 & 0.97 & 0.97 & 0.97 & 0.97 & 0.97 & 0.98 & 0.97 \\
+Savitzky-Golay & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+TrendFilter-k2 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+TrendFilter-k7 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+SpectralTaper_Python & 2.00 & 2.00 & 2.00 & 2.04 & 2.37 & 2.76 & 4.00 & 2.45 \\
+SavitzkyGolay_Python & 39 & 39 & 39 & 39 & 38 & 37 & 36 & 38 \\
+AAA-LowPrec & 0.13 & 0.13 & 0.13 & 0.15 & 0.16 & 0.18 & >1e3 & >1e3 \\
+AAA-HighPrec & 0.00 & 0.38 & 2.07 & 422 & >1e3 & >1e3 & >1e3 & >1e3 \\
+GP-Julia-SE & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 \\
+\bottomrule
+\end{tabular}
+\end{table}

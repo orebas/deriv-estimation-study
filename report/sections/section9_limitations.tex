@@ -1,0 +1,205 @@
+\section{Limitations and Future Work}
+\label{sec:future_work}
+
+This section consolidates limitations identified throughout Sections~\ref{sec:methodology}--\ref{sec:discussion} and proposes extensions to address them.
+
+\subsection{Experimental Design Limitations}
+\label{sec:design_limitations}
+
+\subsubsection{Single Test System}
+
+\textbf{Limitation:} All results derive from a single dynamical system (Lotka-Volterra predator-prey model, prey population $x(t)$ only).
+
+\textbf{Implications:}
+\begin{itemize}
+    \item Lotka-Volterra produces smooth, periodic, analytic signals—ideal for spectral methods and potentially unrepresentative of rough/discontinuous signals
+    \item Only one variable tested (prey $x(t)$); predator population $y(t)$ may exhibit different noise sensitivity
+    \item Method rankings may change for chaotic dynamics, stochastic processes, or experimental data with measurement artifacts
+\end{itemize}
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Test on diverse signal classes: 
+    \begin{itemize}
+        \item Chaotic systems (Lorenz attractor, double pendulum)
+        \item Discontinuous functions (piecewise polynomials, step functions)
+        \item Non-smooth signals (Brownian motion, fractional Brownian motion)
+        \item Real experimental data (e.g., from physics/chemistry measurements)
+    \end{itemize}
+    \item Identify signal characteristics (smoothness, periodicity, characteristic scales) that predict method performance
+    \item Develop signal-adaptive method selection criteria
+\end{itemize}
+
+\subsubsection{Noise Model}
+
+\textbf{Limitation:} Only additive Gaussian noise tested ($\epsilon_i \sim \mathcal{N}(0, \sigma^2)$, independent across time points).
+
+\textbf{Implications:}
+\begin{itemize}
+    \item Gaussian Process optimality guarantees assume Gaussian noise—rankings may change for heavy-tailed or structured noise
+    \item Real data often exhibits multiplicative noise, Poisson noise (count data), or heteroscedastic noise (variance depends on signal magnitude)
+    \item Correlated noise (AR/MA processes) not tested—may favor methods with explicit temporal correlation models
+\end{itemize}
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Evaluate alternative noise models:
+    \begin{itemize}
+        \item Multiplicative noise: $y_i = f(t_i)(1 + \epsilon_i)$
+        \item Poisson noise: common in photon counting, chemical reaction data
+        \item Student-t noise: heavy-tailed, tests robustness to outliers
+        \item Correlated noise: AR(1), colored noise
+    \end{itemize}
+    \item Test robust methods (TVRegDiff, Student-t processes) on heavy-tailed noise
+    \item Develop noise-adaptive method selection guidelines
+\end{itemize}
+
+\subsubsection{Statistical Power}
+
+\textbf{Limitation:} Only $n=3$ trials per configuration—insufficient for formal hypothesis testing or stable variance estimates (Section~\ref{sec:statistics}).
+
+\textbf{Implications:}
+\begin{itemize}
+    \item 95\% confidence intervals have half-width $\approx 2.48 \times$ SD (extremely wide with df=2)
+    \item Rankings of methods within 2$\times$ nRMSE should be interpreted cautiously
+    \item Subtle performance differences cannot be detected reliably
+    \item No statistical significance testing performed (insufficient power)
+\end{itemize}
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Increase to $n \geq 10$ trials for robust statistical inference
+    \item Perform formal pairwise comparisons (e.g., Wilcoxon signed-rank test) with correction for multiple comparisons
+    \item Compute bootstrap confidence intervals for method rankings
+    \item Quantify "zone of indistinguishability" where methods cannot be reliably distinguished given sample size
+\end{itemize}
+
+\subsection{Method Coverage and Implementation Limitations}
+
+\subsubsection{Cross-Language Implementation Discrepancies}
+
+\textbf{Limitation:} 3/27 candidate methods excluded due to $>50\times$ performance discrepancies between Julia and Python implementations despite parameter parity attempts (Section~\ref{sec:cross_language}).
+
+\textbf{Implications:}
+\begin{itemize}
+    \item Implementation quality is a method characteristic, not just algorithmic performance
+    \item "Best method" depends on which implementation—practitioners need software-specific guidance
+    \item Undocumented library defaults, numerical precision choices, and optimization strategies can dominate performance
+\end{itemize}
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Comprehensive cross-language validation: Match \textit{all} parameters, not just documented ones
+    \item Implement reference versions in multiple languages with verified parameter parity
+    \item Document exact software versions, commits, and build configurations for reproducibility
+    \item Develop methodology for fairly comparing methods across languages/implementations
+\end{itemize}
+
+\subsubsection{Partial Coverage Bias}
+
+\textbf{Limitation:} Only 16/24 methods achieve full 56/56 configuration coverage; 8 methods have library/degree limitations restricting testable orders (Section~\ref{sec:coverage}).
+
+\textbf{Implications:}
+\begin{itemize}
+    \item Methods tested only on "easy" configurations appear artificially superior
+    \item Fair comparison requires restricting to full-coverage methods (excludes potentially useful specialized methods)
+    \item Coverage transparency critical but often unreported in prior benchmarks
+\end{itemize}
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Develop imputation strategies for missing configurations (risky—may hide genuine failures)
+    \item Weight rankings by configuration difficulty (requires defining difficulty metric)
+    \item Create separate rankings for full-coverage vs. specialized methods
+\end{itemize}
+
+\subsection{Computational and Scalability Limitations}
+
+\subsubsection{Small Problem Size}
+
+\textbf{Limitation:} Fixed $n=101$ sample points—modest scale, may not reflect large-data or small-data regimes.
+
+\textbf{Implications:}
+\begin{itemize}
+    \item GP methods (O($n^3$)) computationally feasible at $n=101$ but prohibitive for $n > 1000$
+    \item Spectral methods (O($n \log n$)) show modest absolute timing at this scale; advantages emerge only at large $n$
+    \item Small-$n$ behavior ($n < 50$) not tested—may favor different methods (more regularization needed)
+\end{itemize}
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Benchmark across problem sizes: $n \in \{50, 100, 500, 1000, 5000\}$
+    \item Evaluate sparse GP approximations (inducing points, spectral approximations) for large-scale problems
+    \item Test online/streaming methods for real-time applications
+    \item Develop scaling guidelines: Which method for which problem size?
+\end{itemize}
+
+\subsubsection{Uniform Grid Assumption}
+
+\textbf{Limitation:} All evaluations on uniform grids—non-uniform sampling not tested.
+
+\textbf{Implications:}
+\begin{itemize}
+    \item Real data often has irregular sampling (missing data, adaptive sampling)
+    \item GP and spline methods handle non-uniform grids naturally; FFT-based methods require interpolation
+    \item Adaptive sampling strategies not evaluated
+\end{itemize}
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Test on non-uniform grids with varying density
+    \item Evaluate adaptive sampling strategies (higher density near high-curvature regions)
+    \item Assess robustness to missing data
+\end{itemize}
+
+\subsection{Generalization and Applicability}
+
+\subsubsection{Single-Application Domain}
+
+\textbf{Limitation:} Results from ODE system may not generalize to other domains (PDEs, experimental physics/chemistry data, financial time series).
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Domain-specific benchmarks:
+    \begin{itemize}
+        \item PDEs: Navier-Stokes, heat equation (higher-dimensional extensions)
+        \item Experimental data: Real sensor measurements with calibration artifacts
+        \item Stochastic processes: Financial time series with heavy tails and heteroscedasticity
+    \end{itemize}
+    \item Develop domain-specific method recommendations
+\end{itemize}
+
+\subsubsection{Multivariate Extensions}
+
+\textbf{Limitation:} Only univariate (scalar-valued) functions tested—multivariate derivative estimation not addressed.
+
+\textbf{Future work:}
+\begin{itemize}
+    \item Extend to multivariate functions: $f: \mathbb{R}^d \to \mathbb{R}$ (partial derivatives, gradients, Hessians)
+    \item Evaluate GP methods with product kernels
+    \item Test tensor-product splines
+    \item Assess curse of dimensionality: How do methods scale with input dimension $d$?
+\end{itemize}
+
+\subsection{Summary of Recommended Extensions}
+
+\textbf{Highest priority} (addresses most critical limitations):
+\begin{enumerate}
+    \item Increase trial count to $n \geq 10$ for statistical rigor
+    \item Test on 5--10 diverse signals (chaotic, discontinuous, experimental data)
+    \item Evaluate alternative noise models (multiplicative, Poisson, heavy-tailed)
+\end{enumerate}
+
+\textbf{Medium priority} (enhances generalizability):
+\begin{enumerate}
+    \item Scale study: Problem sizes $n \in \{50, 100, 500, 1000, 5000\}$
+    \item Cross-language validation with complete parameter documentation
+    \item Non-uniform grid and missing data robustness testing
+\end{enumerate}
+
+\textbf{Long-term extensions} (new capabilities):
+\begin{enumerate}
+    \item Multivariate derivative estimation (gradients, Hessians)
+    \item Online/streaming methods for real-time applications
+    \item Domain-specific benchmarks (PDEs, experimental physics, finance)
+\end{enumerate}

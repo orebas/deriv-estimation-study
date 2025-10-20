@@ -1,0 +1,196 @@
+\section{Practical Recommendations}
+\label{sec:recommendations}
+
+This section provides actionable guidance for practitioners selecting derivative estimation methods based on experimental findings. Recommendations are organized by derivative order and noise level, with explicit caveats regarding generalization limitations (see Section~\ref{sec:generalization}).
+
+\subsection{Master Recommendation Table}
+\label{sec:master_table}
+
+Table~\ref{tab:recommendations} provides quick-reference method selection guidelines based on derivative order and noise level. All recommendations assume the Lotka-Volterra test system characteristics (smooth, oscillatory, additive Gaussian noise); validation on your specific data is strongly advised.
+
+\begin{table}[htbp]
+\centering
+\caption{Method Selection Recommendations by Derivative Order and Noise Level}
+\label{tab:recommendations}
+\small
+\begin{tabular}{lp{3.5cm}p{3.5cm}p{3.5cm}}
+\toprule
+\textbf{Order} & \textbf{Near-Noiseless ($\leq 10^{-8}$)} & \textbf{Low Noise ($10^{-4}$--$10^{-3}$)} & \textbf{High Noise ($10^{-2}$--$5\times 10^{-2}$)} \\
+\midrule
+\textbf{0--1} & GP-Julia-AD / AAA-HighPrec / Dierckx-5 & GP-Julia-AD / Dierckx-5 & GP-Julia-AD / TVRegDiff \\
+\midrule
+\textbf{2} & GP-Julia-AD / AAA-HighPrec ($\leq 10^{-8}$ only) & GP-Julia-AD / Fourier-Interp & GP-Julia-AD only \\
+\midrule
+\textbf{3--5} & GP-Julia-AD / Fourier-Interp & GP-Julia-AD / Fourier-Interp & GP-Julia-AD (verify nRMSE acceptable) \\
+\midrule
+\textbf{6--7} & GP-Julia-AD only & GP-Julia-AD only & GP-Julia-AD (expect nRMSE 0.5--1.0) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Critical caveat:} AAA-HighPrec \textit{catastrophically fails} at orders $\geq 3$ (nRMSE $> 10^7$), even at near-perfect noise levels ($10^{-8}$). Restrict AAA use to orders 0--2 at noise $\leq 10^{-8}$ only.
+
+\subsection{Detailed Recommendations by Scenario}
+
+\subsubsection{Near-Noiseless Data ($\leq 10^{-8}$)}
+
+\textbf{Orders 0--2:}
+\begin{itemize}
+    \item \textbf{Primary:} GP-Julia-AD—best overall performance across all scenarios (nRMSE $\approx 10^{-9}$ to $10^{-4}$)
+    \item \textbf{Alternative:} AAA-HighPrec—\textit{exceptional} at orders 0--2 only (9--2929$\times$ better than GP at very low orders), but catastrophic at orders $\geq 3$
+    \item \textbf{Fast options:} Dierckx-5, Central-FD (orders 0--1 only)—acceptable if speed is critical and accuracy can be sacrificed
+\end{itemize}
+
+\textbf{Orders 3--7:}
+\begin{itemize}
+    \item \textbf{Only reliable method:} GP-Julia-AD
+    \item \textbf{Fast alternative (orders 3--5):} Fourier-Interp—reasonable accuracy at 10--20$\times$ speedup
+    \item \textbf{DO NOT use AAA:} Catastrophic failures ($10^{7}$--$10^{22}$ nRMSE) even at $10^{-8}$ noise
+\end{itemize}
+
+\subsubsection{Low Noise ($10^{-4}$ to $10^{-3}$)}
+
+\textbf{Orders 0--2:}
+\begin{itemize}
+    \item \textbf{Primary:} GP-Julia-AD (nRMSE $< 0.1$)
+    \item \textbf{Fast alternatives:} Fourier-Interp, Dierckx-5—acceptable accuracy at $\approx 20\times$ speedup
+\end{itemize}
+
+\textbf{Orders 3--5:}
+\begin{itemize}
+    \item \textbf{Primary:} GP-Julia-AD (nRMSE $\approx 0.15$--$0.4$)
+    \item \textbf{Fast alternative:} Fourier-Interp—competitive accuracy, significantly faster
+    \item \textbf{Avoid:} Finite differences (nRMSE $> 1$), AAA (unstable)
+\end{itemize}
+
+\textbf{Orders 6--7:}
+\begin{itemize}
+    \item \textbf{Only viable method:} GP-Julia-AD (nRMSE $\approx 0.5$--$0.7$)
+    \item \textbf{Warning:} High-order derivatives at moderate noise are extremely challenging—verify nRMSE is acceptable for your application before proceeding
+\end{itemize}
+
+\subsubsection{High Noise ($10^{-2}$ to $5 \times 10^{-2}$)}
+
+\textbf{Orders 0--1:}
+\begin{itemize}
+    \item \textbf{Primary:} GP-Julia-AD (nRMSE $< 0.05$)
+    \item \textbf{Alternative:} TVRegDiff-Julia (orders 0--1 only)—edge-preserving smoothing may be advantageous for discontinuous signals
+\end{itemize}
+
+\textbf{Orders 2--3:}
+\begin{itemize}
+    \item \textbf{Primary:} GP-Julia-AD (nRMSE $\approx 0.1$--$0.3$)
+    \item \textbf{Fast alternative (if nRMSE $\sim 0.4$ acceptable):} Fourier-Interp
+    \item \textbf{Avoid:} Finite differences, AAA (unstable)
+\end{itemize}
+
+\textbf{Orders $\geq 4$:}
+\begin{itemize}
+    \item \textbf{Only viable method:} GP-Julia-AD (nRMSE $\approx 0.3$--$1.0$)
+    \item \textbf{Warning:} All methods struggle at high orders with high noise. Consider:
+    \begin{itemize}
+        \item Is the high-order derivative estimate reliable enough for your application?
+        \item Can you reduce noise (additional measurements, filtering) or use lower-order derivatives instead?
+        \item Can you reformulate the problem to avoid high-order derivatives?
+    \end{itemize}
+\end{itemize}
+
+\subsection{Decision Framework}
+\label{sec:decision_framework}
+
+The following sequential decision process guides method selection:
+
+\textbf{Step 1: Identify derivative order requirement}
+\begin{itemize}
+    \item \textbf{Orders 0--1:} Multiple viable methods; proceed to Step 2
+    \item \textbf{Orders 2--3:} Limited methods; proceed to Step 2 with expectation of fewer alternatives
+    \item \textbf{Orders 4--5:} Expect GP-Julia-AD or Fourier-Interp only; verify feasibility
+    \item \textbf{Orders 6--7:} Use GP-Julia-AD; verify nRMSE $\approx 0.5$--$1.0$ is acceptable for your application
+\end{itemize}
+
+\textbf{Step 2: Assess noise level}
+\begin{itemize}
+    \item \textbf{$< 10^{-6}$:} GP-Julia-AD or AAA-HighPrec (both excellent at orders 0--2)
+    \item \textbf{$10^{-4}$ to $10^{-3}$:} GP-Julia-AD (primary), Fourier-Interp (fast alternative)
+    \item \textbf{$> 10^{-2}$:} GP-Julia-AD only reliable for orders $> 2$
+\end{itemize}
+
+\textbf{Step 3: Evaluate computational constraints}
+\begin{itemize}
+    \item \textbf{Speed critical and noise $< 10^{-3}$:} Try Fourier-Interp (10--20$\times$ faster than GP)
+    \item \textbf{Speed critical and noise $> 10^{-2}$:} No fast alternative maintains acceptable accuracy; use GP-Julia-AD
+    \item \textbf{Large datasets ($n > 1000$):} Spectral methods (O($n \log n$)) strongly preferred over GP (O($n^3$))
+\end{itemize}
+
+\textbf{Step 4: Consider additional requirements}
+\begin{itemize}
+    \item \textbf{Uncertainty quantification needed:} Use GP-Julia-AD (built-in confidence intervals via posterior variance)
+    \item \textbf{Edge preservation needed:} Use TVRegDiff-Julia (orders 0--1 only)
+    \item \textbf{Multivariate extensions anticipated:} GP methods generalize naturally via product kernels; AAA and spectral methods require additional development
+\end{itemize}
+
+\textbf{Step 5: Validate on your data}
+\begin{itemize}
+    \item \textbf{Critical:} These recommendations are derived from a \textit{single test system} (Lotka-Volterra) with \textit{additive Gaussian noise}
+    \item Test top 2--3 candidate methods on your actual data using cross-validation or hold-out testing
+    \item Verify nRMSE is acceptable for your specific application before production deployment
+\end{itemize}
+
+\subsection{Common Pitfalls and Misconceptions}
+\label{sec:pitfalls}
+
+\textbf{Pitfall 1: Using AAA for orders $\geq 3$}
+\begin{itemize}
+    \item AAA-HighPrec exhibits catastrophic failure (nRMSE $> 10^7$) at orders $\geq 3$ despite excellent low-order performance
+    \item \textbf{Action:} Restrict AAA to orders 0--2 at noise $\leq 10^{-8}$ only
+\end{itemize}
+
+\textbf{Pitfall 2: Assuming finite differences are ``good enough''}
+\begin{itemize}
+    \item Central-FD exhibits severe noise amplification at moderate noise ($\geq 10^{-3}$) and high orders ($\geq 3$)
+    \item \textbf{Action:} Avoid finite differences for noisy high-order derivatives; use GP or spectral methods
+\end{itemize}
+
+\textbf{Pitfall 3: Ignoring computational scaling}
+\begin{itemize}
+    \item GP methods scale as O($n^3$); prohibitive for $n > 1000$ without approximations
+    \item \textbf{Action:} For large datasets, use spectral methods (O($n \log n$)) or sparse GP approximations
+\end{itemize}
+
+\textbf{Pitfall 4: Over-generalizing from benchmarks}
+\begin{itemize}
+    \item Performance characteristics depend on signal properties (smoothness, periodicity) and noise model
+    \item \textbf{Action:} Treat benchmarks as \textit{starting points}, not definitive rankings; validate on your data
+\end{itemize}
+
+\textbf{Pitfall 5: Trusting high-order derivatives blindly}
+\begin{itemize}
+    \item Even best methods (GP-Julia-AD) exhibit nRMSE $\approx 0.5$--$1.0$ at orders 6--7 with moderate noise
+    \item \textbf{Action:} Question whether high-order derivatives are truly needed; consider reformulating the problem
+\end{itemize}
+
+\subsection{Implementation Guidance}
+\label{sec:implementation}
+
+\textbf{Recommended software packages} (based on experimental evaluation):
+\begin{itemize}
+    \item \textbf{GP-Julia-AD:} GaussianProcesses.jl (Julia)—best overall performance
+    \item \textbf{Fourier-Interp:} FFTW.jl (Julia) or scipy.fftpack (Python)—fast spectral differentiation
+    \item \textbf{TVRegDiff:} Custom Julia implementation (edge-preserving smoothing)
+    \item \textbf{AAA-HighPrec:} BaryRational.jl (Julia)—orders 0--2 at low noise only
+\end{itemize}
+
+\textbf{Hyperparameter tuning:}
+\begin{itemize}
+    \item \textbf{GP methods:} Use maximum likelihood estimation for length scale and noise variance (automatic in GaussianProcesses.jl)
+    \item \textbf{Fourier-Interp:} \texttt{filter\_frac = 0.4} (retains lower 40\% of spectrum) worked well for smooth signals; tune via validation testing for your data
+    \item \textbf{TVRegDiff:} Regularization parameter $\alpha$ requires manual tuning; start with $\alpha = 0.01$ and adjust based on visual inspection
+\end{itemize}
+
+\textbf{Validation strategy:}
+\begin{enumerate}
+    \item Generate synthetic test cases with known ground truth derivatives
+    \item Evaluate candidate methods across realistic noise levels for your application
+    \item Use $k$-fold cross-validation or hold-out testing to assess generalization
+    \item Select method with best nRMSE on validation set, subject to computational constraints
+\end{enumerate}

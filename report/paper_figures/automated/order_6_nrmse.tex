@@ -1,0 +1,27 @@
+\begin{table}[htbp]
+\centering
+\caption{nRMSE for Order 6 (ACTUAL DATA)}
+\label{tab:order_6}
+\tiny
+\begin{tabular}{lcccccccc}
+\toprule
+\textbf{Method} & \textbf{1e-08} & \textbf{1e-06} & \textbf{0.0001} & \textbf{0.001} & \textbf{0.01} & \textbf{0.02} & \textbf{0.05} & \textbf{Mean} \\
+\midrule
+GP-Julia-AD & 0.14 & 0.14 & 0.22 & 0.46 & 0.75 & 0.86 & 0.93 & 0.50 \\
+GP_RBF_Iso_Python & 0.16 & 0.16 & 0.24 & 0.48 & 0.79 & 0.88 & 0.94 & 0.52 \\
+GP_RBF_Python & 0.16 & 0.16 & 0.24 & 0.48 & 0.79 & 0.88 & 0.94 & 0.52 \\
+gp_rbf_mean & 0.16 & 0.16 & 0.24 & 0.48 & 0.79 & 0.88 & 0.94 & 0.52 \\
+Fourier-Interp & 0.81 & 0.81 & 0.81 & 0.81 & 0.83 & 0.85 & 1.03 & 0.85 \\
+ad_trig & 0.82 & 0.82 & 0.82 & 0.82 & 0.83 & 0.87 & 1.07 & 0.87 \\
+TrendFilter-k7 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+Savitzky-Golay & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+TrendFilter-k2 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+fourier & 0.56 & 0.56 & 0.56 & 0.57 & 0.92 & 1.57 & 3.70 & 1.21 \\
+fourier_continuation & 0.58 & 0.58 & 0.58 & 0.58 & 0.95 & 1.59 & 3.72 & 1.23 \\
+chebyshev & 2.56 & 2.56 & 2.56 & 2.56 & 2.60 & 2.64 & 2.77 & 2.61 \\
+SpectralTaper_Python & 5.07 & 5.07 & 5.11 & 5.49 & 9.45 & 14.1 & 28.1 & 10.3 \\
+TVRegDiff_Python & 25.9 & 32.4 & 139.8 & 14.2 & 54.0 & 62.3 & 47.2 & 53.7 \\
+GP-Julia-SE & $7.39e+05$ & $7.39e+05$ & $7.39e+05$ & $7.39e+05$ & $7.38e+05$ & $7.37e+05$ & $7.34e+05$ & $7.38e+05$ \\
+\bottomrule
+\end{tabular}
+\end{table}

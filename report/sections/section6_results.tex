@@ -1,0 +1,414 @@
+\section{Results}
+\label{sec:results}
+
+This section presents performance results for the 24 methods evaluated across 8 derivative orders (0--7) and 7 noise levels ($10^{-8}$ to $5 \times 10^{-2}$). All results are mean $\pm$ standard deviation across 3 trials and should be interpreted as descriptive summaries; statistical limitations ($n=3$, insufficient for formal hypothesis testing) are documented in Sections~\ref{sec:statistics} and~\ref{sec:statistical_uncertainty}.
+
+\subsection{Overall Performance Rankings}
+\label{sec:overall_rankings}
+
+Figure~\ref{fig:1} (Heatmap) visualizes method performance across derivative orders, showing mean nRMSE averaged over all noise levels for the top 15 methods. Methods are sorted by overall average performance (ascending). The heatmap uses log-scale coloring to accommodate the wide range of nRMSE values across different derivative orders.
+
+\textbf{Key observations from Figure~\ref{fig:1}:}
+\begin{itemize}
+    \item Clear performance stratification across derivative orders
+    \item Most methods maintain relatively stable performance at orders 0--2
+    \item Substantial degradation begins at orders 3--4 for many methods
+    \item Only a subset of methods remain viable at orders 6--7
+\end{itemize}
+
+\subsubsection{Full-Coverage Methods Ranking}
+
+To ensure fair comparison, Table~\ref{tab:full_coverage_ranking} ranks the 16 methods with full coverage (all 56 order$\times$noise configurations tested).
+
+\begin{table}[htbp]
+\centering
+\caption{Full-Coverage Methods Overall Performance}
+\label{tab:full_coverage_ranking}
+\begin{tabular}{clccc}
+\toprule
+Rank & Method & Category & Mean nRMSE & Coverage \\
+\midrule
+1 & GP-Julia-AD & Gaussian Process & 0.257 & 56/56 \\
+2 & GP\_RBF\_Iso\_Python & Gaussian Process & 0.269 & 56/56 \\
+3 & GP\_RBF\_Python & Gaussian Process & 0.269 & 56/56 \\
+4 & gp\_rbf\_mean & Gaussian Process & 0.269 & 56/56 \\
+5 & Fourier-Interp & Spectral & 0.441 & 56/56 \\
+6 & ad\_trig & Spectral & 0.447 & 56/56 \\
+7 & fourier & Spectral & 0.584 & 56/56 \\
+8 & fourier\_continuation & Spectral & 0.595 & 56/56 \\
+9 & TrendFilter-k2 & Regularization & 0.771 & 56/56 \\
+10 & TrendFilter-k7 & Regularization & 0.771 & 56/56 \\
+11 & Savitzky-Golay & Local Polynomial & 0.881 & 56/56 \\
+12 & chebyshev & Spectral & 1.754 & 56/56 \\
+13 & SpectralTaper\_Python & Spectral & 5.119 & 56/56 \\
+14 & GP-Julia-SE & Gaussian Process & $3.8 \times 10^7$ & 56/56 \\
+15 & AAA-LowPrec & Rational & $1.2 \times 10^{18}$ & 56/56 \\
+16 & AAA-HighPrec & Rational & $1.6 \times 10^{21}$ & 56/56 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Ranking methodology:} Mean nRMSE computed across all 56 configurations (8 orders $\times$ 7 noise levels), then averaged over 3 trials. Methods with partial coverage excluded from this ranking to avoid bias toward easy configurations (see Section~\ref{sec:coverage_bias}).
+
+\textbf{Key findings from Table~\ref{tab:full_coverage_ranking}:}
+\begin{itemize}
+    \item \textbf{Gaussian Process dominance:} Four GP methods occupy the top 4 ranks, with GP-Julia-AD achieving the best overall performance (nRMSE = 0.257).
+    \item \textbf{Spectral methods competitive:} Fourier-Interp (rank 5, nRMSE = 0.441) demonstrates strong performance, particularly given its computational efficiency (see Section~\ref{sec:pareto}).
+    \item \textbf{Category stratification:} Clear performance hierarchy emerges by category: Gaussian Processes $<$ Spectral $<$ Regularization $<$ Local Polynomial.
+    \item \textbf{Catastrophic failures:} AAA methods and GP-Julia-SE exhibit extreme failure (nRMSE $>10^7$), driven by high-order derivative instability (see Section~\ref{sec:discussion}).
+\end{itemize}
+
+\subsubsection{Coverage Bias Analysis}
+\label{sec:coverage_bias}
+
+\textbf{Critical limitation:} Methods with partial coverage appear artificially superior in naive overall rankings because they are only tested on configurations where they can succeed.
+
+Table~\ref{tab:coverage_summary} documents method coverage across derivative order ranges. Only 16 of 24 evaluated methods achieve full 56/56 configuration coverage (all 8 orders $\times$ 7 noise levels).
+
+\begin{table}[htbp]
+\centering
+\caption{Method Coverage Summary by Derivative Order Range}
+\label{tab:coverage_summary}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Orders 0--1} & \textbf{Orders 2--3} & \textbf{Orders 4--5} & \textbf{Orders 6--7} \\
+\midrule
+\multicolumn{5}{l}{\textit{Full Coverage (56/56 configurations):}} \\
+GP-Julia-AD & \checkmark & \checkmark & \checkmark & \checkmark \\
+GP\_RBF\_Iso\_Python & \checkmark & \checkmark & \checkmark & \checkmark \\
+Fourier-Interp & \checkmark & \checkmark & \checkmark & \checkmark \\
+TrendFilter-k2 & \checkmark & \checkmark & \checkmark & \checkmark \\
+AAA-HighPrec & \checkmark & \checkmark & \checkmark & \checkmark \\
+\textit{(11 more full-coverage methods)} & \checkmark & \checkmark & \checkmark & \checkmark \\
+\midrule
+\multicolumn{5}{l}{\textit{Partial Coverage (library/degree limitations):}} \\
+RKHS\_Spline\_m2\_Python & \checkmark & \checkmark & \checkmark & $\times$ \\
+Butterworth\_Spline\_Python & \checkmark & \checkmark & \checkmark & $\times$ \\
+Dierckx-5 & \checkmark & \checkmark & \checkmark & $\times$ \\
+TVRegDiff-Julia & \checkmark & $\times$ & $\times$ & $\times$ \\
+Central-FD & \checkmark & $\times$ & $\times$ & $\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Implications:} TVRegDiff-Julia and Central-FD (orders 0--1 only) exhibit excellent nRMSE values, but only because they are excluded from challenging high-order configurations where most methods struggle. Fair comparison requires restricting to full-coverage methods (Table~\ref{tab:full_coverage_ranking}).
+
+\textbf{Example:} TVRegDiff-Julia (14/56 configs, orders 0--1 only) and Central-FD (14/56 configs, orders 0--1 only) both achieve low nRMSE values---but only because they are excluded from the challenging high-order configurations where most methods struggle.
+
+\textbf{Recommendation:} Use Table~\ref{tab:full_coverage_ranking} (full-coverage methods only) for fair cross-method comparison. Partial-coverage methods should be evaluated within their tested scope.
+
+\subsection{Performance Across Derivative Orders}
+\label{sec:performance_by_order}
+
+Figure~\ref{fig:2} (Small Multiples) presents an 8-panel grid showing nRMSE vs noise level for each derivative order (0--7). Each panel shows the top 7 full-coverage methods by overall mean nRMSE (consistent set across all panels; see Table~\ref{tab:full_coverage_ranking} ranking), with mean $\pm$ standard deviation from 3 trials.
+
+\subsubsection{Derivative Order Progression}
+
+\textbf{Orders 0--1 (Function and First Derivative):}
+\begin{itemize}
+    \item Most methods perform well in this regime (see Figure~\ref{fig:2}, orders 0--1 panels)
+    \item Differentiation task is relatively easy; even simple methods succeed
+    \item Performance differences between methods are modest
+\end{itemize}
+
+\textbf{Orders 2--3 (Second and Third Derivatives):}
+\begin{itemize}
+    \item Clear separation emerges between method categories
+    \item Some methods begin showing substantial degradation (nRMSE $> 1.0$) at noise $\geq 2\%$
+    \item Gaussian Process and spectral methods maintain relatively stable performance
+\end{itemize}
+
+\textbf{Orders 4--5 (Fourth and Fifth Derivatives):}
+\begin{itemize}
+    \item Extreme challenge for many methods
+    \item Subset of methods exhibits catastrophic failure (nRMSE $> 10$)
+    \item Only methods with sophisticated noise handling remain viable (nRMSE $< 1.0$)
+\end{itemize}
+
+\textbf{Orders 6--7 (Sixth and Seventh Derivatives):}
+\begin{itemize}
+    \item Represents the most challenging test case
+    \item Many methods fail completely (NaN/Inf or nRMSE $\gg 10$)
+    \item Limited subset of methods provides usable estimates even at moderate noise ($10^{-2}$)
+    \item Partial coverage is highest at these orders due to library/degree limitations
+\end{itemize}
+
+\subsubsection{Method-Specific Observations}
+
+Analysis of performance trends across derivative orders reveals distinct degradation patterns by method category:
+
+\textbf{Gaussian Process methods (GP-Julia-AD):}
+\begin{itemize}
+    \item Gradual, approximately linear degradation in log-scale: nRMSE increases from 0.007 (order 0) to 0.620 (order 7)
+    \item No catastrophic failures at any order—maintains usable accuracy throughout
+    \item Most robust behavior across all derivative orders among full-coverage methods
+\end{itemize}
+
+\textbf{Spectral methods (Fourier-Interp):}
+\begin{itemize}
+    \item Similar gradual degradation pattern: 0.011 (order 0) to 0.937 (order 7)
+    \item Performance comparable to GP at high orders (6--7) despite lower computational cost
+    \item Slight acceleration in degradation at orders $\geq 5$ likely due to filter\_frac limitations
+\end{itemize}
+
+\textbf{Regularization methods (TrendFilter-k2):}
+\begin{itemize}
+    \item Excellent low-order performance: 0.014 (order 0), 0.185 (order 1)
+    \item \textbf{Performance plateau} at orders $\geq 2$: nRMSE stabilizes at $\approx 0.995$ for all orders 2--7
+    \item Suggests regularization strength calibrated for smoothing rather than high-order derivatives
+\end{itemize}
+
+\textbf{Rational approximation (AAA-HighPrec):}
+\begin{itemize}
+    \item Strong performance at orders 0--1: nRMSE = 0.011 (order 0), 2.6 (order 1)
+    \item \textbf{Catastrophic exponential growth} beginning at order 3: $10^7$ (order 3) $\to$ $10^{22}$ (order 7)
+    \item Clear evidence of algorithmic breakdown at high orders, consistent with Discussion findings (Section~\ref{sec:discussion})
+\end{itemize}
+
+\textbf{Cross-category comparison:} At orders 0--2, method rankings are competitive across categories. Separation emerges sharply at order 3, where GP and spectral methods maintain nRMSE $< 1$, while regularization methods plateau and rational methods fail catastrophically.
+
+Table~\ref{tab:performance_by_order} quantifies this degradation pattern across derivative orders for representative methods.
+
+\begin{table}[htbp]
+\centering
+\caption{Performance Degradation Across Derivative Orders (mean nRMSE averaged over all noise levels)}
+\label{tab:performance_by_order}
+\small
+\begin{tabular}{lccccccccc}
+\toprule
+\textbf{Method} & \textbf{Order 0} & \textbf{Order 1} & \textbf{Order 2} & \textbf{Order 3} & \textbf{Order 4} & \textbf{Order 5} & \textbf{Order 6} & \textbf{Order 7} \\
+\midrule
+GP-Julia-AD & 0.007 & 0.025 & 0.076 & 0.162 & 0.275 & 0.393 & 0.501 & 0.620 \\
+Fourier-Interp & 0.011 & 0.041 & 0.140 & 0.311 & 0.518 & 0.713 & 0.853 & 0.937 \\
+TrendFilter-k2 & 0.014 & 0.185 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 \\
+Savitzky-Golay & 0.087 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 \\
+AAA-HighPrec & 0.011 & 2.56 & 8.8$\times$10$^{3}$ & 3.7$\times$10$^{7}$ & 1.6$\times$10$^{11}$ & 7.0$\times$10$^{14}$ & 3.0$\times$10$^{18}$ & 1.3$\times$10$^{22}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key observations from Table~\ref{tab:performance_by_order}:}
+\begin{itemize}
+    \item \textbf{GP-Julia-AD:} Gradual degradation (0.007 $\to$ 0.620), approximately linear growth in log-scale
+    \item \textbf{Fourier-Interp:} Similar graceful degradation pattern, competitive with GP at high orders
+    \item \textbf{Regularization methods:} Plateau effect at orders $\geq 2$ (nRMSE stabilizes at $\approx 0.995$)
+    \item \textbf{AAA-HighPrec:} Catastrophic exponential growth starting at order 3 (2.6 $\to$ $10^{22}$)
+\end{itemize}
+
+\subsection{Qualitative Comparison: Visual Validation}
+\label{sec:qualitative}
+
+Figure~\ref{fig:3} (Qualitative Comparison) shows actual derivative estimates for a challenging test case: 4th-order derivative at 2\% noise level. Four methods are compared:
+\begin{itemize}
+    \item GP-Julia-AD
+    \item AAA-HighPrec
+    \item Fourier-Interp
+    \item \TODO{Replace with a full-coverage method that performed poorly at order 4 (e.g., low-ranking spline or TrendFilter) --- Central-FD only covers orders 0--1 per Section~\ref{sec:coverage_bias}}
+\end{itemize}
+
+\textbf{Visual assessment:}
+Each panel plots ground truth (black solid line) vs method prediction, with nRMSE value displayed. This visualization provides qualitative validation of the quantitative nRMSE metric.
+
+\textbf{Insight:} In this test case (Figure~\ref{fig:3}), methods with nRMSE well below $\sim 0.3$ produced visually accurate reconstructions; those above $\sim 1.0$ showed substantial deviation from ground truth.
+
+\subsection{Accuracy vs Computational Cost Trade-Off}
+\label{sec:pareto}
+
+Figure~\ref{fig:4} (Pareto Frontier) plots mean computation time (x-axis, log scale) vs mean nRMSE (y-axis, log scale) for all 24 methods. Points are color-coded by category, with method names annotated.
+
+Table~\ref{tab:timing_comparison} quantifies the accuracy-speed trade-off for representative methods.
+
+\begin{table}[htbp]
+\centering
+\caption{Computational Cost vs Accuracy Trade-Off (averaged over all 56 configurations)}
+\label{tab:timing_comparison}
+\begin{tabular}{lrrc}
+\toprule
+\textbf{Method} & \textbf{Mean Time (s)} & \textbf{Mean nRMSE} & \textbf{Speedup vs GP} \\
+\midrule
+chebyshev & 0.0032 & 1.754 & 247$\times$ \\
+fourier & 0.0039 & 0.584 & 199$\times$ \\
+TrendFilter-k2 & 0.0090 & 0.771 & 87$\times$ \\
+Fourier-Interp & 0.0343 & 0.441 & 23$\times$ \\
+Savitzky-Golay & 0.0682 & 0.881 & 11$\times$ \\
+GP\_RBF\_Iso\_Python & 0.2696 & 0.269 & 2.9$\times$ \\
+AAA-HighPrec & 0.4752 & 1.6$\times$10$^{21}$ & 1.6$\times$ \\
+GP-Julia-AD & 0.7817 & 0.257 & 1.0$\times$ (baseline) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key findings from Table~\ref{tab:timing_comparison}:}
+\begin{itemize}
+    \item \textbf{Pareto-optimal methods:} GP-Julia-AD (best accuracy), Fourier-Interp (23$\times$ faster, nRMSE = 0.44), fourier (199$\times$ faster, nRMSE = 0.58)
+    \item \textbf{Spectral methods dominate speed:} chebyshev and fourier achieve 200--250$\times$ speedup with acceptable accuracy
+    \item \textbf{AAA timing paradox:} Moderately fast but catastrophically inaccurate (mean nRMSE = $10^{21}$ due to high-order failures)
+    \item \textbf{Practical sweet spot:} Fourier-Interp provides best balance—23$\times$ speedup with only 1.7$\times$ accuracy loss vs GP
+\end{itemize}
+
+\subsubsection{Computational Complexity Observations}
+
+\textbf{Runtime distribution} (on our test system; see Section~\ref{sec:controls} for hardware details):
+\begin{itemize}
+    \item Fast methods ($< 0.01$ s): Fourier/spectral methods, finite differences
+    \item Moderate methods ($0.01$--$0.1$ s): Splines, some regularization methods
+    \item Slow methods ($> 0.1$ s): Gaussian Processes, AAA-HighPrec, RKHS methods
+\end{itemize}
+
+\textbf{Scaling implications:}
+\begin{itemize}
+    \item For $n=101$ points tested here, even slowest methods complete within reasonable time (median timings shown in Figure~\ref{fig:4})
+    \item At larger problem sizes ($n > 1000$), $O(n^3)$ methods (GPs) may become prohibitive
+    \item $O(n \log n)$ spectral methods scale favorably for large-scale applications
+\end{itemize}
+
+\subsubsection{Pareto-Optimal Methods}
+\label{sec:pareto_optimal}
+
+Methods on the Pareto frontier (no other method is both faster AND more accurate) represent optimal trade-off points:
+
+\begin{enumerate}
+    \item \textbf{GP-Julia-AD} (nRMSE = 0.257, time = 0.78~s): Best accuracy, moderate cost—optimal for high-accuracy requirements
+    \item \textbf{GP\_RBF\_Iso\_Python} (nRMSE = 0.269, time = 0.27~s): Near-optimal accuracy, 3$\times$ faster than GP-Julia-AD
+    \item \textbf{Fourier-Interp} (nRMSE = 0.441, time = 0.034~s): Strong accuracy-speed balance—10$\times$ faster than GP methods, nRMSE $< 0.5$
+    \item \textbf{fourier} (nRMSE = 0.584, time = 0.004~s): Fast spectral method for moderate accuracy needs
+    \item \textbf{chebyshev} (nRMSE = 1.754, time = 0.003~s): Fastest viable method, acceptable for low-accuracy applications
+\end{enumerate}
+
+Note: SpectralTaper\_Python is technically Pareto-optimal (fastest at 0.0009~s) but with poor accuracy (nRMSE = 5.1), limiting practical utility.
+
+\textbf{Trade-off recommendations:}
+\begin{itemize}
+    \item \textbf{Accuracy-critical applications} (target nRMSE $< 0.3$): Use GP methods. GP-Julia-AD provides best accuracy; GP\_RBF\_Iso\_Python offers 3$\times$ speedup with minimal accuracy loss.
+    \item \textbf{Balanced requirements} (target nRMSE $< 0.5$, time $< 0.1$~s): Fourier-Interp is optimal—achieves nRMSE = 0.44 in 0.034~s, 23$\times$ faster than GP-Julia-AD.
+    \item \textbf{Speed-critical applications} (real-time, streaming data): Use \texttt{fourier} (0.004~s) or \texttt{chebyshev} (0.003~s), accepting nRMSE $\approx$ 0.6--1.8.
+    \item \textbf{Large-scale problems} ($n > 1000$ points): Spectral methods (O($n \log n$)) strongly preferred over GP methods (O($n^3$)).
+\end{itemize}
+
+\subsection{Performance vs Noise Level}
+\label{sec:noise_sensitivity}
+
+Figure~\ref{fig:5} (Noise Sensitivity) shows nRMSE vs noise level curves for the top 5 full-coverage methods by overall ranking (Table~\ref{tab:full_coverage_ranking}), at selected derivative orders (0, 2, 4, 7). Error bars represent $\pm$ standard deviation across 3 trials.
+
+Table~\ref{tab:noise_sensitivity_order4} quantifies noise sensitivity at derivative order 4 (fourth derivative)—a critical transition point where many methods begin failing.
+
+\begin{table}[htbp]
+\centering
+\caption{Noise Sensitivity at Derivative Order 4 (Fourth Derivative)}
+\label{tab:noise_sensitivity_order4}
+\small
+\begin{tabular}{lrrrrrrr}
+\toprule
+\textbf{Method} & \textbf{$10^{-8}$} & \textbf{$10^{-6}$} & \textbf{$10^{-4}$} & \textbf{$10^{-3}$} & \textbf{$10^{-2}$} & \textbf{$2\times10^{-2}$} & \textbf{$5\times10^{-2}$} \\
+\midrule
+GP-Julia-AD & 0.038 & 0.038 & 0.039 & 0.176 & 0.395 & 0.538 & 0.683 \\
+Fourier-Interp & 0.456 & 0.456 & 0.457 & 0.456 & 0.475 & 0.527 & 0.798 \\
+TrendFilter-k2 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 \\
+Savitzky-Golay & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 & 0.995 \\
+AAA-HighPrec & 57.9 & 1.4$\times$10$^{6}$ & 3.7$\times$10$^{8}$ & 3.8$\times$10$^{9}$ & 1.4$\times$10$^{10}$ & 1.1$\times$10$^{12}$ & 3.9$\times$10$^{10}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key observations from Table~\ref{tab:noise_sensitivity_order4}:}
+\begin{itemize}
+    \item \textbf{GP-Julia-AD:} Minimal degradation at low noise ($\leq 10^{-4}$); graceful degradation at high noise (nRMSE increases from 0.04 to 0.68 as noise increases 6 orders of magnitude)
+    \item \textbf{Fourier-Interp:} Nearly noise-insensitive at low-moderate noise ($\leq 10^{-3}$); slight degradation at high noise
+    \item \textbf{Regularization methods:} Complete noise insensitivity (plateau at nRMSE $\approx 0.995$ regardless of noise level)—indicates regularization strength calibrated for smoothing, not differentiation
+    \item \textbf{AAA-HighPrec:} Catastrophic instability even at $10^{-8}$ noise (nRMSE = 57.9); exponential growth with increasing noise
+\end{itemize}
+
+\subsubsection{Noise Robustness Patterns}
+
+\textbf{Low noise regime ($\leq 10^{-4}$):}
+\begin{itemize}
+    \item Most methods achieve excellent performance (nRMSE $< 0.1$) at orders 0--2
+    \item Performance gap between methods is minimal
+    \item Method choice less critical in this regime
+\end{itemize}
+
+\textbf{Moderate noise regime ($10^{-3}$ to $10^{-2}$):}
+\begin{itemize}
+    \item Substantial separation emerges, especially at orders $\geq 3$
+    \item Method selection becomes critical for accuracy
+    \item Some methods maintain nRMSE $< 0.5$, others degrade to nRMSE $> 2.0$
+\end{itemize}
+
+\textbf{High noise regime ($\geq 2\%$):}
+\begin{itemize}
+    \item Extreme challenge even for best methods
+    \item Only most robust methods maintain nRMSE $< 1.0$ at orders 0--2
+    \item At orders $\geq 4$, nearly all methods struggle (nRMSE $> 1.0$)
+\end{itemize}
+
+\subsubsection{Noise Sensitivity Scaling}
+
+\textbf{Approximate noise scaling relationships} (empirical fit from Figure~\ref{fig:5} data at order 4):
+
+\TODO{Fit and report approximate scaling relationships, e.g.: GP-Julia-AD: nRMSE $\propto$ noise$^\alpha$ (estimate $\alpha$); AAA-HighPrec: nRMSE $\propto$ noise$^\beta$ (estimate $\beta$). Note: These are empirical fits to this specific test system; scaling may differ for other signals}
+
+\subsection{Coverage and Failure Analysis}
+\label{sec:failures}
+
+\subsubsection{Method Coverage Summary}
+
+\textbf{Full coverage (56/56 configurations):} 16 methods
+\begin{itemize}
+    \item Gaussian Processes (4), Rational (2), Spectral (5), Local Polynomial (1), Regularization (2), Other (2)
+\end{itemize}
+
+\textbf{Partial coverage:} 8 methods
+\begin{itemize}
+    \item Orders 0--1 only (2 methods): Central-FD, TVRegDiff-Julia --- library/implementation constraints
+    \item Orders 0--5 only (6 methods): Dierckx-5, ButterworthSpline\_Python, RKHS\_Spline\_m2\_Python, fourier, fourier\_continuation, others --- degree/capability limits
+\end{itemize}
+
+\subsubsection{Failure Mode Documentation}
+
+\textbf{Catastrophic failures} (nRMSE $> 10^6$ or NaN/Inf):
+
+Occurred in \TODO{Count configurations with catastrophic failure across all methods} configurations
+
+\textbf{Most common failure patterns:}
+\begin{enumerate}
+    \item High-order derivatives ($\geq 6$) with high noise ($\geq 2\%$)
+    \item Rational approximation methods at orders $\geq 3$
+    \item Finite difference methods at any order with noise $\geq 10^{-3}$
+\end{enumerate}
+
+\textbf{Failure causes} (inferred from implementation):
+\begin{itemize}
+    \item Numerical instability in high-order rational function derivatives
+    \item Noise amplification in finite difference stencils
+    \item Ill-conditioning in kernel/covariance matrices
+    \item Regularization parameter optimization collapse
+\end{itemize}
+
+\subsection{Statistical Uncertainty}
+\label{sec:statistical_uncertainty}
+
+As documented in Section~\ref{sec:statistics}, $n=3$ trials provides insufficient power for formal hypothesis testing. The following interpretive guidelines apply to all results presented:
+
+\textbf{Confidence intervals:} Where shown (Figures~\ref{fig:2}, \ref{fig:5}), 95\% CIs are extremely wide (half-width $\approx 2.48 \times$ SD). Overlapping CIs do \textbf{not} imply ``no difference''; non-overlapping CIs provide \textbf{moderate evidence} of difference, not statistical significance.
+
+\textbf{Method rankings:} Treat as \textbf{exploratory descriptive summaries}, not definitive statistical statements. Methods differing by $<2\times$ in nRMSE should be considered comparable given sample size limitations.
+
+\textbf{Robust patterns:} Findings that hold across all 3 trials (e.g., consistent method ordering, categorical performance differences exceeding $10\times$) represent more reliable patterns than specific numerical values.
+
+\subsection{Summary of Key Findings}
+\label{sec:key_findings}
+
+\begin{enumerate}
+    \item \textbf{Derivative order is the primary difficulty driver:} Performance degrades systematically with increasing order across all methods and noise levels
+
+    \item \textbf{Method category stratification:} Clear performance hierarchy emerges by category, with Gaussian Processes and spectral methods generally outperforming splines, which outperform finite differences (see Figures~\ref{fig:1}--\ref{fig:2} and Table~\ref{tab:full_coverage_ranking})
+
+    \item \textbf{Coverage bias is substantial:} Partial-coverage methods appear artificially superior in naive rankings; fair comparison requires coverage normalization
+
+    \item \textbf{Noise amplification scales with order:} High-order derivatives ($\geq 4$) exhibit extreme noise sensitivity; even best methods struggle at noise $\geq 2\%$
+
+    \item \textbf{No universal best method:} Optimal choice depends on derivative order, noise level, and computational budget (Figure~\ref{fig:4} Pareto frontier)
+
+    \item \textbf{Statistical power limitations:} Specific numerical rankings should be interpreted cautiously due to $n=3$ sample size
+\end{enumerate}

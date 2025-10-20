@@ -1,0 +1,434 @@
+{
+  "AAA-HighPrec": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "AAA-LowPrec": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "ButterworthSpline_Python": {
+    "total_configs": 42,
+    "max_configs": 56,
+    "coverage_pct": 75.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "Butterworth_Python": {
+    "total_configs": 42,
+    "max_configs": 56,
+    "coverage_pct": 75.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "Central-FD": {
+    "total_configs": 14,
+    "max_configs": 56,
+    "coverage_pct": 25.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 0,
+      "order_3": 0,
+      "order_4": 0,
+      "order_5": 0,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "Dierckx-5": {
+    "total_configs": 42,
+    "max_configs": 56,
+    "coverage_pct": 75.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "Fourier-Interp": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "GP-Julia-AD": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "GP-Julia-SE": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "GP_RBF_Iso_Python": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "GP_RBF_Python": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "KalmanGrad_Python": {
+    "total_configs": 42,
+    "max_configs": 56,
+    "coverage_pct": 75.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "RKHS_Spline_m2_Python": {
+    "total_configs": 42,
+    "max_configs": 56,
+    "coverage_pct": 75.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "SVR_Python": {
+    "total_configs": 42,
+    "max_configs": 56,
+    "coverage_pct": 75.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "Savitzky-Golay": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "SavitzkyGolay_Python": {
+    "total_configs": 42,
+    "max_configs": 56,
+    "coverage_pct": 75.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "SpectralTaper_Python": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "TVRegDiff-Julia": {
+    "total_configs": 14,
+    "max_configs": 56,
+    "coverage_pct": 25.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 0,
+      "order_3": 0,
+      "order_4": 0,
+      "order_5": 0,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "TVRegDiff_Python": {
+    "total_configs": 49,
+    "max_configs": 56,
+    "coverage_pct": 87.5,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "TrendFilter-k2": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "TrendFilter-k7": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "Whittaker_m2_Python": {
+    "total_configs": 42,
+    "max_configs": 56,
+    "coverage_pct": 75.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 0,
+      "order_7": 0
+    },
+    "full_coverage": false
+  },
+  "ad_trig": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "chebyshev": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "fourier": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "fourier_continuation": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  },
+  "gp_rbf_mean": {
+    "total_configs": 56,
+    "max_configs": 56,
+    "coverage_pct": 100.0,
+    "order_coverage": {
+      "order_0": 7,
+      "order_1": 7,
+      "order_2": 7,
+      "order_3": 7,
+      "order_4": 7,
+      "order_5": 7,
+      "order_6": 7,
+      "order_7": 7
+    },
+    "full_coverage": true
+  }
+}

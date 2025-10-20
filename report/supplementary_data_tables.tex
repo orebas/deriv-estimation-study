@@ -1,0 +1,86 @@
+% Supplementary Material: Detailed Data Tables
+% Derivative Estimation Benchmark Study
+\documentclass[10pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage[landscape,margin=0.5in]{geometry}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+}
+
+\graphicspath{{paper_figures/supplementary/}}
+
+\title{Supplementary Material: Detailed Performance Data\\
+Derivative Estimation Benchmark Study}
+\author{Raw Experimental Results}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+
+This document contains detailed performance tables showing normalized RMSE (nRMSE) values for all method-order-noise combinations tested in the benchmark study. These tables support the aggregate results presented in the main paper.
+
+\textbf{Table organization:}
+\begin{itemize}
+    \item \textbf{Part I (Tables S1--S8):} Method $\times$ Noise Level, separately for each derivative order (0--7)
+    \item \textbf{Part II (Tables M1--M16):} Noise Level $\times$ Derivative Order, separately for each full-coverage method
+\end{itemize}
+
+\textbf{Data notes:}
+\begin{itemize}
+    \item All values are mean nRMSE across 3 trials
+    \item Empty cells indicate configurations not tested (method limitations or failures)
+    \item Values $>100$ displayed as scientific notation to preserve readability
+    \item ``---'' indicates NaN/Inf or catastrophic failure
+\end{itemize}
+
+\textbf{Interpretation guide:}
+\begin{itemize}
+    \item nRMSE $< 0.1$: Excellent performance
+    \item nRMSE $0.1$--$0.5$: Good performance
+    \item nRMSE $0.5$--$1.0$: Acceptable performance
+    \item nRMSE $> 1.0$: Poor performance (error exceeds typical signal magnitude)
+    \item nRMSE $> 10$: Catastrophic failure
+\end{itemize}
+
+\clearpage
+
+%==============================================================================
+% PART I: METHOD × NOISE LEVEL (ONE TABLE PER DERIVATIVE ORDER)
+%==============================================================================
+
+\section{Part I: Performance by Derivative Order}
+
+Each table shows nRMSE for all methods across all noise levels, for a fixed derivative order.
+
+% PLACEHOLDER FOR TABLES S1-S8
+% Will be populated by data extraction script
+
+\clearpage
+
+%==============================================================================
+% PART II: NOISE LEVEL × DERIVATIVE ORDER (ONE TABLE PER METHOD)
+%==============================================================================
+
+\section{Part II: Performance by Method}
+
+Each table shows nRMSE for a single method across all derivative orders and noise levels. Only full-coverage methods (56/56 configurations) are included.
+
+% PLACEHOLDER FOR TABLES M1-M16
+% Will be populated by data extraction script
+
+\end{document}

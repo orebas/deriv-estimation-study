@@ -1,0 +1,152 @@
+% Benchmark Study: Derivative Estimation Methods
+% Template for SIAM SISC or ACM TOMS submission
+\documentclass[11pt]{article}
+
+% Essential packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+
+% Code listings
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+}
+
+% TODO handling - visible but doesn't break compilation
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+\newcommand{\TODOITEM}{\textcolor{red}{$\blacksquare$~}}
+
+% Figure path
+\graphicspath{{paper_figures/publication/}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+}
+
+% Title and authors
+\title{Benchmark Study of Derivative Estimation Methods:\\
+Performance Across Orders and Noise Levels}
+
+\author{
+    % TODO: Add author names and affiliations
+    Author Names\thanks{Department/Institution, email@domain.edu}
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Derivative estimation from noisy data is a fundamental problem across computational science, yet systematic comparative evaluation of methods remains lacking. We present a comprehensive benchmark of 24 derivative estimation methods evaluated across 8 derivative orders (0--7) and 7 noise levels ($10^{-8}$ to $5 \times 10^{-2}$), providing the first fine-grained performance map spanning 56 configurations. Methods span six categories: Gaussian Processes, Rational Approximation, Spectral Methods, Splines, Regularization, and Local Polynomial approaches.
+
+Key findings include: (1) Gaussian Process regression (GP-Julia-AD) achieves best overall performance (mean nRMSE = 0.257) with robust behavior across all orders and noise levels; (2) AAA rational approximation catastrophically fails at orders $\geq 3$ (nRMSE $> 10^7$) despite excellent low-order performance—contrary to literature expectations; (3) Fourier spectral methods provide competitive accuracy at 10--20$\times$ speedup for smooth signals; (4) derivative order is the dominant difficulty factor, with performance degrading systematically as order increases; (5) implementation quality is a critical method characteristic—three methods excluded due to $>50\times$ cross-language discrepancies.
+
+We provide practical recommendations including a master method-selection table, decision framework, and common pitfalls to avoid. Results are derived from a single test system (Lotka-Volterra) with additive Gaussian noise and n=3 trials, providing exploratory evidence rather than definitive statistical rankings. Practitioners should validate candidate methods on their specific data before deployment.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%==============================================================================
+% SECTION 1: INTRODUCTION
+%==============================================================================
+\input{sections/section1_introduction}
+
+%==============================================================================
+% SECTION 2: RELATED WORK / BACKGROUND
+%==============================================================================
+\section{Related Work}
+\label{sec:related_work}
+
+% TODO: Write related work section
+\TODO{Related work section. Should review: (1) existing derivative estimation methods surveys, (2) prior benchmarking efforts (limited scope), (3) gaps this study fills, (4) methodological contributions}
+
+%==============================================================================
+% SECTION 3: PROBLEM FORMULATION
+%==============================================================================
+\input{sections/section3_problem}
+
+%==============================================================================
+% SECTION 4: METHODOLOGY
+%==============================================================================
+\input{sections/section4_methodology}
+
+%==============================================================================
+% SECTION 5: METHODS EVALUATED
+%==============================================================================
+\input{sections/section5_methods}
+
+%==============================================================================
+% SECTION 6: RESULTS
+%==============================================================================
+\input{sections/section6_results}
+
+%==============================================================================
+% SECTION 7: DISCUSSION
+%==============================================================================
+\input{sections/section7_discussion}
+
+%==============================================================================
+% SECTION 8: PRACTICAL RECOMMENDATIONS
+%==============================================================================
+\input{sections/section8_recommendations}
+
+%==============================================================================
+% SECTION 9: LIMITATIONS AND FUTURE WORK
+%==============================================================================
+\input{sections/section9_limitations}
+
+%==============================================================================
+% SECTION 10: CONCLUSION
+%==============================================================================
+\input{sections/section10_conclusion}
+
+%==============================================================================
+% ACKNOWLEDGMENTS
+%==============================================================================
+\section*{Acknowledgments}
+We thank the developers of GaussianProcesses.jl, Dierckx.jl, FFTW.jl, and scikit-learn for their open-source implementations.
+% TODO: Add specific acknowledgments for funding, computational resources, reviewers
+
+%==============================================================================
+% BIBLIOGRAPHY
+%==============================================================================
+\bibliographystyle{plain}
+\bibliography{references}
+% TODO: Create references.bib file with all citations
+
+%==============================================================================
+% APPENDICES
+%==============================================================================
+\appendix
+
+\section{Complete Method Specifications}
+\label{app:methods}
+\TODO{Appendix A: Complete parameter specifications for all 24 methods}
+
+\section{Detailed Results Tables}
+\label{app:results}
+\TODO{Appendix B: Full results tables (method × order × noise) for reference}
+
+\section{Reproducibility Checklist}
+\label{app:reproducibility}
+\TODO{Appendix C: Complete reproducibility checklist with all software versions, hardware specs, random seeds, and data availability statements}
+
+\end{document}

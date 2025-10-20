@@ -1,0 +1,28 @@
+% nRMSE values for derivative order 7
+\begin{table}
+\caption{Normalized RMSE for derivative order 7}
+\label{tab:nrmse_order_7}
+\begin{tabular}{lllllllll}
+\toprule
+noise_level & 1e-08 & 1e-06 & 1e-04 & 1e-03 & 1e-02 & 2e-02 & 5e-02 & Mean \\
+method &  &  &  &  &  &  &  &  \\
+\midrule
+GP-Julia-AD & 0.28 & 0.28 & 0.38 & 0.63 & 0.87 & 0.94 & 0.97 & 0.62 \\
+GP_RBF_Iso_Python & 0.29 & 0.29 & 0.40 & 0.65 & 0.90 & 0.95 & 0.98 & 0.64 \\
+GP_RBF_Python & 0.29 & 0.29 & 0.40 & 0.65 & 0.90 & 0.95 & 0.98 & 0.64 \\
+gp_rbf_mean & 0.29 & 0.29 & 0.40 & 0.65 & 0.90 & 0.95 & 0.98 & 0.64 \\
+Fourier-Interp & 0.92 & 0.92 & 0.92 & 0.92 & 0.92 & 0.94 & 1.04 & 0.94 \\
+ad_trig & 0.92 & 0.92 & 0.92 & 0.92 & 0.93 & 0.95 & 1.06 & 0.95 \\
+GP-Julia-SE & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+Savitzky-Golay & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+TrendFilter-k7 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+TrendFilter-k2 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\
+fourier & 0.73 & 0.73 & 0.73 & 0.74 & 1.03 & 1.62 & 3.67 & 1.32 \\
+fourier_continuation & 0.75 & 0.75 & 0.75 & 0.75 & 1.06 & 1.65 & 3.71 & 1.34 \\
+chebyshev & 1.48 & 1.48 & 1.48 & 1.48 & 1.49 & 1.51 & 1.56 & 1.49 \\
+SpectralTaper_Python & 5.48 & 5.48 & 5.52 & 5.88 & 9.70 & 14 & 28 & 11 \\
+AAA-LowPrec & 0.73 & 0.73 & 0.73 & 0.77 & 0.82 & 0.84 & >1e3 & >1e3 \\
+AAA-HighPrec & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 & >1e3 \\
+\bottomrule
+\end{tabular}
+\end{table}
