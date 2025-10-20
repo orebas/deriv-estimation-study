@@ -19,6 +19,20 @@ import numpy as np
 from typing import Dict, List
 import os
 
+# Import hyperparameter selection module
+try:
+    from hyperparameters import (
+        select_chebyshev_degree,
+        select_fourier_harmonics,
+        select_aaa_tolerance,
+        select_fourier_filter_fraction_simple
+    )
+    ADAPTIVE_HYPERPARAMS = True
+except ImportError:
+    ADAPTIVE_HYPERPARAMS = False
+    import warnings
+    warnings.warn("hyperparameters module not found - using fixed hyperparameters")
+
 # Import packages
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel, ConstantKernel, Matern
@@ -200,12 +214,27 @@ class MethodEvaluator:
         return {"predictions": predictions, "failures": failures, "meta": {"length_scale": ell, "amplitude": amp}}
 
     def _chebyshev(self) -> Dict:
-        """Global Chebyshev polynomial with analytic derivatives."""
+        """Global Chebyshev polynomial with analytic derivatives.
+
+        Now uses AICc-based degree selection for automatic regularization.
+        """
         tmin = float(self.x_train.min())
         tmax = float(self.x_train.max())
-        # Heuristic degree: capped at 20 to prevent numerical instability
         n_train = len(self.x_train)
-        deg = max(3, min(20, n_train - 1))
+
+        # Adaptive degree selection via AICc
+        if ADAPTIVE_HYPERPARAMS and os.environ.get("USE_ADAPTIVE_CHEBY", "1") != "0":
+            deg, aicc = select_chebyshev_degree(
+                self.x_train, self.y_train,
+                max_degree=min(30, n_train - 1),
+                min_degree=3
+            )
+            selection_method = "AICc"
+        else:
+            # Fallback to fixed heuristic
+            deg = max(3, min(20, n_train - 1))
+            aicc = None
+            selection_method = "fixed"
 
         poly = Chebyshev.fit(self.x_train, self.y_train, deg=deg, domain=[tmin, tmax])
 
@@ -223,7 +252,11 @@ class MethodEvaluator:
                 failures[order] = str(e)
                 predictions[order] = [np.nan] * len(self.x_eval)
 
-        return {"predictions": predictions, "failures": failures, "meta": {"degree": deg}}
+        meta = {"degree": deg, "selection": selection_method}
+        if aicc is not None:
+            meta["aicc"] = float(aicc)
+
+        return {"predictions": predictions, "failures": failures, "meta": meta}
 
     def _fourier(self) -> Dict:
         """Trigonometric polynomial with analytic n-th derivatives."""
@@ -237,7 +270,20 @@ class MethodEvaluator:
         omega = 2.0 * np.pi / T
 
         n_train = len(t)
-        M = max(1, min( (n_train - 1) // 4, 25 ))  # harmonics
+
+        # Adaptive harmonics selection via GCV
+        if ADAPTIVE_HYPERPARAMS and os.environ.get("USE_ADAPTIVE_FOURIER", "1") != "0":
+            M, gcv = select_fourier_harmonics(
+                self.x_train, self.y_train,
+                max_harmonics=25,
+                min_harmonics=1
+            )
+            selection_method = "GCV"
+        else:
+            # Fallback to fixed heuristic
+            M = max(1, min((n_train - 1) // 4, 25))
+            gcv = None
+            selection_method = "fixed"
 
         # Build design matrix: [1, cos(k ω (t-tmin)), sin(k ω (t-tmin))] for k=1..M
         phi_cols = [np.ones_like(t)]
@@ -277,7 +323,11 @@ class MethodEvaluator:
                 failures[order] = str(e)
                 predictions[order] = [np.nan] * len(self.x_eval)
 
-        return {"predictions": predictions, "failures": failures, "meta": {"harmonics": M}}
+        meta = {"harmonics": M, "selection": selection_method}
+        if gcv is not None:
+            meta["gcv"] = float(gcv)
+
+        return {"predictions": predictions, "failures": failures, "meta": meta}
 
     def _fourier_continuation(self) -> Dict:
         """Trend-removed trigonometric LS fit with analytic n-th derivatives (non-periodic aid).
