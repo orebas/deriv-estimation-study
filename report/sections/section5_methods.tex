@@ -1,16 +1,16 @@
 \section{Methods Evaluated}
 \label{sec:methods}
 
-This section describes the 24 derivative estimation methods analyzed in this study. Three additional methods were evaluated but excluded from final analysis due to implementation failures documented in Section~\ref{sec:exclusions}.
+This section describes the 33 derivative estimation methods analyzed in this study: 24 baseline methods plus 9 adaptive hyperparameter selection variants (Section~\ref{sec:adaptive_methods}). Three additional baseline methods were evaluated but excluded from final analysis due to implementation failures documented in Section~\ref{sec:exclusions}.
 
 \subsection{Summary}
 \label{sec:methods_summary}
 
-Table~\ref{tab:methods_summary} lists all 24 methods with key characteristics.
+Table~\ref{tab:methods_summary} lists all 33 methods with key characteristics. The 9 adaptive methods are detailed in Section~\ref{sec:adaptive_methods}.
 
 \begin{table}[htbp]
 \centering
-\caption{Methods Evaluated (24 methods from 27 candidates; 3 excluded per Section~\ref{sec:exclusions})}
+\caption{Methods Evaluated (33 methods: 24 baseline + 9 adaptive; 3 baseline candidates excluded per Section~\ref{sec:exclusions})}
 \label{tab:methods_summary}
 \small
 \begin{tabular}{llllcc}
@@ -333,6 +333,147 @@ Estimates derivative $u = df/dx$ by minimizing an objective combining data fidel
 \textbf{Implementation:} Convex optimization via \TODO{Specify solver (specialized trend filtering algorithm like PDAS, path algorithm, or generic QP/ADMM) and complexity implications}
 
 \textbf{Coverage:} Full (56/56 configurations)
+
+\subsection{Adaptive Hyperparameter Selection Methods}
+\label{sec:adaptive_methods}
+
+A critical challenge in derivative estimation is selecting appropriate hyperparameters (polynomial degree, number of harmonics, smoothing tolerance) that balance bias and variance. Traditional methods use fixed, pre-tuned parameters across all noise levels and derivative orders. This section describes 9 new adaptive methods that automatically select hyperparameters based on the data characteristics, particularly noise level estimation.
+
+\subsubsection{Noise Estimation Techniques}
+
+Two noise estimation methods are used across the adaptive methods:
+
+\textbf{Wavelet-based MAD (Median Absolute Deviation):}
+\begin{equation}
+\hat{\sigma} = \frac{\text{MAD}(\text{HF}_{wavelet})}{0.6745}
+\end{equation}
+where $\text{HF}_{wavelet}$ denotes level-1 detail coefficients from Daubechies-4 wavelet decomposition with symmetric boundary extension. The constant 0.6745 is the MAD-to-standard-deviation conversion factor for Gaussian noise (Donoho-Johnstone, 1994). This method is robust to signal content as it isolates noise in the high-frequency wavelet decomposition.
+
+\textbf{Second-order difference method:}
+\begin{equation}
+\hat{\sigma} = \sqrt{\frac{1}{6(n-2)} \sum_{i=2}^{n-1} (y_{i+1} - 2y_i + y_{i-1})^2}
+\end{equation}
+This exploits the fact that $\text{Var}(y_{i+1} - 2y_i + y_{i-1}) = 6\sigma^2$ for additive Gaussian noise with variance $\sigma^2$, while smooth signal components are suppressed by the second-order difference operator.
+
+\subsubsection{Adaptive Polynomial Methods}
+
+\textbf{Chebyshev-AICc (Adaptive Chebyshev via AICc):}
+
+Uses small-sample corrected Akaike Information Criterion \cite{hurvich1989regression} (AICc) to select polynomial degree:
+\begin{equation}
+\text{AICc}(d) = n \log(\text{RSS}_d/n) + 2(d+1) + \frac{2(d+1)(d+2)}{n-d-2}
+\end{equation}
+where $\text{RSS}_d$ is residual sum of squares for degree-$d$ polynomial, and $n$ is sample size. The correction term $\frac{2(d+1)(d+2)}{n-d-2}$ is critical for small samples to prevent overfitting.
+
+\textbf{Algorithm:}
+\begin{enumerate}
+    \item Scale input domain to $[-1, 1]$ (standard Chebyshev domain)
+    \item Fit Chebyshev polynomials for degrees $d \in \{3, 4, \ldots, \min(15, n/3)\}$
+    \item Compute AICc for each degree
+    \item Select $d^* = \argmin_d \text{AICc}(d)$
+    \item Differentiate the degree-$d^*$ Chebyshev polynomial analytically
+\end{enumerate}
+
+\textbf{Implementation:} Python using numpy.polynomial.Chebyshev
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\subsubsection{Adaptive Spectral Methods}
+
+\textbf{Fourier-GCV (Fourier with GCV Harmonics Selection):}
+
+Uses Generalized Cross-Validation to select number of Fourier harmonics $M$:
+\begin{equation}
+\text{GCV}(M) = \frac{n \cdot \text{RSS}_M}{(n - \text{df}_M)^2}
+\end{equation}
+where $\text{df}_M = 2M + 1$ is effective degrees of freedom for $M$ harmonics.
+
+\textbf{Algorithm:}
+\begin{enumerate}
+    \item Compute FFT of signal
+    \item For $M \in \{3, 5, 7, \ldots, \lfloor n/4 \rfloor\}$:
+    \begin{itemize}
+        \item Retain lowest $M$ frequencies, zero out rest
+        \item Compute inverse FFT (reconstruction)
+        \item Calculate GCV score
+    \end{itemize}
+    \item Select $M^* = \argmin_M \text{GCV}(M)$
+    \item Differentiate in frequency domain: multiply by $(ik\omega)^n$, inverse FFT
+\end{enumerate}
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\textbf{Fourier-FFT-Adaptive (Noise-Adaptive Spectral Filtering):}
+
+Combines wavelet MAD noise estimation with adaptive frequency cutoff:
+\begin{enumerate}
+    \item Estimate noise $\hat{\sigma}$ via wavelet MAD
+    \item Compute signal-to-noise ratio: $\text{SNR} = \text{std}(y) / \hat{\sigma}$
+    \item Set adaptive cutoff: $k_{max} = \lfloor n/2 \cdot \min(0.5, \max(0.2, 0.1 \cdot \log_{10}(\text{SNR}))) \rfloor$
+    \item Retain frequencies $|k| \leq k_{max}$, differentiate via $(ik)^n$ multiplication
+\end{enumerate}
+
+\textbf{Rationale:} High SNR allows more frequencies (less aggressive smoothing); low SNR requires aggressive filtering to prevent noise amplification.
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\textbf{Fourier-Continuation-Adaptive:}
+
+Dual adaptive strategy combining Fourier continuation (to reduce endpoint artifacts) with GCV-based harmonics selection. Uses reflected boundary extension for better periodicity, then applies GCV as in Fourier-GCV.
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\textbf{ad\_trig\_adaptive (Adaptive Trigonometric via GCV):}
+
+Similar to Fourier-GCV but uses trigonometric basis functions. Applies GCV to select optimal number of trigonometric terms for least-squares fitting.
+
+\textbf{Coverage:} Full (56/56 configurations)
+
+\subsubsection{Adaptive Rational Approximation Methods}
+
+The AAA (Adaptive Antoulas-Anderson) algorithm inherently adapts the number of support points via iterative greedy selection, but the termination tolerance $\text{tol}$ critically affects performance. The following methods adaptively set the AAA tolerance based on estimated noise level:
+
+\textbf{AAA-Python-Adaptive-Wavelet:}
+
+Uses wavelet MAD noise estimation to set AAA tolerance:
+\begin{equation}
+\text{tol} = \max(10^{-13}, C \cdot \hat{\sigma})
+\end{equation}
+where $C = 10$ is an empirically tuned safety factor. Implements AAA via baryrat library (Python port of Chebfun's AAA).
+
+\textbf{Derivative computation:} Uses baryrat's built-in derivative method (analytic differentiation of barycentric form). Limited to derivative orders 0--5 in standard implementation.
+
+\textbf{Coverage:} Partial (42/56 configurations, orders 0--5 only)
+
+\textbf{AAA-Python-Adaptive-Diff2:}
+
+Identical to AAA-Python-Adaptive-Wavelet except uses second-order difference noise estimation instead of wavelet MAD. Provides comparison of noise estimation methods' impact on AAA performance.
+
+\textbf{Coverage:} Partial (42/56 configurations, orders 0--5 only)
+
+\textbf{AAA-JAX-Adaptive-Wavelet \& AAA-JAX-Adaptive-Diff2:}
+
+\textbf{Key innovation:} Uses JAX (Google's automatic differentiation library) to compute arbitrary-order derivatives of the AAA rational approximant, enabling orders 6--7 which are unavailable in standard baryrat.
+
+\textbf{Derivative computation via nested forward-mode automatic differentiation:}
+\begin{equation}
+\frac{d^n r}{dx^n}\bigg|_{x=x_0} = \text{jax.jvp}^{(n)}(r)(x_0)
+\end{equation}
+where $\text{jax.jvp}^{(n)}$ denotes $n$ nested applications of JAX's Jacobian-vector product (forward-mode AD).
+
+\textbf{Algorithm:}
+\begin{enumerate}
+    \item Estimate noise $\hat{\sigma}$ (wavelet MAD or diff2)
+    \item Compute AAA approximation $r(x)$ using baryrat with tolerance $10 \cdot \hat{\sigma}$
+    \item Re-implement barycentric evaluation formula using \texttt{jax.numpy} to create JAX-traceable function $r(x)$
+    \item Apply $n$ nested \texttt{jax.jvp()} calls to obtain $n$-th derivative
+\end{enumerate}
+
+\textbf{Computational complexity:} Nested forward-mode AD has exponential cost scaling with derivative order $n$. High-order derivatives (6--7) can take 8--20 minutes per configuration due to repeated compilations and nested differentiation overhead.
+
+\textbf{Coverage:} Full (56/56 configurations) --- first AAA-based method achieving orders 6--7
+
+\textbf{Performance note:} Section~\ref{sec:results} documents that AAA-JAX methods enable order 7 derivatives but do not solve the fundamental AAA instability issue at high orders (see Section~\ref{sec:aaa_failure}). The automatic differentiation is numerically stable, but the underlying rational approximant still exhibits catastrophic error growth.
 
 \subsection{Implementation Notes}
 \label{sec:implementation_notes}

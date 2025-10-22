@@ -115,6 +115,57 @@ def estimate_noise_auto(y: np.ndarray) -> float:
 
 
 # ===========================================================================
+# AAA: Adaptive tolerance selection
+# ===========================================================================
+
+def select_aaa_tolerance(
+    y_train: np.ndarray,
+    noise_estimator_func,
+    multiplier: float = 10.0,
+    min_tol: float = 1e-13,
+    max_tol_fraction: float = 0.1
+) -> float:
+    """
+    Select AAA tolerance based on estimated noise level with adaptive capping.
+
+    Prevents pathological behavior at high noise levels by capping tolerance
+    at a fraction of the signal's standard deviation.
+
+    Args:
+        y_train: Training y values
+        noise_estimator_func: Function to estimate noise (estimate_noise_auto or estimate_noise_diff2)
+        multiplier: Tolerance multiplier for noise estimate (default: 10.0)
+        min_tol: Minimum tolerance floor (default: 1e-13)
+        max_tol_fraction: Maximum tolerance as fraction of signal std (default: 0.1 = 10%)
+
+    Returns:
+        Selected tolerance value
+
+    Theory:
+        - Base tolerance: tol = multiplier * σ̂ (typically 10σ to avoid fitting noise)
+        - Cap tolerance: tol ≤ max_tol_fraction * std(y) (prevents underfitting at high noise)
+        - When noise ≈ signal amplitude, uncapped tolerance can force trivial constant fits
+
+    Example:
+        - std(y) = 2.0, noise = 5e-2
+        - Uncapped: tol = 10 * 0.05 = 0.5 (catastrophic - exceeds signal range!)
+        - Capped:   tol = min(0.5, 0.1 * 2.0) = 0.2 ✓
+    """
+    sigma_hat = noise_estimator_func(y_train)
+
+    # Rule: tolerance should be ~10x noise to avoid fitting noise
+    tol = max(min_tol, multiplier * sigma_hat)
+
+    # Cap tolerance to prevent extreme underfitting on very noisy signals
+    signal_std = np.std(y_train)
+    if signal_std > 1e-9:  # Avoid division by zero for constant signals
+        max_tol = max_tol_fraction * signal_std
+        tol = min(tol, max_tol)
+
+    return float(tol)
+
+
+# ===========================================================================
 # CHEBYSHEV: AICc-based degree selection
 # ===========================================================================
 
@@ -162,10 +213,13 @@ def select_chebyshev_degree(
             y_pred = poly(x_train)
             rss = np.sum((y_train - y_pred) ** 2)
 
-            # AICc formula
-            p = deg + 1  # number of parameters
-            if n - p - 2 > 0:
-                aicc = n * np.log(rss / n + 1e-12) + 2*p + 2*p*(p+1)/(n - p - 2)
+            # AICc formula (Hurvich & Tsai 1989)
+            # k = total parameters estimated = coefficients + variance σ²
+            p = deg + 1  # number of polynomial coefficients
+            k = p + 1    # coefficients + residual variance σ²
+
+            if n - k - 1 > 0:
+                aicc = n * np.log(rss / n + 1e-12) + 2*k + 2*k*(k+1)/(n - k - 1)
             else:
                 aicc = np.inf
 
@@ -270,43 +324,6 @@ def select_fourier_harmonics(
 
 
 # ===========================================================================
-# AAA: Noise-adaptive tolerance
-# ===========================================================================
-
-def select_aaa_tolerance(
-    y_train: np.ndarray,
-    multiplier: float = 10.0,
-    min_tol: float = 1e-13
-) -> float:
-    """
-    Select AAA tolerance based on estimated noise level.
-
-    The AAA algorithm tries to minimize residual error. If tolerance is too
-    tight relative to noise, it overfits by creating spurious poles.
-
-    Args:
-        y_train: Training y values (used for noise estimation)
-        multiplier: Safety factor (tol = multiplier * σ̂)
-        min_tol: Minimum tolerance (for clean data / machine precision)
-
-    Returns:
-        Adaptive tolerance value
-
-    Strategy:
-        - High noise (σ̂=5e-2): tol ≈ 0.5 (very loose, prevents overfitting)
-        - Moderate (σ̂=1e-4): tol ≈ 1e-3
-        - Clean (σ̂=1e-8): tol ≈ 1e-7 (tight but not absurd)
-    """
-    sigma_hat = estimate_noise_auto(y_train)
-
-    # Rule: tolerance should be ~10x noise to avoid fitting noise
-    # But don't go below machine precision for truly clean data
-    tol = max(min_tol, multiplier * sigma_hat)
-
-    return float(tol)
-
-
-# ===========================================================================
 # FOURIER-FFT: SURE-based filter selection
 # ===========================================================================
 
@@ -377,20 +394,31 @@ def select_fourier_filter_fraction_sure(
 
 def select_fourier_filter_fraction_simple(
     y_train: np.ndarray,
+    # Three-sigma (3σ) rule from statistics: Under Gaussian noise assumption,
+    # coefficients more than 3 standard deviations from zero are statistically
+    # significant (99.7% confidence interval). Standard practice in signal
+    # processing for separating signal from noise.
     confidence_multiplier: float = 3.0
 ) -> float:
     """
     Simple filter fraction: keep coefficients above threshold.
 
     Simpler than SURE - estimates noise, keeps coefficients significantly
-    above noise floor.
+    above noise floor using the three-sigma (3σ) rule.
 
     Args:
         y_train: Training y values
-        confidence_multiplier: Threshold = multiplier * σ̂ (default: 3 = 99% confidence)
+        confidence_multiplier: Threshold multiplier (default: 3.0). Based on the
+                              "three-sigma rule": under Gaussian noise, values
+                              >3σ are significant (99.7% confidence). Standard
+                              practice in signal processing.
 
     Returns:
         filter_frac (fraction of frequencies to keep)
+
+    Note:
+        The default value of 3.0 corresponds to the classical "three-sigma rule"
+        from statistics, widely used in quality control and signal processing.
     """
     from scipy.fftpack import dct
 
@@ -405,7 +433,11 @@ def select_fourier_filter_fraction_simple(
     threshold = confidence_multiplier * sigma_hat * np.sqrt(n)
     m = np.sum(c_abs >= threshold)
 
-    # Guard rails: keep between 10% and 80%
+    # Engineering constraints: Prevent pathological filtering by constraining
+    # to 10%-80% of frequencies. Based on practical experience - extreme values
+    # (e.g., keeping <10% or >80%) typically indicate noise estimation failure
+    # rather than true signal structure. These bounds improve robustness without
+    # theoretical justification.
     m = max(int(0.1 * n), min(int(0.8 * n), m))
 
     filter_frac = m / n

@@ -18,6 +18,10 @@ using Statistics
 using LinearAlgebra
 using NoiseRobustDifferentiation
 
+# Load hyperparameter selection module
+include("hyperparameter_selection.jl")
+using .HyperparameterSelection
+
 # ============================================================================
 # Method Result Structure
 # ============================================================================
@@ -796,7 +800,26 @@ function evaluate_julia_method(method_name::String,
 			fitted_func = fit_aaa(x, y; tol = 1e-14)
 
 		elseif method_name == "AAA-LowPrec"
-			fitted_func = fit_aaa(x, y; tol = 0.1)
+			# Check if we should use adaptive tolerance
+			use_adaptive = get(ENV, "USE_ADAPTIVE_AAA", "0") != "0"
+			if use_adaptive
+				tol_adaptive = select_aaa_tolerance(y)
+				fitted_func = fit_aaa(x, y; tol = tol_adaptive)
+			else
+				fitted_func = fit_aaa(x, y; tol = 0.1)
+			end
+
+		elseif method_name == "AAA-Adaptive-Diff2"
+			# Adaptive tolerance using 2nd-order difference noise estimation
+			σ̂ = estimate_noise_diff2(y)
+			tol_adaptive = max(1e-13, 10.0 * σ̂)
+			fitted_func = fit_aaa(x, y; tol = tol_adaptive)
+
+		elseif method_name == "AAA-Adaptive-Wavelet"
+			# Adaptive tolerance using Haar wavelet noise estimation
+			σ̂ = estimate_noise_wavelet(y)
+			tol_adaptive = max(1e-13, 10.0 * σ̂)
+			fitted_func = fit_aaa(x, y; tol = tol_adaptive)
 
 		elseif method_name == "GP-Julia-SE"
 			# Use analytic SE GP for derivatives (stable up to high orders)
@@ -820,6 +843,9 @@ function evaluate_julia_method(method_name::String,
 			fitted_func = fit_gp_matern(x, y; nu = 2.5)
 
 		elseif method_name == "Fourier-Interp"
+			fitted_func = fit_fourier(x, y)
+
+		elseif method_name == "Fourier-FFT-Adaptive"
 			fitted_func = fit_fourier(x, y)
 
 		elseif method_name == "Dierckx-5"
@@ -930,9 +956,26 @@ function evaluate_julia_method(method_name::String,
 				end
 			end
 		elseif method_name == "Fourier-Interp"
-			# Use FFT-based spectral differentiation with low-pass filtering for noise
+			# Use FFT-based spectral differentiation with fixed low-pass filtering
 			fourier_fft = fitted_func  # This is a FourierFFT struct
 			filter_frac = get(params, :fourier_filter_frac, 0.4)
+
+			for order in orders
+				try
+					predictions[order] = [fourier_fft_deriv(fourier_fft, xi, order; filter_frac=filter_frac) for xi in x_eval]
+				catch e
+					predictions[order] = fill(NaN, length(x_eval))
+					failures[order] = string(e)
+				end
+			end
+
+		elseif method_name == "Fourier-FFT-Adaptive"
+			# FFT-based spectral differentiation with adaptive noise-based filtering
+			fourier_fft = fitted_func  # This is a FourierFFT struct
+
+			# Adaptive filter fraction based on noise estimation
+			filter_frac = select_fourier_filter_frac(y)
+
 			for order in orders
 				try
 					predictions[order] = [fourier_fft_deriv(fourier_fft, xi, order; filter_frac=filter_frac) for xi in x_eval]
@@ -985,11 +1028,11 @@ function evaluate_julia_method(method_name::String,
 		success = !isempty(predictions)
 
 		# Determine category
-		category = if method_name in ["AAA-HighPrec", "AAA-LowPrec"]
+		category = if method_name in ["AAA-HighPrec", "AAA-LowPrec", "AAA-Adaptive-Diff2", "AAA-Adaptive-Wavelet"]
 			"Rational"
 		elseif method_name in ["GP-Julia-SE", "GP-Julia-AD", "GP-Julia-Matern-0.5", "GP-Julia-Matern-1.5", "GP-Julia-Matern-2.5"]
 			"Gaussian Process"
-		elseif method_name in ["Fourier-Interp"]
+		elseif method_name in ["Fourier-Interp", "Fourier-FFT-Adaptive"]
 			"Spectral"
 		elseif method_name in ["Dierckx-5"]
 			"Spline"
@@ -1026,12 +1069,15 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 	methods = [
 		"AAA-HighPrec",
 		"AAA-LowPrec",
+		"AAA-Adaptive-Diff2",
+		"AAA-Adaptive-Wavelet",
 		"GP-Julia-SE",  # Re-enabled - analytic implementation is robust
 		"GP-Julia-AD",  # AD-based GP (simpler, more robust)
-		"GP-Julia-Matern-0.5",  # GP with Matérn-1/2 kernel
-		"GP-Julia-Matern-1.5",  # GP with Matérn-3/2 kernel
-		"GP-Julia-Matern-2.5",  # GP with Matérn-5/2 kernel
+		# "GP-Julia-Matern-0.5",  # DISABLED - only produces order 0 (function values, not derivatives)
+		# "GP-Julia-Matern-1.5",  # DISABLED - only produces order 0 (function values, not derivatives)
+		# "GP-Julia-Matern-2.5",  # DISABLED - only produces order 0 (function values, not derivatives)
 		"Fourier-Interp",
+		"Fourier-FFT-Adaptive",
 		"Dierckx-5",
 		"Savitzky-Golay",
 		"TrendFilter-k7",

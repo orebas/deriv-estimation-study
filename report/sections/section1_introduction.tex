@@ -40,12 +40,12 @@ However, \textbf{systematic comparative evaluation across derivative orders, noi
 \subsection{Contributions of This Study}
 \label{sec:contributions}
 
-This paper presents a \textbf{comprehensive benchmark of 24 derivative estimation methods} evaluated across:
+This paper presents a \textbf{comprehensive benchmark of 33 derivative estimation methods} (24 baseline methods\footnote{From 27 candidate baseline implementations; 3 were excluded due to severe cross-language performance discrepancies exceeding $50\times$ despite parameter parity attempts (documented in Section~\ref{sec:exclusions}).} plus 9 adaptive hyperparameter selection variants) evaluated across:
 \begin{itemize}
     \item \textbf{8 derivative orders:} 0--7 (order 0 = smoothing, testing full capability range)
     \item \textbf{7 noise levels:} $10^{-8}$ to $5 \times 10^{-2}$ (near-noiseless to high-noise regimes, spanning $\approx$ 7 orders of magnitude)
     \item \textbf{56 configurations:} All combinations of order $\times$ noise, providing fine-grained performance maps
-    \item \textbf{6 method categories:} Gaussian Processes, Rational Approximation, Spectral Methods, Splines, Regularization, and Local Polynomial methods
+    \item \textbf{7 method categories:} Gaussian Processes, Rational Approximation, Spectral Methods, Splines, Regularization, Local Polynomial methods, and Adaptive Hyperparameter Selection
 \end{itemize}
 
 \textbf{Key contributions include:}
@@ -62,6 +62,8 @@ This paper presents a \textbf{comprehensive benchmark of 24 derivative estimatio
     \begin{itemize}
         \item AAA rational approximation \textit{catastrophically fails} at orders $\geq 3$ (nRMSE $> 10^7$) despite excellent low-order performance—contrary to literature expectations
         \item Gaussian Process regression (GP-Julia-AD) achieves best overall performance but 3 Python GP implementations fail or underperform dramatically, highlighting implementation quality as a critical method characteristic
+        \item Adaptive hyperparameter selection methods (using GCV, AICc, and noise estimation) significantly outperform their fixed-parameter counterparts, particularly at high derivative orders
+        \item JAX-based automatic differentiation enables arbitrary-order derivatives for AAA rational approximants, though fundamental high-order instability persists
         \item Derivative order is the dominant difficulty factor, with performance degrading systematically for all methods as order increases
     \end{itemize}
     

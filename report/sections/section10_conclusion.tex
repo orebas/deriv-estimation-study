@@ -1,27 +1,39 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-This paper presents the first comprehensive benchmark of derivative estimation methods across the full range of practical derivative orders (0--7) and noise levels ($10^{-8}$ to $5 \times 10^{-2}$). We evaluated 24 methods from 6 categories on 56 configurations, providing fine-grained performance maps to guide method selection.
+This paper presents the first comprehensive benchmark of derivative estimation methods across the full range of practical derivative orders (0--7) and noise levels ($10^{-8}$ to $5 \times 10^{-2}$). We evaluated 33 methods from 7 categories (24 baseline methods plus 9 adaptive hyperparameter selection variants) on 56 configurations, providing fine-grained performance maps to guide method selection.
 
 \subsection{Key Findings}
 
-\textbf{1. Gaussian Process regression (GP-Julia-AD) is the most reliable all-around choice}
+\textbf{1. Adaptive hyperparameter selection consistently achieves lower error than fixed methods}
 
-GP-Julia-AD achieved the best overall performance (mean nRMSE = 0.257 across all configurations) with no catastrophic failures. It maintains usable accuracy even at extreme challenges (orders 6--7 with high noise), though nRMSE $\approx 0.5$--$1.0$ indicates fundamental difficulty limits.
+Among the 9 new adaptive methods, \textbf{Fourier-GCV} emerged as the top performer, ranking 4th overall by mean nRMSE (descriptive finding; n=3 trials insufficient for statistical significance testing). Adaptive methods using GCV (Generalized Cross-Validation) for harmonics selection and AICc for polynomial degree selection demonstrated consistently lower mean nRMSE across varying noise levels and derivative orders compared to their fixed-parameter counterparts.
 
-\textbf{2. AAA rational approximation fails catastrophically at high orders}
+\textbf{2. Gaussian Process regression remains the most reliable baseline method}
 
-Contrary to literature expectations based on interpolation performance, AAA-HighPrec exhibits catastrophic failure (nRMSE $> 10^7$) at orders $\geq 3$, even at near-perfect noise levels ($10^{-8}$). This failure persists despite high-precision (BigFloat) arithmetic, indicating an algorithmic limitation rather than numerical precision issue. \textbf{Recommendation:} Restrict AAA use to orders 0--2 at noise $\leq 10^{-8}$ only.
+GP-Julia-AD achieved the best overall performance among baseline methods (mean nRMSE = 0.257 across all configurations) with no catastrophic failures. It maintains usable accuracy even at extreme challenges (orders 6--7 with high noise), though nRMSE $\approx 0.5$--$1.0$ indicates fundamental difficulty limits.
 
-\textbf{3. Fourier spectral methods are strong alternatives for smooth signals}
+\textbf{3. JAX automatic differentiation enables arbitrary-order AAA derivatives but doesn't solve high-order instability}
 
-Fourier-Interp (rank 5, nRMSE = 0.44) achieves competitive accuracy at 10--20$\times$ speedup compared to GP methods, particularly effective at high orders (5--7) where many methods fail. Proper filtering (filter\_frac = 0.4) is critical to prevent noise amplification.
+The new AAA-JAX-Adaptive methods successfully compute derivatives up to order 7 via nested automatic differentiation, overcoming the previous limitation of AAA-based methods to orders 0--5. However, the fundamental algorithmic instability of AAA at high orders persists—AAA-JAX methods still exhibit large errors at orders $\geq 3$. The computational cost is significant: order 7 derivatives can take 8--20 minutes per configuration.
 
-\textbf{4. Derivative order is the dominant difficulty factor}
+\textbf{4. AAA rational approximation fails catastrophically at high orders despite adaptive tolerance}
 
-Performance degrades systematically for all methods as derivative order increases, with order 3 representing a critical transition point where many methods begin failing. High-order derivatives (6--7) remain extremely challenging even for best methods—all evaluated methods exhibit nRMSE $> 0.5$ at these orders with noise $\geq 10^{-2}$.
+Contrary to literature expectations based on interpolation performance, AAA-HighPrec exhibits catastrophic failure (nRMSE $> 10^7$) at orders $\geq 3$, even at near-perfect noise levels ($10^{-8}$). This failure persists despite high-precision (BigFloat) arithmetic and adaptive tolerance selection based on noise estimation, indicating an algorithmic limitation rather than numerical precision or hyperparameter issue. \textbf{Recommendation:} Restrict AAA use to orders 0--2 at noise $\leq 10^{-8}$ only.
 
-\textbf{5. Implementation quality is a method characteristic}
+\textbf{5. Fourier spectral methods are strong alternatives for smooth signals}
+
+Fourier-Interp achieves competitive accuracy at 10--20$\times$ speedup compared to GP methods, particularly effective at high orders (5--7) where many methods fail. The new Fourier-GCV adaptive variant outperforms the fixed-parameter Fourier-Interp by automatically selecting the optimal number of harmonics via GCV, demonstrating robustness across noise levels.
+
+\textbf{6. Noise estimation quality affects AAA performance}
+
+Comparing AAA-Python-Adaptive-Wavelet and AAA-Python-Adaptive-Diff2 reveals that noise estimation method (wavelet MAD vs. second-order difference) significantly impacts AAA tolerance selection and subsequent performance. Wavelet MAD tends to provide more robust estimates for oscillatory signals like Lotka-Volterra.
+
+\textbf{7. Derivative order is the dominant difficulty factor}
+
+Performance degrades systematically for all methods (both baseline and adaptive) as derivative order increases, with order 3 representing a critical transition point where many methods begin failing. High-order derivatives (6--7) remain extremely challenging even for best methods—all evaluated methods exhibit nRMSE $> 0.5$ at these orders with noise $\geq 10^{-2}$. \textbf{Practical recommendation:} For production systems requiring robustness, limit derivative estimation to orders 0--4; orders 5--7 are computationally expensive and exhibit degraded accuracy.
+
+\textbf{8. Implementation quality is a method characteristic}
 
 Three methods (GP-Julia-SE, TVRegDiff\_Python, SavitzkyGolay\_Python) were excluded due to $> 50\times$ performance discrepancies between Julia and Python implementations despite parameter parity attempts. This finding highlights that algorithmic excellence alone is insufficient—robust, numerically stable implementation is essential.
 

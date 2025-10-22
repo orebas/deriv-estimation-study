@@ -11,11 +11,13 @@ References:
 
 module HyperparameterSelection
 
-export estimate_noise_diff2, select_aaa_tolerance, select_fourier_filter_frac
+export estimate_noise_diff2, estimate_noise_wavelet, select_aaa_tolerance, select_fourier_filter_frac
 
 using Statistics
 using FFTW
 using Random
+using LinearAlgebra
+using Wavelets
 
 """
     estimate_noise_diff2(y::Vector{Float64}) -> Float64
@@ -53,6 +55,67 @@ function estimate_noise_diff2(y::Vector{Float64})
     # Var(d) = 6σ² for i.i.d. Gaussian noise
     # Factor 0.6745 is the 75th percentile of standard normal
     σ̂ = median(abs.(d .- median(d))) / 0.6745 / sqrt(6.0)
+
+    return σ̂
+end
+
+
+"""
+    estimate_noise_wavelet(y::Vector{Float64}; wavelet=wavelet(WT.db4)) -> Float64
+
+Estimate noise σ using wavelet MAD (Donoho-Johnstone estimator).
+
+This is the "gold standard" noise estimation method. Uses the finest-scale
+wavelet detail coefficients which primarily capture noise in smooth signals.
+
+# Arguments
+- `y`: Signal (possibly noisy)
+- `wavelet`: Wavelet type (default: Daubechies-4, matching PyWavelets default)
+
+# Returns
+- Estimated noise standard deviation σ̂
+
+# References
+- Donoho, D. L., & Johnstone, I. M. (1994). Ideal spatial adaptation by
+  wavelet shrinkage. Biometrika, 81(3), 425-455.
+
+# Note
+Uses Wavelets.jl with 1-level decomposition. Daubechies-4 (db4) is the
+standard choice for noise estimation in the literature.
+"""
+function estimate_noise_wavelet(y::Vector{Float64}; wt=wavelet(WT.db4))
+    n = length(y)
+    if n < 4
+        error("Need at least 4 points for wavelet decomposition")
+    end
+
+    # Pad to next power of 2 if necessary (DWT requirement)
+    n_pow2 = 2^ceil(Int, log2(n))
+    if n_pow2 > n
+        # Zero-pad (common practice for DWT)
+        y_padded = vcat(y, zeros(n_pow2 - n))
+    else
+        y_padded = y
+    end
+
+    # 1-level discrete wavelet transform
+    # Returns approximation (low-freq) and detail (high-freq) coefficients
+    decomp = dwt(y_padded, wt, 1)
+
+    # Extract detail coefficients at finest scale (level 1)
+    # For 1-level decomp: decomp = [approx; detail]
+    n_detail = n_pow2 ÷ 2
+    detail = decomp[n_detail+1:end]
+
+    # Only use detail coefficients from original signal (not padding)
+    # This prevents bias from zero-padding
+    n_detail_orig = min(n_detail, (n + 1) ÷ 2)
+    detail_orig = detail[1:n_detail_orig]
+
+    # MAD estimator on detail coefficients
+    # Robust to outliers and works under Gaussian noise assumption
+    # Factor 0.6745 is the 75th percentile of standard normal distribution
+    σ̂ = median(abs.(detail_orig .- median(detail_orig))) / 0.6745
 
     return σ̂
 end

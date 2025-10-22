@@ -25,13 +25,35 @@ try:
         select_chebyshev_degree,
         select_fourier_harmonics,
         select_aaa_tolerance,
-        select_fourier_filter_fraction_simple
+        select_fourier_filter_fraction_simple,
+        estimate_noise_auto
     )
     ADAPTIVE_HYPERPARAMS = True
 except ImportError:
     ADAPTIVE_HYPERPARAMS = False
     import warnings
     warnings.warn("hyperparameters module not found - using fixed hyperparameters")
+
+# Import AAA (baryrat)
+try:
+    from baryrat import aaa
+    BARYRAT_AVAILABLE = True
+except ImportError:
+    BARYRAT_AVAILABLE = False
+    import warnings
+    warnings.warn("baryrat not available - AAA methods disabled")
+
+# Import JAX AAA (baryrat_jax) for automatic differentiation
+try:
+    import jax
+    jax.config.update("jax_enable_x64", True)
+    import jax.numpy as jnp
+    from baryrat_jax import aaa as aaa_jax
+    JAX_AAA_AVAILABLE = True
+except ImportError:
+    JAX_AAA_AVAILABLE = False
+    import warnings
+    warnings.warn("JAX or baryrat_jax not available - JAX AAA methods with AD disabled")
 
 # Import packages
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -81,6 +103,14 @@ class MethodEvaluator:
         self.x_eval = np.array(x_eval)
         self.orders = orders
 
+        # Input validation: check for NaN/inf in training data
+        if not np.all(np.isfinite(self.x_train)):
+            raise ValueError("Training x values contain NaN or inf")
+        if not np.all(np.isfinite(self.y_train)):
+            raise ValueError("Training y values contain NaN or inf")
+        if not np.all(np.isfinite(self.x_eval)):
+            raise ValueError("Evaluation x values contain NaN or inf")
+
     def evaluate_method(self, method_name: str) -> Dict:
         """Evaluate a single method."""
         t_start = time.time()
@@ -88,12 +118,28 @@ class MethodEvaluator:
         try:
             if method_name == "chebyshev":
                 result = self._chebyshev()
+            elif method_name == "Chebyshev-AICc":
+                result = self._chebyshev_aicc()
             elif method_name == "fourier":
                 result = self._fourier()
+            elif method_name == "Fourier-GCV":
+                result = self._fourier_gcv()
+            elif method_name == "Fourier-FFT-Adaptive":
+                result = self._fourier_fft_adaptive()
+            elif method_name == "AAA-Python-Adaptive-Wavelet":
+                result = self._aaa_adaptive_wavelet()
+            elif method_name == "AAA-Python-Adaptive-Diff2":
+                result = self._aaa_adaptive_diff2()
+            elif method_name == "AAA-JAX-Adaptive-Wavelet":
+                result = self._aaa_jax_adaptive_wavelet()
+            elif method_name == "AAA-JAX-Adaptive-Diff2":
+                result = self._aaa_jax_adaptive_diff2()
             elif method_name == "gp_rbf_mean":
                 result = self._gp_rbf_mean_derivative()
             elif method_name == "ad_trig":
                 result = self._ad_trig()
+            elif method_name == "ad_trig_adaptive":
+                result = self._ad_trig_adaptive()
             # Legacy IFAC25 Python methods
             elif method_name == "Butterworth_Python":
                 result = self._butterworth_spline()
@@ -123,6 +169,8 @@ class MethodEvaluator:
                 result = self._gp_matern(nu=2.5)
             elif method_name == "fourier_continuation":
                 result = self._fourier_continuation()
+            elif method_name == "Fourier-Continuation-Adaptive":
+                result = self._fourier_continuation_adaptive()
             else:
                 return {
                     "success": False,
@@ -222,19 +270,11 @@ class MethodEvaluator:
         tmax = float(self.x_train.max())
         n_train = len(self.x_train)
 
-        # Adaptive degree selection via AICc
-        if ADAPTIVE_HYPERPARAMS and os.environ.get("USE_ADAPTIVE_CHEBY", "1") != "0":
-            deg, aicc = select_chebyshev_degree(
-                self.x_train, self.y_train,
-                max_degree=min(30, n_train - 1),
-                min_degree=3
-            )
-            selection_method = "AICc"
-        else:
-            # Fallback to fixed heuristic
-            deg = max(3, min(20, n_train - 1))
-            aicc = None
-            selection_method = "fixed"
+        # Use fixed degree (original behavior)
+        # For adaptive selection, use Chebyshev-Adaptive method instead
+        deg = max(3, min(20, n_train - 1))
+        aicc = None
+        selection_method = "fixed"
 
         poly = Chebyshev.fit(self.x_train, self.y_train, deg=deg, domain=[tmin, tmax])
 
@@ -271,19 +311,11 @@ class MethodEvaluator:
 
         n_train = len(t)
 
-        # Adaptive harmonics selection via GCV
-        if ADAPTIVE_HYPERPARAMS and os.environ.get("USE_ADAPTIVE_FOURIER", "1") != "0":
-            M, gcv = select_fourier_harmonics(
-                self.x_train, self.y_train,
-                max_harmonics=25,
-                min_harmonics=1
-            )
-            selection_method = "GCV"
-        else:
-            # Fallback to fixed heuristic
-            M = max(1, min((n_train - 1) // 4, 25))
-            gcv = None
-            selection_method = "fixed"
+        # Use fixed harmonics (original behavior)
+        # For adaptive selection, use Fourier-Adaptive method instead
+        M = max(1, min((n_train - 1) // 4, 25))
+        gcv = None
+        selection_method = "fixed"
 
         # Build design matrix: [1, cos(k ω (t-tmin)), sin(k ω (t-tmin))] for k=1..M
         phi_cols = [np.ones_like(t)]
@@ -328,6 +360,363 @@ class MethodEvaluator:
             meta["gcv"] = float(gcv)
 
         return {"predictions": predictions, "failures": failures, "meta": meta}
+
+    def _chebyshev_aicc(self) -> Dict:
+        """
+        Chebyshev polynomial with adaptive degree selection via AICc.
+
+        Uses Akaike Information Criterion (corrected for small samples) to
+        automatically select polynomial degree based on bias-variance tradeoff.
+        """
+        tmin = float(self.x_train.min())
+        tmax = float(self.x_train.max())
+        n_train = len(self.x_train)
+
+        # Always use adaptive degree selection via AICc
+        deg, aicc = select_chebyshev_degree(
+            self.x_train, self.y_train,
+            max_degree=min(30, n_train - 1),
+            min_degree=3
+        )
+
+        poly = Chebyshev.fit(self.x_train, self.y_train, deg=deg, domain=[tmin, tmax])
+
+        predictions = {}
+        failures = {}
+        for order in self.orders:
+            try:
+                if order == 0:
+                    vals = poly(self.x_eval)
+                else:
+                    dpoly = poly.deriv(m=order)
+                    vals = dpoly(self.x_eval)
+                predictions[order] = [float(v) for v in np.asarray(vals)]
+            except Exception as e:
+                failures[order] = str(e)
+                predictions[order] = [np.nan] * len(self.x_eval)
+
+        meta = {"degree": deg, "selection": "AICc", "aicc": float(aicc)}
+        return {"predictions": predictions, "failures": failures, "meta": meta}
+
+    def _fourier_gcv(self) -> Dict:
+        """
+        Fourier series with adaptive harmonics selection via GCV.
+
+        Uses Generalized Cross-Validation to automatically select the number
+        of harmonics based on bias-variance tradeoff.
+        """
+        t = self.x_train
+        y = self.y_train
+        tmin = float(t.min())
+        tmax = float(t.max())
+        T = tmax - tmin
+        if T <= 0:
+            raise ValueError("Invalid domain length for Fourier fit")
+        omega = 2.0 * np.pi / T
+        n_train = len(t)
+
+        # Always use adaptive harmonics selection via GCV
+        M, gcv = select_fourier_harmonics(
+            self.x_train, self.y_train,
+            max_harmonics=25,
+            min_harmonics=1
+        )
+
+        # Build design matrix: [1, cos(k ω (t-tmin)), sin(k ω (t-tmin))] for k=1..M
+        phi_cols = [np.ones_like(t)]
+        ang = (t - tmin)
+        for k in range(1, M + 1):
+            kω = k * omega
+            phi_cols.append(np.cos(kω * ang))
+            phi_cols.append(np.sin(kω * ang))
+        Phi = np.vstack(phi_cols).T  # shape (N, 2M+1)
+
+        coef, *_ = np.linalg.lstsq(Phi, y, rcond=None)
+        c0 = float(coef[0])
+        a = coef[1::2]
+        b = coef[2::2]
+
+        predictions = {}
+        failures = {}
+
+        ang_eval = (self.x_eval - tmin)
+        for order in self.orders:
+            try:
+                if order == 0:
+                    vals = np.full_like(ang_eval, c0, dtype=float)
+                    for k in range(1, M + 1):
+                        kω = k * omega
+                        vals += a[k-1] * np.cos(kω * ang_eval) + b[k-1] * np.sin(kω * ang_eval)
+                else:
+                    shift = order * (np.pi / 2.0)
+                    vals = np.zeros_like(ang_eval, dtype=float)
+                    for k in range(1, M + 1):
+                        kω = k * omega
+                        factor = (kω ** order)
+                        θ = kω * ang_eval
+                        vals += a[k-1] * factor * np.cos(θ + shift) + b[k-1] * factor * np.sin(θ + shift)
+                predictions[order] = [float(v) for v in np.asarray(vals)]
+            except Exception as e:
+                failures[order] = str(e)
+                predictions[order] = [np.nan] * len(self.x_eval)
+
+        meta = {"harmonics": M, "selection": "GCV", "gcv": float(gcv)}
+        return {"predictions": predictions, "failures": failures, "meta": meta}
+
+    def _fourier_fft_adaptive(self) -> Dict:
+        """
+        FFT-based spectral differentiation with adaptive noise-based filtering.
+
+        Uses wavelet noise estimation to adaptively select filter fraction,
+        preventing noise amplification in high-order derivatives.
+
+        Matches Julia's Fourier-FFT-Adaptive implementation.
+        """
+        if not ADAPTIVE_HYPERPARAMS:
+            return {
+                "predictions": {},
+                "failures": {0: "hyperparameters module not available"},
+                "meta": {"error": "hyperparameters module not found"}
+            }
+
+        from scipy.fft import fft, ifft, fftfreq
+        from scipy.interpolate import interp1d
+
+        x = self.x_train
+        y = self.y_train
+        n = len(y)
+
+        # Estimate noise and select adaptive filter fraction
+        filter_frac = select_fourier_filter_fraction_simple(y, confidence_multiplier=3.0)
+
+        # Compute FFT
+        y_fft = fft(y)
+        freqs = fftfreq(n, d=float(np.mean(np.diff(x))))
+        k = 2.0 * np.pi * freqs  # Angular wavenumbers
+
+        # Determine cutoff frequency based on filter fraction
+        k_abs = np.abs(k)
+        k_max = np.max(k_abs)
+        k_cutoff = filter_frac * k_max
+
+        predictions = {}
+        failures = {}
+
+        for order in self.orders:
+            try:
+                if order == 0:
+                    # Order 0: simple interpolation
+                    interp = interp1d(x, y, kind='linear', bounds_error=False, fill_value='extrapolate')
+                    vals = interp(self.x_eval)
+                    predictions[order] = [float(v) for v in vals]
+                else:
+                    # Apply spectral differentiation with filtering
+                    deriv_fft = y_fft.copy()
+
+                    # Multiply by (ik)^n and apply low-pass filter
+                    for i in range(n):
+                        if k_abs[i] <= k_cutoff:
+                            deriv_fft[i] *= (1j * k[i]) ** order
+                        else:
+                            deriv_fft[i] = 0.0  # Zero out high frequencies
+
+                    # Inverse FFT to get derivative
+                    deriv = np.real(ifft(deriv_fft))
+
+                    # Interpolate to evaluation points
+                    interp = interp1d(x, deriv, kind='linear', bounds_error=False, fill_value='extrapolate')
+                    vals = interp(self.x_eval)
+                    predictions[order] = [float(v) for v in vals]
+
+            except Exception as e:
+                failures[order] = str(e)
+                predictions[order] = [np.nan] * len(self.x_eval)
+
+        meta = {
+            "filter_frac": float(filter_frac),
+            "cutoff_freq": float(k_cutoff / (2.0 * np.pi)),
+            "selection": "noise-adaptive"
+        }
+
+        return {"predictions": predictions, "failures": failures, "meta": meta}
+
+    def _aaa_adaptive_base(
+        self,
+        noise_estimator_func,
+        aaa_func,
+        use_jax_ad: bool,
+        implementation_name: str,
+        selection_name: str,
+        availability_flag: bool,
+        availability_error: str
+    ) -> Dict:
+        """
+        Unified helper for all AAA adaptive methods.
+
+        Consolidates common logic across AAA-Adaptive-Wavelet, AAA-Adaptive-Diff2,
+        AAA-JAX-Adaptive-Wavelet, and AAA-JAX-Adaptive-Diff2.
+
+        Args:
+            noise_estimator_func: Function to estimate noise (e.g., estimate_noise_auto)
+            aaa_func: AAA implementation (aaa or aaa_jax)
+            use_jax_ad: If True, use JAX AD for all orders; else baryrat eval_deriv (≤ order 2)
+            implementation_name: Name for meta (e.g., "baryrat", "JAX-AD")
+            selection_name: Noise estimation method for meta (e.g., "wavelet-MAD", "diff2")
+            availability_flag: Check if dependencies available (BARYRAT_AVAILABLE or JAX_AAA_AVAILABLE)
+            availability_error: Error message if dependencies unavailable
+
+        Returns:
+            Standard method result dict with predictions, failures, meta
+        """
+        if not availability_flag:
+            return {
+                "predictions": {},
+                "failures": {0: availability_error},
+                "meta": {"error": availability_error}
+            }
+
+        if not ADAPTIVE_HYPERPARAMS:
+            return {
+                "predictions": {},
+                "failures": {0: "hyperparameters module not available"},
+                "meta": {"error": "hyperparameters module not found"}
+            }
+
+        # Estimate noise and set adaptive tolerance with cap
+        tol = select_aaa_tolerance(
+            self.y_train,
+            noise_estimator_func,
+            multiplier=10.0,
+            max_tol_fraction=0.1
+        )
+        σ_hat = noise_estimator_func(self.y_train)  # For logging
+
+        # Fit AAA rational approximation
+        try:
+            r = aaa_func(self.x_train, self.y_train, tol=tol)
+        except Exception as e:
+            return {
+                "predictions": {},
+                "failures": {0: f"AAA fit failed: {str(e)}"},
+                "meta": {"tolerance": tol, "noise_estimate": σ_hat}
+            }
+
+        predictions = {}
+        failures = {}
+
+        for order in self.orders:
+            try:
+                if order == 0:
+                    # Function evaluation
+                    vals = r(self.x_eval)
+                elif use_jax_ad:
+                    # JAX AD: Use Taylor-mode jet for 10× speedup
+                    # Import jet-based derivatives (with fallback to nested grad)
+                    try:
+                        from jax_derivatives_jet import compute_derivatives_at_points
+                        USE_JET = True
+                    except ImportError:
+                        USE_JET = False
+
+                    if USE_JET:
+                        # FAST PATH: Compute ALL derivatives 0-max_order at ALL points in one pass
+                        # This is ~10× faster than nested grad() calls
+                        # Only compute once per AAA fit, then extract the needed order
+                        if not hasattr(self, '_aaa_jax_all_derivs_cache') or self._aaa_jax_all_derivs_cache is None:
+                            max_order_needed = max(self.orders)
+                            # Shape: (max_order+1, n_eval_points)
+                            self._aaa_jax_all_derivs_cache = compute_derivatives_at_points(
+                                lambda x: r(x),
+                                jnp.array(self.x_eval),
+                                max_order=max_order_needed
+                            )
+                        # Extract the specific order we need
+                        vals = self._aaa_jax_all_derivs_cache[order, :]
+                    else:
+                        # SLOW FALLBACK: Nested grad() calls (original implementation)
+                        def nth_derivative(f, n):
+                            """Compute n-th derivative via nested jax.grad() calls."""
+                            result = f
+                            for _ in range(n):
+                                result = jax.grad(result)
+                            return result
+
+                        deriv_func = nth_derivative(lambda x: r(x), order)
+                        vals = jnp.array([deriv_func(jnp.array(xi)) for xi in self.x_eval])
+                elif order <= 2:
+                    # baryrat: only supports derivatives up to order 2
+                    vals = r.eval_deriv(self.x_eval, k=order)
+                else:
+                    # baryrat limitation
+                    failures[order] = "baryrat only supports derivatives up to order 2"
+                    predictions[order] = [np.nan] * len(self.x_eval)
+                    continue
+
+                predictions[order] = [float(v) for v in np.asarray(vals)]
+            except Exception as e:
+                failures[order] = str(e)
+                predictions[order] = [np.nan] * len(self.x_eval)
+
+        meta = {
+            "tolerance": float(tol),
+            "noise_estimate": float(σ_hat),
+            "selection": selection_name,
+            "implementation": implementation_name
+        }
+        if hasattr(r, 'degree'):
+            meta["degree"] = r.degree()
+
+        return {"predictions": predictions, "failures": failures, "meta": meta}
+
+    def _aaa_adaptive_wavelet(self) -> Dict:
+        """AAA rational approximation with wavelet-based adaptive tolerance."""
+        return self._aaa_adaptive_base(
+            noise_estimator_func=estimate_noise_auto,
+            aaa_func=aaa,
+            use_jax_ad=False,
+            implementation_name="baryrat",
+            selection_name="wavelet-MAD",
+            availability_flag=BARYRAT_AVAILABLE,
+            availability_error="baryrat package not available"
+        )
+
+    def _aaa_adaptive_diff2(self) -> Dict:
+        """AAA rational approximation with 2nd-order difference noise estimation."""
+        from hyperparameters import estimate_noise_diff2
+        return self._aaa_adaptive_base(
+            noise_estimator_func=estimate_noise_diff2,
+            aaa_func=aaa,
+            use_jax_ad=False,
+            implementation_name="baryrat",
+            selection_name="diff2",
+            availability_flag=BARYRAT_AVAILABLE,
+            availability_error="baryrat package not available"
+        )
+
+    def _aaa_jax_adaptive_wavelet(self) -> Dict:
+        """AAA-JAX with wavelet noise estimation and automatic differentiation for all orders."""
+        return self._aaa_adaptive_base(
+            noise_estimator_func=estimate_noise_auto,
+            aaa_func=aaa_jax,
+            use_jax_ad=True,
+            implementation_name="JAX-AD",
+            selection_name="wavelet-MAD",
+            availability_flag=JAX_AAA_AVAILABLE,
+            availability_error="JAX or baryrat_jax not available"
+        )
+
+    def _aaa_jax_adaptive_diff2(self) -> Dict:
+        """AAA-JAX with diff2 noise estimation and automatic differentiation for all orders."""
+        from hyperparameters import estimate_noise_diff2
+        return self._aaa_adaptive_base(
+            noise_estimator_func=estimate_noise_diff2,
+            aaa_func=aaa_jax,
+            use_jax_ad=True,
+            implementation_name="JAX-AD",
+            selection_name="diff2",
+            availability_flag=JAX_AAA_AVAILABLE,
+            availability_error="JAX or baryrat_jax not available"
+        )
 
     def _fourier_continuation(self) -> Dict:
         """Trend-removed trigonometric LS fit with analytic n-th derivatives (non-periodic aid).
@@ -409,6 +798,107 @@ class MethodEvaluator:
 
         return {"predictions": predictions, "failures": failures, "meta": {"harmonics": M, "trend_deg": deg}}
 
+    def _fourier_continuation_adaptive(self) -> Dict:
+        """
+        Fourier continuation with adaptive trend degree (AICc) and harmonics (GCV).
+
+        Uses Chebyshev AICc for trend removal and Fourier GCV for residuals,
+        providing automatic hyperparameter selection for non-periodic data.
+        """
+        if not ADAPTIVE_HYPERPARAMS:
+            return {
+                "predictions": {},
+                "failures": {0: "hyperparameters module not available"},
+                "meta": {"error": "hyperparameters module not found"}
+            }
+
+        t = self.x_train
+        y = self.y_train
+        tmin = float(t.min())
+        tmax = float(t.max())
+        T = tmax - tmin
+        if T <= 0:
+            raise ValueError("Invalid domain length for Fourier continuation fit")
+        omega = 2.0 * np.pi / T
+
+        # 1. Adaptive trend degree selection via AICc
+        deg, aicc = select_chebyshev_degree(t, y, max_degree=5, min_degree=1)
+
+        tt = (t - tmin)
+        # Vandermonde [1, tt, tt^2, ...]
+        V = np.vander(tt, N=deg + 1, increasing=True)
+        coef_trend, *_ = np.linalg.lstsq(V, y, rcond=None)
+
+        # Remove trend
+        y_resid = y - V @ coef_trend
+
+        # 2. Adaptive harmonics selection via GCV on residuals
+        M, gcv = select_fourier_harmonics(t, y_resid, max_harmonics=25, min_harmonics=1)
+
+        # Fit Fourier to residuals
+        phi_cols = [np.ones_like(t)]
+        for k in range(1, M + 1):
+            kω = k * omega
+            phi_cols.append(np.cos(kω * tt))
+            phi_cols.append(np.sin(kω * tt))
+        Phi = np.vstack(phi_cols).T
+        coef_trig, *_ = np.linalg.lstsq(Phi, y_resid, rcond=None)
+        c0 = float(coef_trig[0])
+        a = coef_trig[1::2]
+        b = coef_trig[2::2]
+
+        predictions = {}
+        failures = {}
+
+        tt_eval = (self.x_eval - tmin)
+
+        # Helper: evaluate trend and its derivatives at eval points
+        def eval_trend(n_order: int) -> np.ndarray:
+            vals = np.zeros_like(tt_eval, dtype=float)
+            if n_order > deg:
+                return vals
+            # Derivative coefficients
+            coeffs = coef_trend.copy()
+            for _ in range(n_order):
+                coeffs = np.array([i * coeffs[i] for i in range(1, len(coeffs))], dtype=float)
+            # Evaluate
+            for i, c in enumerate(coeffs):
+                vals += c * (tt_eval ** i)
+            return vals
+
+        for order in self.orders:
+            try:
+                # Trend part
+                vals = eval_trend(order)
+                # Trig part
+                if order == 0:
+                    vals += c0
+                    for k in range(1, M + 1):
+                        kω = k * omega
+                        vals += a[k-1] * np.cos(kω * tt_eval) + b[k-1] * np.sin(kω * tt_eval)
+                else:
+                    shift = order * (np.pi / 2.0)
+                    for k in range(1, M + 1):
+                        kω = k * omega
+                        factor = (kω ** order)
+                        θ = kω * tt_eval
+                        vals += a[k-1] * factor * np.cos(θ + shift) + b[k-1] * factor * np.sin(θ + shift)
+                predictions[order] = [float(v) for v in np.asarray(vals)]
+            except Exception as e:
+                failures[order] = str(e)
+                predictions[order] = [np.nan] * len(self.x_eval)
+
+        meta = {
+            "harmonics": M,
+            "trend_deg": deg,
+            "selection_trend": "AICc",
+            "selection_harmonics": "GCV",
+            "aicc": float(aicc),
+            "gcv": float(gcv)
+        }
+
+        return {"predictions": predictions, "failures": failures, "meta": meta}
+
     def _ad_trig(self) -> Dict:
         """AD-backed trigonometric polynomial using autograd for derivatives."""
         if not AUTOGRAD_AVAILABLE:
@@ -464,6 +954,78 @@ class MethodEvaluator:
                 predictions[order] = [np.nan] * len(self.x_eval)
 
         return {"predictions": predictions, "failures": failures, "meta": {"harmonics": M}}
+
+    def _ad_trig_adaptive(self) -> Dict:
+        """
+        AD-backed trigonometric polynomial with GCV-selected harmonics.
+
+        Uses Generalized Cross-Validation to adaptively select the number
+        of harmonics, then uses autograd for automatic differentiation.
+        """
+        if not AUTOGRAD_AVAILABLE:
+            raise RuntimeError("autograd is not available")
+
+        if not ADAPTIVE_HYPERPARAMS:
+            return {
+                "predictions": {},
+                "failures": {0: "hyperparameters module not available"},
+                "meta": {"error": "hyperparameters module not found"}
+            }
+
+        t = self.x_train
+        y = self.y_train
+        tmin = float(t.min())
+        tmax = float(t.max())
+        T = tmax - tmin
+        if T <= 0:
+            raise ValueError("Invalid domain length for AD-trig fit")
+        omega = 2.0 * np.pi / T
+
+        # Adaptive harmonics selection via GCV
+        M, gcv = select_fourier_harmonics(
+            self.x_train, self.y_train,
+            max_harmonics=25,
+            min_harmonics=1
+        )
+
+        # LS fit coefficients (NumPy OK; coefficients are constants for AD eval)
+        phi_cols = [np.ones_like(t)]
+        ang = (t - tmin)
+        for k in range(1, M + 1):
+            kω = k * omega
+            phi_cols.append(np.cos(kω * ang))
+            phi_cols.append(np.sin(kω * ang))
+        Phi = np.vstack(phi_cols).T
+        coef, *_ = np.linalg.lstsq(Phi, y, rcond=None)
+        c0 = float(coef[0])
+        a = coef[1::2]
+        b = coef[2::2]
+
+        # Define autograd-evaluable model
+        a_ag = anp.array(a)
+        b_ag = anp.array(b)
+        def f_scalar(tt):
+            θ = anp.arange(1, M + 1) * omega * (tt - tmin)
+            return c0 + anp.sum(a_ag * anp.cos(θ) + b_ag * anp.sin(θ))
+
+        predictions = {}
+        failures = {}
+
+        for order in self.orders:
+            try:
+                if order == 0:
+                    vals = np.array([float(f_scalar(tt)) for tt in self.x_eval])
+                else:
+                    g = f_scalar
+                    for _ in range(order):
+                        g = egrad(g)
+                    vals = np.array([float(g(tt)) for tt in self.x_eval])
+                predictions[order] = [float(v) for v in np.asarray(vals)]
+            except Exception as e:
+                failures[order] = str(e)
+                predictions[order] = [np.nan] * len(self.x_eval)
+
+        return {"predictions": predictions, "failures": failures, "meta": {"harmonics": M, "selection": "GCV", "gcv": float(gcv)}}
 
     def _quintic_spline_derivatives(self, x_grid: np.ndarray, y_grid: np.ndarray) -> Dict:
         """Helper: fit quintic spline to (x_grid, y_grid) and return derivatives at self.x_eval."""
@@ -1077,12 +1639,22 @@ def main():
 
     # Methods to evaluate
     methods = [
-        # Analytic/closed-form
+        # Analytic/closed-form (fixed hyperparameters)
         "chebyshev",
         "fourier",
         "fourier_continuation",
         "gp_rbf_mean",
         "ad_trig",
+        # NEW: Adaptive hyperparameter methods
+        "Chebyshev-AICc",
+        "Fourier-GCV",
+        "Fourier-FFT-Adaptive",
+        "Fourier-Continuation-Adaptive",
+        "ad_trig_adaptive",
+        "AAA-Python-Adaptive-Wavelet",
+        "AAA-Python-Adaptive-Diff2",
+        "AAA-JAX-Adaptive-Wavelet",
+        "AAA-JAX-Adaptive-Diff2",
         # IFAC25 legacy methods (Python)
         "Butterworth_Python",
         "ButterworthSpline_Python",

@@ -44,12 +44,12 @@ with open(csv_path, 'r') as f:
 
 noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 0.01, 0.02, 0.05]
 noise_labels = ['1e-8', '1e-6', '1e-4', '1e-3', '1e-2', '2e-2', '5e-2']
-orders = list(range(8))
+orders = list(range(7))  # Data has orders 0-6 (max_order=6)
 
 full_coverage_methods = set()
 for method in methods_set:
     coverage = sum(1 for o in orders for n in noise_levels if (method, o, n) in data)
-    if coverage == 56:
+    if coverage == 49:  # 7 orders × 7 noise levels
         full_coverage_methods.add(method)
 
 all_methods_sorted = sorted(methods_set)

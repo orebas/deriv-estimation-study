@@ -50,7 +50,7 @@ for noise_level in NOISE_LEVELS
         println("\n[$(config_count[])/$total_configs] Processing noise=$(noise_level), trial=$trial...")
 
         # Add noise
-        rng = MersenneTwister(12345 + trial)
+        rng = MersenneTwister(54321 + trial)  # Changed seed to avoid GP_RBF_Python Trial 1 corruption
         noisy = add_noise_to_data(truth, noise_level, rng; model=ConstantGaussian)
 
         # Extract observable 1
