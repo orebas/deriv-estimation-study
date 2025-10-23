@@ -21,7 +21,7 @@ const PILOT_TRIALS = CONFIG.trials
 const PILOT_NOISE_LEVELS = CONFIG.noise_levels
 const PILOT_DATA_SIZES = CONFIG.data_sizes
 const PILOT_MAX_DERIV = CONFIG.max_derivative_order
-const PYTHON_SCRIPT = joinpath(@__DIR__, "..", "python", "python_methods.py")
+const PYTHON_SCRIPT = joinpath(@__DIR__, "..", "python", "python_methods_integrated.py")
 const PYTHON_VENV = joinpath(@__DIR__, "..", "python", ".venv", "bin", "python")
 
 println("=" ^ 80)

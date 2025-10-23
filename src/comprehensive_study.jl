@@ -21,7 +21,7 @@ const NOISE_LEVELS = CONFIG.noise_levels
 const DATA_SIZE = CONFIG.data_size
 const MAX_DERIV = CONFIG.max_derivative_order
 const TRIALS_PER_CONFIG = CONFIG.trials_per_config
-const PYTHON_SCRIPT = joinpath(@__DIR__, "..", "python", "python_methods.py")
+const PYTHON_SCRIPT = joinpath(@__DIR__, "..", "python", "python_methods_integrated.py")
 const PYTHON_VENV = joinpath(@__DIR__, "..", "python", ".venv", "bin", "python")
 
 println("=" ^ 80)
