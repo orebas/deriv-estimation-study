@@ -1,0 +1,23 @@
+# Central Configuration for Derivative Estimation Study
+# Single source of truth for all parameters
+
+[comprehensive_study]
+noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2, 5e-2]
+data_size = 101
+max_derivative_order = 7
+trials_per_config = 3
+
+[pilot_study]
+data_size = 51
+max_derivative_order = 3
+noise_level = 0.0
+
+[python]
+venv_path = "python/.venv"
+
+[paths]
+build_dir = "build"
+results_dir = "build/results"
+figures_dir = "build/figures"
+tables_dir = "build/tables"
+data_dir = "build/data"
