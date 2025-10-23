@@ -27,15 +27,24 @@ if [ ! -f "$PYTHON_VENV" ]; then
     exit 1
 fi
 
-echo "Generating additional figures..."
+echo "Generating publication figures..."
 $PYTHON_VENV python/generate_additional_figures.py
+
+echo ""
+echo "Generating comprehensive per-method and per-order plots..."
+$PYTHON_VENV python/generate_comprehensive_plots.py
 
 # Check output
 if [ -d "build/figures/publication" ]; then
     echo ""
     echo "✓ Figures generated!"
-    echo "  Output: build/figures/publication/"
-    find build/figures/publication -name "*.pdf" -o -name "*.png" | wc -l | xargs echo "    Figure files:"
+    echo "  Publication figures: build/figures/publication/"
+    find build/figures/publication -name "*.pdf" -o -name "*.png" | wc -l | xargs echo "    Files:"
+
+    if [ -d "build/figures/supplemental" ]; then
+        echo "  Supplemental figures: build/figures/supplemental/"
+        find build/figures/supplemental -name "*.pdf" | wc -l | xargs echo "    Files:"
+    fi
 else
     echo "✗ ERROR: Figure output directory not found!"
     exit 1
