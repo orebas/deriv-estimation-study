@@ -30,14 +30,14 @@ print("GENERATING ADDITIONAL PUBLICATION FIGURES")
 print("=" * 80)
 
 # Load data
-results_dir = Path(__file__).parent.parent / "build", "results", "comprehensive"
+results_dir = Path(__file__).parent.parent / "build" / "results" / "comprehensive"
 summary = pd.read_csv(results_dir / "comprehensive_summary.csv")
 raw_results = pd.read_csv(results_dir / "comprehensive_results.csv")
 
 print(f"\nLoaded {len(summary)} summary rows, {len(raw_results)} raw result rows")
 
 # Output directory
-output_dir = Path(__file__).parent.parent / "build", "figures", "publication"
+output_dir = Path(__file__).parent.parent / "build" / "figures" / "publication"
 output_dir.mkdir(parents=True, exist_ok=True)
 
 # ============================================================================
@@ -208,8 +208,8 @@ target_noise = 2e-2
 
 # Check if we have input/output data for this configuration
 trial_id = f"noise{int(target_noise*1e8)}e-8_trial1"
-input_json = Path(__file__).parent.parent / "build", "data", "input" / f"{trial_id}.json"
-output_json = Path(__file__).parent.parent / "build", "data", "output" / f"{trial_id}_results.json"
+input_json = Path(__file__).parent.parent / "build" / "data" / "input" / f"{trial_id}.json"
+output_json = Path(__file__).parent.parent / "build" / "data" / "output" / f"{trial_id}_results.json"
 
 if input_json.exists() and output_json.exists():
     import json
