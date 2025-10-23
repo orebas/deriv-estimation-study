@@ -12,28 +12,24 @@ echo "========================================"
 
 cd "$REPO_ROOT"
 
-# Configuration
-export DSIZE=51
-export MAX_DERIV=3
-export NOISE=0.0
-export PY_MAX_ORDER=3
-
-echo "Configuration:"
-echo "  Data size: $DSIZE"
-echo "  Max derivative order: $MAX_DERIV"
-echo "  Noise level: $NOISE"
+echo "Configuration is loaded from config.toml"
+echo "(pilot_study section)"
 echo ""
 
 # Run pilot study
-echo "Running minimal pilot..."
-julia --project=. --startup-file=no src/minimal_pilot.jl
+echo "Running pilot study..."
+julia --project=. --startup-file=no src/pilot_study.jl
 
 # Check results
-if [ -f "build/results/pilot/minimal_pilot_results.csv" ]; then
+if [ -f "build/results/pilot/pilot_results.csv" ]; then
     echo ""
     echo "✓ Pilot study complete!"
-    echo "  Results: build/results/pilot/minimal_pilot_results.csv"
-    wc -l build/results/pilot/minimal_pilot_results.csv
+    echo "  Results: build/results/pilot/pilot_results.csv"
+    wc -l build/results/pilot/pilot_results.csv
+
+    if [ -f "build/results/pilot/pilot_summary.csv" ]; then
+        echo "  Summary: build/results/pilot/pilot_summary.csv"
+    fi
 else
     echo "✗ ERROR: Pilot results not found!"
     exit 1

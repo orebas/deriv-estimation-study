@@ -12,15 +12,8 @@ echo "========================================"
 
 cd "$REPO_ROOT"
 
-# Configuration (can be overridden by environment)
-export DATA_SIZE="${DATA_SIZE:-51}"
-export MAX_DERIV="${MAX_DERIV:-5}"
-export NUM_TRIALS="${NUM_TRIALS:-10}"
-
-echo "Configuration:"
-echo "  Data size: $DATA_SIZE"
-echo "  Max derivative order: $MAX_DERIV"
-echo "  Number of trials: $NUM_TRIALS"
+echo "Configuration is loaded from config.toml"
+echo "(comprehensive_study section)"
 echo ""
 echo "NOTE: This may take significant time depending on configuration."
 echo ""

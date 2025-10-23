@@ -7,6 +7,7 @@ Runs a minimal pilot to test the complete pipeline.
 include("ground_truth.jl")
 include("noise_model.jl")
 include("julia_methods_integrated.jl")
+include("config_loader.jl")
 
 using Random
 using JSON3
@@ -14,22 +15,19 @@ using CSV
 using DataFrames
 using Printf
 
-# Pilot configuration
-const PILOT_TRIALS = 2
-const PILOT_NOISE_LEVELS = [0.0, 0.01]  # 0%, 1%
-const PILOT_DATA_SIZES = [51, 101]
-const PILOT_MAX_DERIV = 4  # Start with 0-4 (orders 5-7 are very expensive)
+# Load pilot configuration from config.toml (single source of truth)
+const CONFIG = get_pilot_config()
+const PILOT_TRIALS = CONFIG.trials
+const PILOT_NOISE_LEVELS = CONFIG.noise_levels
+const PILOT_DATA_SIZES = CONFIG.data_sizes
+const PILOT_MAX_DERIV = CONFIG.max_derivative_order
 const PYTHON_SCRIPT = joinpath(@__DIR__, "..", "python", "python_methods.py")
 const PYTHON_VENV = joinpath(@__DIR__, "..", "python", ".venv", "bin", "python")
 
-println("=" ^ 70)
+println("=" ^ 80)
 println("PILOT STUDY: HIGH-ORDER DERIVATIVE ESTIMATION")
-println("=" ^ 70)
-println("Trials: $PILOT_TRIALS")
-println("Noise levels: $PILOT_NOISE_LEVELS")
-println("Data sizes: $PILOT_DATA_SIZES")
-println("Max derivative order: $PILOT_MAX_DERIV")
-println("=" ^ 70)
+println("=" ^ 80)
+print_config_summary(:pilot)
 
 # Generate ground truth for each data size
 println("\nPre-computing ground truth...")

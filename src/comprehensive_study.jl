@@ -7,6 +7,7 @@ Runs extensive tests across multiple noise levels and derivative orders.
 include("ground_truth.jl")
 include("noise_model.jl")
 include("julia_methods_integrated.jl")
+include("config_loader.jl")
 
 using Random
 using JSON3
@@ -14,22 +15,19 @@ using CSV
 using DataFrames
 using Printf
 
-# Study configuration
-const NOISE_LEVELS = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2, 5e-2]  # 0% to 5%
-const DATA_SIZE = 101  # Fixed size for consistency
-const MAX_DERIV = 7  # Test up to 7th derivative
-const TRIALS_PER_CONFIG = 3  # Multiple trials for statistical robustness
+# Load study configuration from config.toml (single source of truth)
+const CONFIG = get_comprehensive_config()
+const NOISE_LEVELS = CONFIG.noise_levels
+const DATA_SIZE = CONFIG.data_size
+const MAX_DERIV = CONFIG.max_derivative_order
+const TRIALS_PER_CONFIG = CONFIG.trials_per_config
 const PYTHON_SCRIPT = joinpath(@__DIR__, "..", "python", "python_methods.py")
 const PYTHON_VENV = joinpath(@__DIR__, "..", "python", ".venv", "bin", "python")
 
 println("=" ^ 80)
 println("COMPREHENSIVE DERIVATIVE ESTIMATION STUDY")
 println("=" ^ 80)
-println("Noise levels: $NOISE_LEVELS")
-println("Data size: $DATA_SIZE")
-println("Max derivative order: $MAX_DERIV")
-println("Trials per configuration: $TRIALS_PER_CONFIG")
-println("=" ^ 80)
+print_config_summary(:comprehensive)
 
 # Generate ground truth once
 println("\nGenerating ground truth...")

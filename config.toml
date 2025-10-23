@@ -8,9 +8,10 @@ max_derivative_order = 7
 trials_per_config = 3
 
 [pilot_study]
-data_size = 51
-max_derivative_order = 3
-noise_level = 0.0
+trials = 2
+noise_levels = [0.0, 0.01]
+data_sizes = [51, 101]
+max_derivative_order = 4
 
 [python]
 venv_path = "python/.venv"
