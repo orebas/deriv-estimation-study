@@ -43,11 +43,12 @@ cd report
 
 # Run pdflatex + bibtex + pdflatex + pdflatex (standard LaTeX build)
 echo "First pass: pdflatex..."
-pdflatex -interaction=nonstopmode paper.tex > /dev/null 2>&1 || {
-    echo "✗ ERROR: First pdflatex pass failed!"
+pdflatex -interaction=nonstopmode paper.tex > /dev/null 2>&1
+if [ ! -f "paper.pdf" ]; then
+    echo "✗ ERROR: First pdflatex pass failed - PDF not created!"
     echo "  Check report/paper.log for details"
     exit 1
-}
+fi
 
 echo "Running bibtex..."
 bibtex paper > /dev/null 2>&1 || {
@@ -55,18 +56,20 @@ bibtex paper > /dev/null 2>&1 || {
 }
 
 echo "Second pass: pdflatex..."
-pdflatex -interaction=nonstopmode paper.tex > /dev/null 2>&1 || {
-    echo "✗ ERROR: Second pdflatex pass failed!"
+pdflatex -interaction=nonstopmode paper.tex > /dev/null 2>&1
+if [ ! -f "paper.pdf" ]; then
+    echo "✗ ERROR: Second pdflatex pass failed - PDF not created!"
     echo "  Check report/paper.log for details"
     exit 1
-}
+fi
 
 echo "Third pass: pdflatex..."
-pdflatex -interaction=nonstopmode paper.tex > /dev/null 2>&1 || {
-    echo "✗ ERROR: Third pdflatex pass failed!"
+pdflatex -interaction=nonstopmode paper.tex > /dev/null 2>&1
+if [ ! -f "paper.pdf" ]; then
+    echo "✗ ERROR: Third pdflatex pass failed - PDF not created!"
     echo "  Check report/paper.log for details"
     exit 1
-}
+fi
 
 # Check if PDF was created
 if [ ! -f "paper.pdf" ]; then
