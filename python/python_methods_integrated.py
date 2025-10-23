@@ -334,8 +334,8 @@ def main():
     print("\n  Summary:")
     for method, result in cleaned_results.items():
         if result.get("success", False):
-            valid_orders = sum(1 for o in orders if o in result.get("predictions", {})
-                             and not any(np.isnan(result["predictions"][o])))
+            valid_orders = sum(1 for o in orders if str(o) in result.get("predictions", {})
+                             and not any(np.isnan(result["predictions"][str(o)])))
             print(f"    {method}: OK ({valid_orders}/{len(orders)} orders, "
                   f"{result.get('timing', 0.0):.3f}s)")
         else:
