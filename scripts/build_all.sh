@@ -14,7 +14,43 @@ echo ""
 
 cd "$REPO_ROOT"
 
-# Step 0: Clean previous build (optional)
+# Step 0: Check environments
+echo "Checking environments..."
+ENV_OK=1
+
+# Check Julia Manifest.toml
+if [ ! -f "Manifest.toml" ]; then
+    echo "✗ Julia environment not set up (Manifest.toml missing)"
+    ENV_OK=0
+fi
+
+# Check Python venv
+if [ ! -d "python/.venv" ]; then
+    echo "✗ Python environment not set up (python/.venv missing)"
+    ENV_OK=0
+fi
+
+if [ "$ENV_OK" = "0" ]; then
+    echo ""
+    echo "========================================"
+    echo "ERROR: Environments not configured!"
+    echo "========================================"
+    echo ""
+    echo "Please run the setup script first:"
+    echo "  ./scripts/setup.sh"
+    echo ""
+    echo "This will:"
+    echo "  - Install Julia packages from Project.toml"
+    echo "  - Create Python virtual environment with uv"
+    echo "  - Install Python packages from pyproject.toml"
+    echo ""
+    exit 1
+fi
+
+echo "✓ Environments configured"
+echo ""
+
+# Step 0a: Clean previous build (optional)
 if [ "${CLEAN_FIRST:-0}" = "1" ]; then
     echo "Cleaning previous build..."
     bash "$SCRIPT_DIR/clean.sh"
@@ -79,6 +115,8 @@ if [ -d "build/paper" ]; then
     fi
 fi
 echo ""
-echo "To clean build artifacts: ./scripts/clean.sh"
-echo "To skip specific steps: SKIP_PILOT=1 SKIP_COMPREHENSIVE=1 SKIP_FIGURES=1 SKIP_TABLES=1 SKIP_PAPER=1"
+echo "Useful commands:"
+echo "  Clean build artifacts:  ./scripts/clean.sh"
+echo "  Setup environments:     ./scripts/setup.sh"
+echo "  Skip specific steps:    SKIP_PILOT=1 SKIP_COMPREHENSIVE=1 SKIP_FIGURES=1 SKIP_TABLES=1 SKIP_PAPER=1"
 echo "========================================"
