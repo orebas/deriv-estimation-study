@@ -4,7 +4,7 @@ Minimal Pilot - Single Configuration Test
 
 include("ground_truth.jl")
 include("noise_model.jl")
-include("julia_methods.jl")
+include("julia_methods_integrated.jl")  # Use integrated methods instead of monolithic julia_methods.jl
 
 using Random
 using JSON3
@@ -12,7 +12,7 @@ using CSV
 using DataFrames
 using Printf
 
-const PYTHON_SCRIPT = joinpath(@__DIR__, "..", "python", "python_methods.py")
+const PYTHON_SCRIPT = joinpath(@__DIR__, "..", "python", "python_methods_integrated.py")  # Use integrated methods
 const PYTHON_VENV = joinpath(@__DIR__, "..", "python", ".venv", "bin", "python")
 
 println("=" ^ 70)
@@ -52,7 +52,7 @@ else
 end
 
 # Export to JSON for Python
-input_json_path = joinpath(@__DIR__, "..", "data", "input", "$(trial_id).json")
+input_json_path = joinpath(@__DIR__, "..", "build", "data", "input", "$(trial_id).json")
 input_data = Dict(
 	"system" => "Lotka-Volterra",
 	"observable" => "x(t)",
@@ -77,7 +77,7 @@ open(input_json_path, "w") do f
 end
 
 # Call Python script with timeout
-output_json_path = joinpath(@__DIR__, "..", "data", "output", "$(trial_id)_results.json")
+output_json_path = joinpath(@__DIR__, "..", "build", "data", "output", "$(trial_id)_results.json")
 cmd = `$PYTHON_VENV $PYTHON_SCRIPT $input_json_path $output_json_path`
 
 println("Running Python methods...")
@@ -216,7 +216,7 @@ end
 # Save results
 println("\nSaving results...")
 df = DataFrame(all_results)
-results_dir = joinpath(@__DIR__, "..", "results", "pilot")
+results_dir = joinpath(@__DIR__, "..", "build", "results", "pilot")
 mkpath(results_dir)
 CSV.write(joinpath(results_dir, "minimal_pilot_results.csv"), df)
 

@@ -28,7 +28,7 @@ print("GENERATING PAPER TABLES AND PLOTS")
 print("="*80)
 
 # Load data
-results_dir = Path(__file__).parent.parent / "results" / "comprehensive"
+results_dir = Path(__file__).parent.parent / "build" / "results" / "comprehensive"
 summary = pd.read_csv(results_dir / "comprehensive_summary.csv")
 
 print(f"\nLoaded {len(summary)} rows from summary data")
@@ -38,8 +38,8 @@ noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2, 5e-2]
 orders = list(range(8))  # 0-7
 
 # Output directory
-output_dir = Path(__file__).parent.parent / "report" / "paper_figures"
-output_dir.mkdir(exist_ok=True)
+output_dir = Path(__file__).parent.parent / "build" / "tables" / "publication"
+output_dir.mkdir(parents=True, exist_ok=True)
 
 print(f"Output directory: {output_dir}")
 
@@ -117,8 +117,8 @@ print("\n" + "="*80)
 print("GENERATING PLOTS")
 print("="*80)
 
-plots_dir = output_dir / "plots"
-plots_dir.mkdir(exist_ok=True)
+plots_dir = Path(__file__).parent.parent / "build" / "figures" / "publication"
+plots_dir.mkdir(parents=True, exist_ok=True)
 
 THRESHOLD = 1.0  # nRMSE threshold for plotting
 
@@ -228,9 +228,171 @@ plt.close()
 
 print(f"Saved: {heatmap_file.name}")
 
+# ============================================================================
+# Generate key LaTeX table includes for paper
+# ============================================================================
+
+print("\n" + "="*80)
+print("GENERATING KEY LATEX TABLE INCLUDES")
+print("="*80)
+
+# Also load raw results for some tables
+raw_results = pd.read_csv(results_dir / "comprehensive_results.csv")
+
+# Table 1: Full Coverage Ranking
+print("\nGenerating tab:full_coverage_ranking...")
+coverage = summary.groupby('method').size()
+full_coverage_methods = coverage[coverage == 56].index.tolist()  # 8 orders × 7 noise levels = 56
+
+# Get method categories (from summary data)
+method_category = summary.groupby('method')['category'].first()
+
+# Compute overall ranking for full-coverage methods
+full_coverage_data = summary[summary['method'].isin(full_coverage_methods)].copy()
+overall_ranking = full_coverage_data.groupby('method').agg({
+    'mean_nrmse': 'mean'
+}).reset_index()
+overall_ranking['category'] = overall_ranking['method'].map(method_category)
+overall_ranking['coverage'] = '56/56'
+overall_ranking = overall_ranking.sort_values('mean_nrmse')
+overall_ranking['rank'] = range(1, len(overall_ranking) + 1)
+
+# Format nRMSE for display
+def format_nrmse_sci(x):
+    if x < 1:
+        return f"{x:.3f}"
+    elif x < 1000:
+        return f"{x:.1f}"
+    else:
+        exp = int(np.floor(np.log10(x)))
+        mantissa = x / 10**exp
+        return f"{mantissa:.1f}$\\times$10$^{{{exp}}}$"
+
+overall_ranking['mean_nrmse_fmt'] = overall_ranking['mean_nrmse'].apply(format_nrmse_sci)
+
+# Generate LaTeX table
+latex_ranking = output_dir / "tab_full_coverage_ranking.tex"
+with open(latex_ranking, 'w') as f:
+    f.write("% AUTO-GENERATED: Full-Coverage Methods Overall Performance\n")
+    f.write("% Data source: build/results/comprehensive/comprehensive_summary.csv\n")
+    f.write("\\begin{tabular}{clccc}\n")
+    f.write("\\toprule\n")
+    f.write("Rank & Method & Category & Mean nRMSE & Coverage \\\\\n")
+    f.write("\\midrule\n")
+    for _, row in overall_ranking.iterrows():
+        f.write(f"{row['rank']} & {row['method']} & {row['category']} & {row['mean_nrmse_fmt']} & {row['coverage']} \\\\\n")
+    f.write("\\bottomrule\n")
+    f.write("\\end{tabular}\n")
+
+print(f"  Saved: {latex_ranking.name}")
+
+# Table 2: Performance By Order
+print("\nGenerating tab:performance_by_order...")
+# Select representative methods
+representative_methods = ['GP-Julia-AD', 'Fourier-Interp', 'TrendFilter-k2', 'Savitzky-Golay', 'AAA-HighPrec']
+
+perf_by_order = []
+for method in representative_methods:
+    method_data = summary[summary['method'] == method].copy()
+    order_means = method_data.groupby('deriv_order')['mean_nrmse'].mean()
+    perf_by_order.append({
+        'method': method,
+        **{f'order_{i}': order_means.get(i, np.nan) for i in range(8)}
+    })
+
+perf_df = pd.DataFrame(perf_by_order)
+
+latex_perf = output_dir / "tab_performance_by_order.tex"
+with open(latex_perf, 'w') as f:
+    f.write("% AUTO-GENERATED: Performance Degradation Across Derivative Orders\n")
+    f.write("% Data source: build/results/comprehensive/comprehensive_summary.csv\n")
+    f.write("\\begin{tabular}{l" + "c" * 8 + "}\n")
+    f.write("\\toprule\n")
+    f.write("\\textbf{Method} & \\textbf{Order 0} & \\textbf{Order 1} & \\textbf{Order 2} & \\textbf{Order 3} & \\textbf{Order 4} & \\textbf{Order 5} & \\textbf{Order 6} & \\textbf{Order 7} \\\\\n")
+    f.write("\\midrule\n")
+    for _, row in perf_df.iterrows():
+        f.write(f"{row['method']}")
+        for i in range(8):
+            val = row[f'order_{i}']
+            f.write(f" & {format_nrmse_sci(val)}")
+        f.write(" \\\\\n")
+    f.write("\\bottomrule\n")
+    f.write("\\end{tabular}\n")
+
+print(f"  Saved: {latex_perf.name}")
+
+# Table 3: Timing Comparison
+print("\nGenerating tab:timing_comparison...")
+# Need timing data from raw_results
+timing_data = raw_results.groupby('method').agg({
+    'timing': 'mean',
+    'nrmse': 'mean'
+}).reset_index()
+timing_data = timing_data.sort_values('timing')
+
+# Select representative methods for comparison
+timing_methods = ['chebyshev', 'fourier', 'TrendFilter-k2', 'Fourier-Interp',
+                  'Savitzky-Golay', 'GP_RBF_Iso_Python', 'AAA-HighPrec', 'GP-Julia-AD']
+timing_subset = timing_data[timing_data['method'].isin(timing_methods)].copy()
+
+# Calculate speedup vs GP-Julia-AD
+gp_time = timing_subset[timing_subset['method'] == 'GP-Julia-AD']['timing'].values[0]
+timing_subset['speedup'] = gp_time / timing_subset['timing']
+
+latex_timing = output_dir / "tab_timing_comparison.tex"
+with open(latex_timing, 'w') as f:
+    f.write("% AUTO-GENERATED: Computational Cost vs Accuracy Trade-Off\n")
+    f.write("% Data source: build/results/comprehensive/comprehensive_results.csv\n")
+    f.write("\\begin{tabular}{lrrc}\n")
+    f.write("\\toprule\n")
+    f.write("\\textbf{Method} & \\textbf{Mean Time (s)} & \\textbf{Mean nRMSE} & \\textbf{Speedup vs GP} \\\\\n")
+    f.write("\\midrule\n")
+    for _, row in timing_subset.iterrows():
+        speedup_str = f"{row['speedup']:.1f}$\\times$" if row['speedup'] != 1.0 else "1.0$\\times$ (baseline)"
+        f.write(f"{row['method']} & {row['timing']:.4f} & {format_nrmse_sci(row['nrmse'])} & {speedup_str} \\\\\n")
+    f.write("\\bottomrule\n")
+    f.write("\\end{tabular}\n")
+
+print(f"  Saved: {latex_timing.name}")
+
+# Table 4: Noise Sensitivity at Order 4
+print("\nGenerating tab:noise_sensitivity_order4...")
+order4_data = summary[summary['deriv_order'] == 4].copy()
+order4_pivot = order4_data.pivot_table(
+    index='method',
+    columns='noise_level',
+    values='mean_nrmse'
+)
+
+# Select representative methods
+noise_methods = ['GP-Julia-AD', 'Fourier-Interp', 'TrendFilter-k2', 'Savitzky-Golay', 'AAA-HighPrec']
+order4_subset = order4_pivot.loc[noise_methods]
+
+latex_noise = output_dir / "tab_noise_sensitivity_order4.tex"
+with open(latex_noise, 'w') as f:
+    f.write("% AUTO-GENERATED: Noise Sensitivity at Derivative Order 4\n")
+    f.write("% Data source: build/results/comprehensive/comprehensive_summary.csv\n")
+    f.write("\\begin{tabular}{l" + "r" * len(noise_levels) + "}\n")
+    f.write("\\toprule\n")
+    f.write("\\textbf{Method}")
+    for nl in noise_levels:
+        f.write(f" & \\textbf{{{nl:.0e}}}")
+    f.write(" \\\\\n\\midrule\n")
+    for method, row in order4_subset.iterrows():
+        f.write(f"{method}")
+        for nl in noise_levels:
+            val = row[nl]
+            f.write(f" & {format_nrmse_sci(val)}")
+        f.write(" \\\\\n")
+    f.write("\\bottomrule\n")
+    f.write("\\end{tabular}\n")
+
+print(f"  Saved: {latex_noise.name}")
+
 print("\n" + "="*80)
 print("TABLE AND PLOT GENERATION COMPLETE")
 print("="*80)
 print(f"\nTables: {tables_dir}")
 print(f"Plots: {plots_dir}")
+print(f"LaTeX includes: {output_dir}")
 print("="*80)

@@ -58,7 +58,7 @@ for noise_level in NOISE_LEVELS
         y_noisy = noisy[:obs][1][0]
 
         # === Export to JSON for Python ===
-        input_json_path = joinpath(@__DIR__, "..", "data", "input", "$(trial_id).json")
+        input_json_path = joinpath(@__DIR__, "..", "build", "data", "input", "$(trial_id).json")
         input_data = Dict(
             "system" => "Lotka-Volterra",
             "observable" => "x(t)",
@@ -83,7 +83,7 @@ for noise_level in NOISE_LEVELS
         end
 
         # === Call Python script with timeout ===
-        output_json_path = joinpath(@__DIR__, "..", "data", "output", "$(trial_id)_results.json")
+        output_json_path = joinpath(@__DIR__, "..", "build", "data", "output", "$(trial_id)_results.json")
         cmd = `$PYTHON_VENV $PYTHON_SCRIPT $input_json_path $output_json_path`
 
         println("  Running Python methods...")
@@ -230,7 +230,7 @@ end
 # Save results
 println("\nSaving results...")
 df = DataFrame(all_results)
-results_dir = joinpath(@__DIR__, "..", "results", "comprehensive")
+results_dir = joinpath(@__DIR__, "..", "build", "results", "comprehensive")
 mkpath(results_dir)
 CSV.write(joinpath(results_dir, "comprehensive_results.csv"), df)
 

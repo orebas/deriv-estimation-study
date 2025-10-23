@@ -235,8 +235,8 @@ end
 mkpath(joinpath(@__DIR__, "..", "results"))
 mkpath(joinpath(@__DIR__, "..", "figures"))
 
-CSV.write(joinpath(@__DIR__, "..", "results", "results.csv"), df)
-CSV.write(joinpath(@__DIR__, "..", "results", "summary.csv"), summary)
+CSV.write(joinpath(@__DIR__, "..", "build", "results", "results.csv"), df)
+CSV.write(joinpath(@__DIR__, "..", "build", "results", "summary.csv"), summary)
 
 # Generate plots
 println("\nGenerating plots...")

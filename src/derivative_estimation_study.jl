@@ -697,9 +697,9 @@ df = aggregate_results(results)
 summary = create_summary_statistics(df)
 
 println("\nSaving results...")
-CSV.write(joinpath(@__DIR__, "..", "results", "raw_results.csv"), df)
-CSV.write(joinpath(@__DIR__, "..", "results", "summary_statistics.csv"), summary)
-serialize(joinpath(@__DIR__, "..", "results", "results.jls"), results)
+CSV.write(joinpath(@__DIR__, "..", "build", "results", "raw_results.csv"), df)
+CSV.write(joinpath(@__DIR__, "..", "build", "results", "summary_statistics.csv"), summary)
+serialize(joinpath(@__DIR__, "..", "build", "results", "results.jls"), results)
 
 println("\nGenerating visualizations...")
 generate_plots(df, summary, joinpath(@__DIR__, "..", "figures"))

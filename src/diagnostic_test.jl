@@ -65,7 +65,7 @@ println("=" ^ 70)
 
 # Export data for Python
 using JSON3
-input_json = joinpath(@__DIR__, "..", "data", "input", "diagnostic_test.json")
+input_json = joinpath(@__DIR__, "..", "build", "data", "input", "diagnostic_test.json")
 input_data = Dict(
     "system" => "Lotka-Volterra",
     "observable" => "x(t)",
@@ -90,7 +90,7 @@ open(input_json, "w") do f
 end
 
 # Run Python script with timeout
-output_json = joinpath(@__DIR__, "..", "data", "output", "diagnostic_test_results.json")
+output_json = joinpath(@__DIR__, "..", "build", "data", "output", "diagnostic_test_results.json")
 python_venv = joinpath(@__DIR__, "..", "python", ".venv", "bin", "python")
 python_script = joinpath(@__DIR__, "..", "python", "python_methods.py")
 cmd = `$python_venv $python_script $input_json $output_json`
