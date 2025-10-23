@@ -72,7 +72,7 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"AAA-LowPrec",
 		"AAA-Adaptive-Diff2",
 		"AAA-Adaptive-Wavelet",
-		"GP-Julia-SE",  # Analytic implementation is robust
+		# "GP-Julia-SE" removed per user request
 		"GP-Julia-AD",  # AD-based GP (simpler, more robust)
 		# Matérn methods disabled by default (can be enabled)
 		# "GP-Julia-Matern-0.5",
