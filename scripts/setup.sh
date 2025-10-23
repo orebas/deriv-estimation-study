@@ -59,9 +59,9 @@ echo ""
 echo "✓ Julia environment ready!"
 echo ""
 
-# Show installed packages
+# Show installed packages (limited output to avoid broken pipe)
 echo "Julia packages installed:"
-julia --project=. -e 'using Pkg; Pkg.status()' | head -20
+julia --project=. -e 'using Pkg; Pkg.status()' 2>&1 | head -20 || true
 echo ""
 
 # ============================================================================
@@ -73,21 +73,23 @@ echo "Setting up Python environment..."
 echo "=========================================="
 echo ""
 
-cd python
-
-# Check if pyproject.toml exists
+# Check if pyproject.toml exists in root
 if [ ! -f "pyproject.toml" ]; then
-    echo "✗ ERROR: python/pyproject.toml not found!"
+    echo "✗ ERROR: pyproject.toml not found!"
+    echo "  Expected location: $(pwd)/pyproject.toml"
     exit 1
 fi
 
-# Create virtual environment with uv
-echo "Running: uv venv"
-uv venv
+# Create python directory if it doesn't exist
+mkdir -p python
+
+# Create virtual environment with uv in python/.venv/
+echo "Running: uv venv python/.venv"
+uv venv python/.venv
 
 echo ""
-echo "Running: uv pip install -e ."
-uv pip install -e .
+echo "Running: uv pip install -e . (from root pyproject.toml)"
+uv pip install -e . --python python/.venv/bin/python
 
 echo ""
 echo "✓ Python environment ready!"
@@ -95,10 +97,8 @@ echo ""
 
 # Show installed packages
 echo "Python packages installed:"
-.venv/bin/python -m pip list | head -20
+python/.venv/bin/python -m pip list | head -20
 echo ""
-
-cd "$REPO_ROOT"
 
 # ============================================================================
 # Summary
