@@ -186,13 +186,14 @@ for dsize in PILOT_DATA_SIZES
                                     mae = mean(abs.(pred[valid] .- true_vals[valid]))
 
                                     # Determine category
-                                    category = if contains(method_name, "GP")
+                                    method_str = String(method_name)
+                                    category = if contains(method_str, "GP")
                                         "Gaussian Process"
-                                    elseif contains(method_name, "RBF")
+                                    elseif contains(method_str, "RBF")
                                         "RBF"
-                                    elseif contains(method_name, "Spline")
+                                    elseif contains(method_str, "Spline")
                                         "Spline"
-                                    elseif contains(method_name, "FD")
+                                    elseif contains(method_str, "FD")
                                         "Finite Difference"
                                     else
                                         "Other"
