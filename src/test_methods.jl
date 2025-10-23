@@ -4,7 +4,7 @@ Test script for Julia methods
 
 include("ground_truth.jl")
 include("noise_model.jl")
-include("julia_methods.jl")
+include("julia_methods_integrated.jl")
 
 using Random
 using Printf

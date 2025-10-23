@@ -6,7 +6,7 @@ Runs a minimal pilot to test the complete pipeline.
 
 include("ground_truth.jl")
 include("noise_model.jl")
-include("julia_methods.jl")
+include("julia_methods_integrated.jl")
 
 using Random
 using JSON3

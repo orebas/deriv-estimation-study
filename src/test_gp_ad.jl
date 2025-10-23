@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 
 include("ground_truth.jl")
-include("julia_methods.jl")
+include("julia_methods_integrated.jl")
 
 using Printf
 using Statistics
