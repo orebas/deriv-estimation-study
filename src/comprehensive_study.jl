@@ -43,8 +43,8 @@ configs = [(noise_level, trial)
            for trial in 1:TRIALS_PER_CONFIG]
 total_configs = length(configs)
 
-# Pre-allocate results array
-all_results_array = Vector{Vector{Dict{Symbol, Any}}}(undef, total_configs)
+# Pre-allocate results array (use Any to accept NamedTuples)
+all_results_array = Vector{Vector{Any}}(undef, total_configs)
 
 # Thread-safe lock for logging and file I/O
 io_lock = ReentrantLock()
