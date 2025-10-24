@@ -222,6 +222,72 @@ for noise_level in NOISE_LEVELS
                 end
             end
         end
+
+        # === Save combined predictions JSON (for visualization) ===
+        predictions_dir = joinpath(@__DIR__, "..", "build", "results", "comprehensive", "predictions")
+        mkpath(predictions_dir)
+
+        # Helper function to convert NaN/Inf to nothing for JSON compatibility
+        clean_for_json(x::AbstractArray) = map(v -> isfinite(v) ? v : nothing, x)
+        clean_for_json(x) = x
+
+        # Combine Python and Julia predictions
+        combined_methods = Dict{String, Any}()
+
+        # Add Python methods
+        if isfile(output_json_path)
+            python_output = JSON3.read(read(output_json_path, String))
+            for (method_name, method_result) in python_output["methods"]
+                # Clean predictions (convert NaN/Inf to null)
+                cleaned_preds = Dict(
+                    string(k) => clean_for_json(v)
+                    for (k, v) in method_result["predictions"]
+                )
+                combined_methods[string(method_name)] = Dict(
+                    "predictions" => cleaned_preds,
+                    "timing" => method_result["timing"],
+                    "success" => method_result["success"],
+                    "language" => "Python"
+                )
+            end
+        end
+
+        # Add Julia methods
+        for result in julia_results
+            # Clean predictions (convert NaN/Inf to null)
+            cleaned_preds = Dict(
+                string(k) => clean_for_json(v)
+                for (k, v) in result.predictions
+            )
+            combined_methods[result.name] = Dict(
+                "predictions" => cleaned_preds,
+                "timing" => result.timing,
+                "success" => result.success,
+                "language" => "Julia"
+            )
+        end
+
+        # Create combined JSON (also clean ground truth)
+        predictions_json = Dict(
+            "trial_id" => trial_id,
+            "config" => Dict(
+                "noise_level" => noise_level,
+                "trial" => trial,
+                "data_size" => DATA_SIZE
+            ),
+            "times" => times,
+            "ground_truth_derivatives" => Dict(
+                string(order) => clean_for_json(truth[:obs][1][order])
+                for order in 0:MAX_DERIV
+            ),
+            "methods" => combined_methods
+        )
+
+        # Write to predictions directory
+        predictions_path = joinpath(predictions_dir, "$(trial_id).json")
+        open(predictions_path, "w") do f
+            JSON3.write(f, predictions_json)
+        end
     end
 end
 
@@ -256,6 +322,7 @@ println("\n" * "=" ^ 80)
 println("COMPREHENSIVE STUDY COMPLETE")
 println("=" ^ 80)
 println("\nResults saved to: $(results_dir)")
-println("  - comprehensive_results.csv (raw data)")
+println("  - comprehensive_results.csv (aggregated metrics)")
 println("  - comprehensive_summary.csv (summary statistics)")
+println("  - predictions/ (raw prediction arrays for visualization)")
 println("=" ^ 80)
