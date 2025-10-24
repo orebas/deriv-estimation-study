@@ -84,8 +84,10 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"Dierckx-5",
 		"GSS",
 		"Savitzky-Golay",
-		"TrendFilter-k7",
-		"TrendFilter-k2",
+		# TrendFilter methods removed - output is discrete vector, not continuous function
+		# Linear interpolation used previously destroyed C^(k-1) smoothness property
+		# "TrendFilter-k7",
+		# "TrendFilter-k2",
 		"TVRegDiff-Julia",
 		"Central-FD",
 	]
