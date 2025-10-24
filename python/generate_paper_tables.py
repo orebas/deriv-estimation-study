@@ -259,6 +259,8 @@ overall_ranking['rank'] = range(1, len(overall_ranking) + 1)
 
 # Format nRMSE for display
 def format_nrmse_sci(x):
+    if np.isnan(x) or np.isinf(x):
+        return "---"  # Method failed for this order
     if x < 1:
         return f"{x:.3f}"
     elif x < 1000:
@@ -289,7 +291,7 @@ print(f"  Saved: {latex_ranking.name}")
 # Table 2: Performance By Order
 print("\nGenerating tab:performance_by_order...")
 # Select representative methods
-representative_methods = ['GP-Julia-AD', 'Fourier-Interp', 'TrendFilter-k2', 'Savitzky-Golay', 'AAA-HighPrec']
+representative_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay', 'AAA-HighPrec']
 
 perf_by_order = []
 for method in representative_methods:
@@ -331,7 +333,7 @@ timing_data = raw_results.groupby('method').agg({
 timing_data = timing_data.sort_values('timing')
 
 # Select representative methods for comparison
-timing_methods = ['chebyshev', 'fourier', 'TrendFilter-k2', 'Fourier-Interp',
+timing_methods = ['chebyshev', 'fourier', 'Fourier-Interp',
                   'Savitzky-Golay', 'GP_RBF_Iso_Python', 'AAA-HighPrec', 'GP-Julia-AD']
 timing_subset = timing_data[timing_data['method'].isin(timing_methods)].copy()
 
@@ -365,7 +367,7 @@ order4_pivot = order4_data.pivot_table(
 )
 
 # Select representative methods
-noise_methods = ['GP-Julia-AD', 'Fourier-Interp', 'TrendFilter-k2', 'Savitzky-Golay', 'AAA-HighPrec']
+noise_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay', 'AAA-HighPrec']
 order4_subset = order4_pivot.loc[noise_methods]
 
 latex_noise = output_dir / "tab_noise_sensitivity_order4.tex"
