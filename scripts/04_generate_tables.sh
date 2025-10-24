@@ -27,15 +27,26 @@ if [ ! -f "$PYTHON_VENV" ]; then
     exit 1
 fi
 
-echo "Generating LaTeX tables and plots..."
+echo "Generating publication tables..."
 $PYTHON_VENV python/generate_paper_tables.py
+
+echo ""
+echo "Generating supplemental tables..."
+$PYTHON_VENV python/generate_supplemental_tables.py
 
 # Check output
 if [ -d "build/tables/publication" ]; then
     echo ""
-    echo "✓ Tables generated!"
+    echo "✓ Publication tables generated!"
     echo "  Tables: build/tables/publication/"
     find build/tables/publication -name "*.tex" -o -name "*.csv" | wc -l | xargs echo "    Table files:"
+fi
+
+if [ -d "build/tables/supplemental" ]; then
+    echo ""
+    echo "✓ Supplemental tables generated!"
+    echo "  Tables: build/tables/supplemental/"
+    find build/tables/supplemental -name "*.tex" -o -name "*.csv" | wc -l | xargs echo "    Table files:"
 fi
 
 if [ -d "build/figures/publication" ]; then

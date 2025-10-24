@@ -111,10 +111,12 @@ for i, method in enumerate(methods, 1):
 
     plt.tight_layout()
 
-    # Save with sanitized filename
+    # Save with sanitized filename (both PDF and PNG)
     safe_name = method.replace('/', '_').replace(' ', '_').replace('.', '_')
-    output_file = per_method_dir / f"{safe_name}_heatmap.pdf"
-    plt.savefig(output_file, bbox_inches='tight', dpi=300)
+    output_pdf = per_method_dir / f"{safe_name}_heatmap.pdf"
+    output_png = per_method_dir / f"{safe_name}_heatmap.png"
+    plt.savefig(output_pdf, bbox_inches='tight', dpi=300)
+    plt.savefig(output_png, bbox_inches='tight', dpi=300)
     plt.close()
 
 print(f"\n✓ Generated {len(methods)} per-method heatmaps")
@@ -171,7 +173,7 @@ for i, method in enumerate(methods, 1):
     ax.set_title(f'{method}\nNoise Sensitivity by Derivative Order', fontweight='bold')
     ax.legend(loc='best', ncol=2, frameon=True)
     ax.grid(True, alpha=0.3, which='both')
-    ax.set_ylim(0, min(5.0, method_data['mean_nrmse'].max() * 1.1))  # Cap at reasonable range
+    ax.set_ylim(0, 1.0)  # Fixed scale 0-1 for easy comparison
 
     # Add horizontal reference lines
     ax.axhline(y=0.1, color='green', linestyle='--', linewidth=1, alpha=0.5, label='Excellent (0.1)')
@@ -181,8 +183,11 @@ for i, method in enumerate(methods, 1):
     plt.tight_layout()
 
     safe_name = method.replace('/', '_').replace(' ', '_').replace('.', '_')
-    output_file = per_method_dir / f"{safe_name}_noise_sensitivity.pdf"
-    plt.savefig(output_file, bbox_inches='tight', dpi=300)
+    # Save both PDF and PNG
+    output_pdf = per_method_dir / f"{safe_name}_noise_sensitivity.pdf"
+    output_png = per_method_dir / f"{safe_name}_noise_sensitivity.png"
+    plt.savefig(output_pdf, bbox_inches='tight', dpi=300)
+    plt.savefig(output_png, bbox_inches='tight', dpi=300)
     plt.close()
 
 print(f"\n✓ Generated {len(methods)} per-method line plots")
@@ -227,7 +232,7 @@ for order in orders:
     ax.set_title(f'Derivative Order {order}: Method Comparison\n(Top 15 methods by average nRMSE)', fontweight='bold')
     ax.legend(loc='best', ncol=2, frameon=True, fontsize=7)
     ax.grid(True, alpha=0.3, which='both')
-    ax.set_ylim(0, min(3.0, order_data['mean_nrmse'].quantile(0.95)))
+    ax.set_ylim(0, 1.0)  # Fixed scale 0-1 for easy comparison
 
     # Add reference bands
     ax.axhspan(0, 0.1, alpha=0.05, color='green', label='Excellent')
@@ -236,8 +241,11 @@ for order in orders:
 
     plt.tight_layout()
 
-    output_file = per_order_dir / f"order_{order}_method_comparison.pdf"
-    plt.savefig(output_file, bbox_inches='tight', dpi=300)
+    # Save both PDF and PNG
+    output_pdf = per_order_dir / f"order_{order}_method_comparison.pdf"
+    output_png = per_order_dir / f"order_{order}_method_comparison.png"
+    plt.savefig(output_pdf, bbox_inches='tight', dpi=300)
+    plt.savefig(output_png, bbox_inches='tight', dpi=300)
     plt.close()
 
 print(f"\n✓ Generated {len(orders)} per-order comparison plots")
@@ -249,8 +257,8 @@ print("\n" + "=" * 80)
 print("COMPREHENSIVE VISUALIZATION COMPLETE")
 print("=" * 80)
 print(f"\nGenerated:")
-print(f"  {len(methods)} per-method heatmaps → {per_method_dir}")
-print(f"  {len(methods)} per-method line plots → {per_method_dir}")
-print(f"  {len(orders)} per-order comparisons → {per_order_dir}")
-print(f"\nTotal: {2*len(methods) + len(orders)} plots")
+print(f"  {len(methods)} per-method heatmaps (PDF + PNG) → {per_method_dir}")
+print(f"  {len(methods)} per-method line plots (PDF + PNG) → {per_method_dir}")
+print(f"  {len(orders)} per-order comparisons (PDF + PNG) → {per_order_dir}")
+print(f"\nTotal: {2*len(methods) + len(orders)} plots × 2 formats = {2*(2*len(methods) + len(orders))} files")
 print("=" * 80)
