@@ -114,11 +114,7 @@ class AdaptiveMethods(MethodEvaluator):
             }
 
         if not ADAPTIVE_HYPERPARAMS:
-            return {
-                "predictions": {},
-                "failures": {0: "hyperparameters module not available"},
-                "meta": {"error": "hyperparameters module not found"}
-            }
+            raise RuntimeError("hyperparameters module not available")
 
         # Estimate noise and set adaptive tolerance with cap
         tol = select_aaa_tolerance(

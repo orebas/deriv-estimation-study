@@ -168,11 +168,7 @@ class SpectralMethods(MethodEvaluator):
                 meta: Number of harmonics, GCV score, and selection method
         """
         if not ADAPTIVE_HYPERPARAMS:
-            return {
-                "predictions": {},
-                "failures": {0: "hyperparameters module not available"},
-                "meta": {"error": "hyperparameters module not found"}
-            }
+            raise RuntimeError("hyperparameters module not available")
 
         t = self.x_train
         y = self.y_train
@@ -248,11 +244,7 @@ class SpectralMethods(MethodEvaluator):
                 meta: Filter fraction, cutoff frequency, and selection method
         """
         if not ADAPTIVE_HYPERPARAMS:
-            return {
-                "predictions": {},
-                "failures": {0: "hyperparameters module not available"},
-                "meta": {"error": "hyperparameters module not found"}
-            }
+            raise RuntimeError("hyperparameters module not available")
 
         from scipy.fft import fft, ifft, fftfreq
         from scipy.interpolate import interp1d
@@ -418,11 +410,7 @@ class SpectralMethods(MethodEvaluator):
                 meta: Harmonics, trend degree, selection methods, and scores
         """
         if not ADAPTIVE_HYPERPARAMS:
-            return {
-                "predictions": {},
-                "failures": {0: "hyperparameters module not available"},
-                "meta": {"error": "hyperparameters module not found"}
-            }
+            raise RuntimeError("hyperparameters module not available")
 
         t = self.x_train
         y = self.y_train
@@ -594,11 +582,7 @@ class SpectralMethods(MethodEvaluator):
             raise RuntimeError("autograd is not available")
 
         if not ADAPTIVE_HYPERPARAMS:
-            return {
-                "predictions": {},
-                "failures": {0: "hyperparameters module not available"},
-                "meta": {"error": "hyperparameters module not found"}
-            }
+            raise RuntimeError("hyperparameters module not available")
 
         t = self.x_train
         y = self.y_train

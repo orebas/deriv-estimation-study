@@ -127,10 +127,7 @@ class SplineMethods(MethodEvaluator):
                 meta: Polynomial degree, AICc score, and selection method
         """
         if not ADAPTIVE_HYPERPARAMS:
-            return {
-                "predictions": {order: [np.nan] * len(self.x_eval) for order in self.orders},
-                "failures": {"error": "Adaptive hyperparameters module not available"}
-            }
+            raise RuntimeError("hyperparameters module not available")
 
         tmin = float(self.x_train.min())
         tmax = float(self.x_train.max())
