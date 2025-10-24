@@ -51,8 +51,9 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"Fourier-Interp" => evaluate_fourier_interp,
 		"Fourier-FFT-Adaptive" => evaluate_fourier_fft_adaptive,
 
-		# Splines (1 method)
+		# Splines (2 methods)
 		"Dierckx-5" => evaluate_dierckx,
+		"GSS" => evaluate_gss,
 
 		# Filtering (1 method)
 		"Savitzky-Golay" => evaluate_savitzky_golay,
@@ -81,6 +82,7 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"Fourier-Interp",
 		"Fourier-FFT-Adaptive",
 		"Dierckx-5",
+		"GSS",
 		"Savitzky-Golay",
 		"TrendFilter-k7",
 		"TrendFilter-k2",

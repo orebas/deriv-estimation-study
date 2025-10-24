@@ -114,7 +114,7 @@ for noise_level in NOISE_LEVELS
         orders = collect(0:MAX_DERIV)
         julia_results = evaluate_all_julia_methods(
             times, y_noisy, times, orders;
-            params=Dict(:noise_level => noise_level)
+            params=Dict()
         )
 
         # === Compute errors ===
