@@ -14,16 +14,16 @@ cd "$REPO_ROOT"
 
 # Remove build directory contents (keep .gitkeep files)
 if [ -d "build" ]; then
-    echo "Cleaning build/ directory..."
+    echo "Cleaning build/ directory (includes results, figures, tables, tex, paper)..."
     find build -type f ! -name '.gitkeep' -delete
-    echo "  ✓ Removed generated files from build/"
+    echo "  ✓ Removed all generated files from build/"
 fi
 
-# Remove build_tex directory contents (keep .gitkeep)
-if [ -d "build_tex" ]; then
-    echo "Cleaning build_tex/ directory..."
-    find build_tex -type f ! -name '.gitkeep' -delete
-    echo "  ✓ Removed LaTeX build artifacts"
+# Remove report/paper.pdf if it exists (should be in build/paper/ now)
+if [ -f "report/paper.pdf" ]; then
+    echo "Removing report/paper.pdf (output should be in build/paper/)..."
+    rm -f "report/paper.pdf"
+    echo "  ✓ Removed PDF from report/ directory"
 fi
 
 # Remove any scattered old generated data (from pre-reorganization workflow)

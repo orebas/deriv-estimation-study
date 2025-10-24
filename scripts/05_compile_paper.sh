@@ -25,8 +25,8 @@ if [ ! -d "build/tables/publication" ] || [ -z "$(ls -A build/tables/publication
     exit 1
 fi
 
-# Create build_tex directory for LaTeX artifacts
-mkdir -p build_tex
+# Create build/tex directory for LaTeX artifacts
+mkdir -p build/tex
 
 # Check for pdflatex
 if ! command -v pdflatex &> /dev/null; then
@@ -84,14 +84,18 @@ echo "Copying paper.pdf to build/paper/..."
 mkdir -p ../build/paper
 cp paper.pdf ../build/paper/paper.pdf
 
-# Move LaTeX artifacts to build_tex
-echo "Moving LaTeX artifacts to build_tex/..."
-mv paper.aux paper.log paper.out paper.toc paper.bbl paper.blg ../build_tex/ 2>/dev/null || true
+# Move LaTeX artifacts to build/tex
+echo "Moving LaTeX artifacts to build/tex/..."
+mv paper.aux paper.log paper.out paper.toc paper.bbl paper.blg ../build/tex/ 2>/dev/null || true
+
+# Remove paper.pdf from report/ directory (keep report/ as pure source)
+echo "Removing paper.pdf from report/ (output is in build/paper/)..."
+rm -f paper.pdf
 
 echo ""
 echo "✓ Paper compiled successfully!"
 echo "  Output: build/paper/paper.pdf"
-echo "  LaTeX artifacts: build_tex/"
+echo "  LaTeX artifacts: build/tex/"
 
 # Count pages
 if command -v pdfinfo &> /dev/null; then
