@@ -19,8 +19,8 @@ echo "NOTE: This may take significant time depending on configuration."
 echo ""
 
 # Run comprehensive study with parallelization
-echo "Running comprehensive benchmark with 6 threads..."
-julia --project=. --threads=6 --startup-file=no src/comprehensive_study.jl
+echo "Running comprehensive benchmark with 4 threads..."
+julia --project=. --threads=4 --startup-file=no src/comprehensive_study.jl
 
 # Check results
 if [ -f "build/results/comprehensive/comprehensive_results.csv" ]; then

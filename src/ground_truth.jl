@@ -46,6 +46,122 @@ end
 
 
 """
+    van_der_pol_system()
+
+Define the Van der Pol oscillator with symbolic derivatives.
+This is a classic nonlinear oscillator with relaxation dynamics.
+
+The second-order equation ẍ - μ(1-x²)ẋ + x = 0 is rewritten as:
+    dx/dt = v
+    dv/dt = μ(1-x²)v - x
+
+With μ=3, this produces strong relaxation oscillations with fast/slow dynamics.
+
+Returns a NamedTuple with:
+- system: The ODE system
+- params: Parameter values
+- ic: Initial conditions
+- tspan: Time span
+- obs: Observable variables
+- name: System name
+"""
+function van_der_pol_system()
+    @variables x(t) v(t)
+    @parameters μ
+
+    # Van der Pol equations: dx/dt = v,  dv/dt = μ(1-x²)v - x
+    eqs = [
+        D(x) ~ v,
+        D(v) ~ μ * (1 - x^2) * v - x
+    ]
+
+    @named sys = ODESystem(eqs, t)
+
+    return (
+        system = structural_simplify(sys),
+        params = [μ => 3.0],  # μ=3 gives nice relaxation oscillations
+        ic = [x => 2.0, v => 0.0],  # Start away from origin for interesting trajectory
+        tspan = (0.0, 20.0),  # Longer time to capture several cycles
+        obs = [x],  # Observe x position (has sharp peaks/troughs)
+        name = "Van-der-Pol"
+    )
+end
+
+
+"""
+    lorenz_system()
+
+Define the Lorenz system with symbolic derivatives.
+This is a classic chaotic system exhibiting sensitive dependence on initial conditions.
+
+The equations are:
+    dx/dt = σ(y - x)
+    dy/dt = x(ρ - z) - y
+    dz/dt = xy - βz
+
+With standard parameters σ=10, ρ=28, β=8/3, the system exhibits chaotic behavior
+on the famous "butterfly" attractor.
+
+Returns a NamedTuple with:
+- system: The ODE system
+- params: Parameter values
+- ic: Initial conditions
+- tspan: Time span
+- obs: Observable variables
+- name: System name
+"""
+function lorenz_system()
+    @variables x(t) y(t) z(t)
+    @parameters σ ρ β
+
+    # Lorenz equations
+    eqs = [
+        D(x) ~ σ * (y - x),
+        D(y) ~ x * (ρ - z) - y,
+        D(z) ~ x * y - β * z
+    ]
+
+    @named sys = ODESystem(eqs, t)
+
+    return (
+        system = structural_simplify(sys),
+        params = [σ => 10.0, ρ => 25.0, β => 8.0/3.0],  # Mildly chaotic parameters (ρ slightly above critical 24.74)
+        ic = [x => 1.0, y => 1.0, z => 1.0],  # Generic initial condition
+        tspan = (0.0, 5.0),  # Shorter time span for gentler dynamics
+        obs = [x],  # Observe x-coordinate (oscillates between wings)
+        name = "Lorenz"
+    )
+end
+
+
+"""
+    get_all_ode_systems()
+
+Get dictionary of all available ODE systems.
+Keys are system identifiers (e.g., "lotka_volterra"), values are system definitions.
+
+To filter based on config, use get_all_ode_systems(enabled_keys).
+
+Returns a Dict{String, NamedTuple} where each value has the structure returned by
+lotka_volterra_system(), van_der_pol_system(), etc.
+"""
+function get_all_ode_systems(enabled_keys::Union{Vector{String}, Nothing}=nothing)
+    all_systems = Dict(
+        "lotka_volterra" => lotka_volterra_system(),
+        "van_der_pol" => van_der_pol_system(),
+        "lorenz" => lorenz_system()
+    )
+
+    # If specific systems are requested, filter
+    if enabled_keys !== nothing
+        return Dict(k => all_systems[k] for k in enabled_keys if haskey(all_systems, k))
+    else
+        return all_systems
+    end
+end
+
+
+"""
     calculate_symbolic_derivatives(sys_def, max_order)
 
 Calculate symbolic expressions for derivatives up to max_order.

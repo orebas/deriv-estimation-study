@@ -1,11 +1,15 @@
 # Central Configuration for Derivative Estimation Study
 # Single source of truth for all parameters
 
+[ode_systems]
+# Which ODE systems to include in comprehensive study
+enabled_systems = ["lotka_volterra", "van_der_pol", "lorenz"]
+
 [comprehensive_study]
 noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2, 5e-2]
-data_size = 101
+data_size = 251
 max_derivative_order = 7
-trials_per_config = 3
+trials_per_config = 10
 
 [pilot_study]
 trials = 2
@@ -15,6 +19,10 @@ max_derivative_order = 4
 
 [python]
 venv_path = "python/.venv"
+
+[performance]
+# Number of Julia threads for parallel execution
+julia_threads = 7
 
 [paths]
 build_dir = "build"

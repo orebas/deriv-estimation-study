@@ -30,15 +30,16 @@ println("COMPREHENSIVE DERIVATIVE ESTIMATION STUDY")
 println("=" ^ 80)
 print_config_summary(:comprehensive)
 
-# Generate ground truth once
-println("\nGenerating ground truth...")
-sys = lotka_volterra_system()
-times = collect(range(sys.tspan[1], sys.tspan[2], length=DATA_SIZE))
-truth = generate_ground_truth(sys, times, MAX_DERIV)
+# Load enabled ODE systems from config
+enabled_ode_keys = get_enabled_ode_systems()
+println("\nEnabled ODE systems: $(join(enabled_ode_keys, ", "))")
+ode_systems = get_all_ode_systems(enabled_ode_keys)
+println("Loaded $(length(ode_systems)) ODE system(s)")
 
 # Run comprehensive study
 # Create flat configuration list for parallel execution
-configs = [(noise_level, trial)
+configs = [(ode_key, noise_level, trial)
+           for ode_key in enabled_ode_keys
            for noise_level in NOISE_LEVELS
            for trial in 1:TRIALS_PER_CONFIG]
 total_configs = length(configs)
@@ -52,16 +53,22 @@ io_lock = ReentrantLock()
 println("\nRunning $total_configs configurations with $(Threads.nthreads()) threads in parallel...\n")
 
 @threads for config_idx in 1:total_configs
-    noise_level, trial = configs[config_idx]
+    ode_key, noise_level, trial = configs[config_idx]
     config_results = []  # Thread-local results
-    trial_id = "noise$(Int(noise_level*1e8))e-8_trial$(trial)"
+    trial_id = "$(ode_key)_noise$(Int(noise_level*1e8))e-8_trial$(trial)"
 
     lock(io_lock) do
-        println("[$(config_idx)/$total_configs] Thread $(threadid()): Processing noise=$(noise_level), trial=$trial...")
+        println("[$(config_idx)/$total_configs] Thread $(threadid()): Processing ODE=$(ode_key), noise=$(noise_level), trial=$trial...")
     end
 
+    # Generate ground truth for this ODE system
+    sys_def = ode_systems[ode_key]
+    times = collect(range(sys_def.tspan[1], sys_def.tspan[2], length=DATA_SIZE))
+    truth = generate_ground_truth(sys_def, times, MAX_DERIV)
+
     # Add noise (use unique seed per config for thread safety)
-    rng = MersenneTwister(54321 + trial + config_idx * 1000)
+    # Changed seed from 54321 to 98765 to generate different noise realizations
+    rng = MersenneTwister(98765 + trial + config_idx * 1000)
     noisy = add_noise_to_data(truth, noise_level, rng; model=ConstantGaussian)
 
     # Extract observable 1
@@ -71,7 +78,8 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
     # === Export to JSON for Python ===
     input_json_path = joinpath(@__DIR__, "..", "build", "data", "input", "$(trial_id).json")
     input_data = Dict(
-        "system" => "Lotka-Volterra",
+        "system" => sys_def.name,
+        "ode_key" => ode_key,
         "observable" => "x(t)",
         "times" => times,
         "y_noisy" => y_noisy,
@@ -85,7 +93,7 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
             "data_size" => DATA_SIZE,
             "noise_level" => noise_level,
             "trial" => trial,
-            "tspan" => [sys.tspan[1], sys.tspan[2]]
+            "tspan" => [sys_def.tspan[1], sys_def.tspan[2]]
         )
     )
 
@@ -162,6 +170,7 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
                             nrmse = rmse / max(true_std, 1e-12)  # Avoid division by near-zero
 
                             push!(config_results, (
+                                ode_system = ode_key,
                                 noise_level = noise_level,
                                 trial = trial,
                                 method = result.name,
@@ -221,6 +230,7 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
                                 end
 
                                 push!(config_results, (
+                                    ode_system = ode_key,
                                     noise_level = noise_level,
                                     trial = trial,
                                     method = method_str,
@@ -322,9 +332,9 @@ results_dir = joinpath(@__DIR__, "..", "build", "results", "comprehensive")
 mkpath(results_dir)
 CSV.write(joinpath(results_dir, "comprehensive_results.csv"), df)
 
-# Create summary statistics
+# Create summary statistics (grouped by ODE system)
 println("Creating summary statistics...")
-summary = combine(groupby(df, [:method, :category, :language, :deriv_order, :noise_level])) do sdf
+summary = combine(groupby(df, [:ode_system, :method, :category, :language, :deriv_order, :noise_level])) do sdf
     (
         mean_rmse = mean(sdf.rmse),
         std_rmse = std(sdf.rmse),
@@ -342,11 +352,45 @@ end
 
 CSV.write(joinpath(results_dir, "comprehensive_summary.csv"), summary)
 
+# Create failure report (methods with missing trials)
+println("Creating failure report...")
+expected_trials = TRIALS_PER_CONFIG * length(enabled_ode_keys)
+failure_report = combine(groupby(summary, [:method, :deriv_order, :noise_level])) do sdf
+	total_trials = sum(sdf.trials)
+	failures = expected_trials - total_trials
+	(
+		total_successful = total_trials,
+		total_failures = failures,
+		failure_rate = failures / expected_trials,
+		affected_odes = join([row.ode_system for row in eachrow(sdf) if row.trials < TRIALS_PER_CONFIG], ", ")
+	)
+end
+# Sort by failure rate (descending) to show most problematic methods first
+sort!(failure_report, :total_failures, rev=true)
+CSV.write(joinpath(results_dir, "failure_report.csv"), failure_report)
+
+# Print summary of failures
+println("\nFailure Summary:")
+critical_failures = filter(row -> row.total_failures > 0, failure_report)
+if nrow(critical_failures) > 0
+	println("  $(nrow(critical_failures)) method/config combinations have failures")
+	top_failures = first(critical_failures, 10)
+	for row in eachrow(top_failures)
+		println("    $(row.method) (order=$(row.deriv_order), noise=$(row.noise_level)): $(row.total_failures)/$(expected_trials) failures ($(round(row.failure_rate*100, digits=1))%)")
+	end
+	if nrow(critical_failures) > 10
+		println("    ... and $(nrow(critical_failures) - 10) more (see failure_report.csv)")
+	end
+else
+	println("  ✓ No failures detected - all methods completed successfully!")
+end
+
 println("\n" * "=" ^ 80)
 println("COMPREHENSIVE STUDY COMPLETE")
 println("=" ^ 80)
 println("\nResults saved to: $(results_dir)")
 println("  - comprehensive_results.csv (aggregated metrics)")
 println("  - comprehensive_summary.csv (summary statistics)")
+println("  - failure_report.csv (methods with missing/failed trials)")
 println("  - predictions/ (raw prediction arrays for visualization)")
 println("=" ^ 80)
