@@ -43,6 +43,18 @@ function get_comprehensive_config()
 end
 
 """
+    get_enabled_ode_systems()
+
+Get list of enabled ODE systems from configuration.
+Returns Vector{String} of ODE system keys (e.g., ["lotka_volterra", "van_der_pol", "lorenz"])
+"""
+function get_enabled_ode_systems()
+    config = load_config()
+    ode_systems = config["ode_systems"]
+    return String.(ode_systems["enabled_systems"])
+end
+
+"""
     get_pilot_config()
 
 Get configuration for pilot study.
