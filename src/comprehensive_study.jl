@@ -225,6 +225,8 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
                                     "Spline"
                                 elseif contains(method_str, "FD")
                                     "Finite Difference"
+                                elseif contains(method_str, "Fourier") || contains(method_str, "Chebyshev")
+                                    "Spectral"
                                 else
                                     "Other"
                                 end
