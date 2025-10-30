@@ -13,10 +13,11 @@ METHODS_TO_PLOT = [
     'Dierckx-5',
     'Fourier-Interp',
 ]
-# Use absolute paths for robustness
-ROOT_DIR = Path('/home/orebas/tmp/deriv-estimation-study')
+# Use paths relative to script location
+SCRIPT_DIR = Path(__file__).parent
+ROOT_DIR = SCRIPT_DIR.parent.parent
 PREDICTIONS_FILE = ROOT_DIR / 'build/results/comprehensive/predictions' / f'{TRIAL_ID}.json'
-OUTPUT_DIR = ROOT_DIR / 'gemini-analysis/paper/figures'
+OUTPUT_DIR = SCRIPT_DIR / 'figures'
 OUTPUT_FILENAME = OUTPUT_DIR / 'low_noise_fit_comparison.png'
 
 # --- Plot Styling ---
@@ -86,6 +87,6 @@ ax.autoscale(enable=True, axis='y', tight=True)
 
 # --- Final Touches ---
 fig.tight_layout(pad=2.0)
-fig.savefig(OUTPUT_FILENAME, dpi=150)
+fig.savefig(OUTPUT_FILENAME, dpi=300)  # 300 DPI for publication quality
 
 print(f"Figure saved to {OUTPUT_FILENAME}")

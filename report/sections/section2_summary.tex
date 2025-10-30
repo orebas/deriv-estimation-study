@@ -24,21 +24,19 @@ The subsequent sections of this paper will detail the experimental journey and a
 
 The quantitative results in the summary table are powerfully illustrated by a few key visualizations.
 
-% NOTE: Qualitative comparison figures (high_noise_fit_comparison, low_noise_fit_comparison)
-% are not yet implemented. Uncomment when they are generated.
-%\begin{figure}[htbp]
-%\centering
-%\includegraphics[width=0.9\textwidth]{high_noise_fit_comparison.png}
-%\caption{\textbf{High-Noise Performance.} This figure compares the top-performing methods on a challenging 4th-order derivative estimation task with 2\% noise. The \texttt{GP-Julia-AD} method tracks the ground truth almost perfectly, while the fixed \texttt{GP-RBF-Python} also performs well. \texttt{Savitzky-Golay}, a simpler filtering method, provides a robust, if slightly less precise, estimate, demonstrating its value as a baseline.}
-%\label{fig:high_noise_comp}
-%\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{high_noise_fit_comparison.png}
+\caption{\textbf{High-Noise Performance.} This figure compares the top-performing methods on a challenging 4th-order derivative estimation task with 2\% noise. The \texttt{GP-Julia-AD} method tracks the ground truth almost perfectly, while the fixed \texttt{GP-RBF-Python} also performs well. \texttt{Savitzky-Golay}, a simpler filtering method, provides a robust, if slightly less precise, estimate, demonstrating its value as a baseline.}
+\label{fig:high_noise_comp}
+\end{figure}
 
-%\begin{figure}[htbp]
-%\centering
-%\includegraphics[width=0.9\textwidth]{low_noise_fit_comparison.png}
-%\caption{\textbf{Low-Noise Precision.} In a low-noise environment (1e-8), this figure shows that for a 5th-order derivative, precision-focused methods become highly competitive. \texttt{Dierckx-5} (a smoothing spline) and \texttt{Fourier-Interp} (a spectral method) match the performance of \texttt{GP-Julia-AD}, illustrating that GPR's main advantage lies in its robustness to noise.}
-%\label{fig:low_noise_comp}
-%\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{low_noise_fit_comparison.png}
+\caption{\textbf{Low-Noise Precision.} In a low-noise environment (1e-8), this figure shows that for a 5th-order derivative, precision-focused methods become highly competitive. \texttt{Dierckx-5} (a smoothing spline) and \texttt{Fourier-Interp} (a spectral method) match the performance of \texttt{GP-Julia-AD}, illustrating that GPR's main advantage lies in its robustness to noise.}
+\label{fig:low_noise_comp}
+\end{figure}
 
 \begin{figure}[htbp]
 \centering
