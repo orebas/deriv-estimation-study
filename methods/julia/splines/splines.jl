@@ -10,6 +10,7 @@ include("../common.jl")
 using Dierckx
 using GeneralizedSmoothingSplines
 using ForwardDiff
+using Random
 
 # Import noise estimation module
 include(joinpath(@__DIR__, "..", "..", "..", "src", "hyperparameter_selection.jl"))
@@ -54,7 +55,7 @@ function evaluate_dierckx(
 	y::Vector{Float64},
 	x_eval::Vector{Float64},
 	orders::Vector{Int};
-	params = Dict()
+	params = Dict(),
 )
 	t_start = time()
 	predictions = Dict{Int, Vector{Float64}}()
@@ -111,19 +112,49 @@ function fit_gss_spline(x, y; max_order = 7, noise_level = 0.0)
 
 	# Tune lambda using marginal likelihood if noise level is available
 	if noise_level > 0.0
+		# Try standard tuning; on failure, retry with tiny jitter and multiple seeds
+		local tuned = false
 		try
 			GeneralizedSmoothingSplines.tune!(model, x, y; show_trace = false)
+			tuned = true
 		catch e
-			# If tuning fails, use default lambda
-			@warn "GSS tuning failed, using default lambda" exception = e
+			@warn "GSS tuning failed (first attempt), retrying with jitter" exception = e
+			# Retry strategy: add tiny jitter only for tuning (do not change final fit data)
+			σy = std(y)
+			jitter_scale = max(σy, 1.0) * 1e-12
+			y_tune = y .+ jitter_scale .* randn(length(y))
+
+			# Try again with jitter
+			try
+				GeneralizedSmoothingSplines.tune!(model, x, y_tune; show_trace = false)
+				tuned = true
+			catch e2
+				@warn "GSS tuning failed (jitter attempt), trying seed lambdas" exception = e2
+				# Try a small set of seed lambdas and re-tune from there
+				for seed in (1e-6, 1e-4, 1e-2, 1.0, 1e2)
+					try
+						model.lambda = seed
+						GeneralizedSmoothingSplines.tune!(model, x, y_tune; show_trace = false)
+						tuned = true
+						break
+					catch
+						# continue trying other seeds
+					end
+				end
+				if !tuned
+					@warn "GSS tuning failed after retries; using default lambda" lambda = model.lambda
+				end
+			end
 		end
+		# Ensure strictly positive lambda in any case
+		model.lambda = max(model.lambda, 1e-12)
 	end
 
 	# Fit the model
 	fitresult, _, _ = GeneralizedSmoothingSplines.MMI.fit(model, 0, x, y)
 
 	# Return prediction function
-	pred_fn = function(t::T) where T
+	pred_fn = function (t::T) where T
 		result_vec = GeneralizedSmoothingSplines.MMI.predict(model, fitresult, T[t])
 		return result_vec[1]
 	end
@@ -158,7 +189,7 @@ function evaluate_gss(
 	y::Vector{Float64},
 	x_eval::Vector{Float64},
 	orders::Vector{Int};
-	params = Dict()
+	params = Dict(),
 )
 	t_start = time()
 	predictions = Dict{Int, Vector{Float64}}()

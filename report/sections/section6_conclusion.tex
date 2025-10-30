@@ -1,0 +1,31 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This comprehensive study evaluated a wide array of numerical methods for the estimation of high-order derivatives from noisy data. After a detailed investigation that included a multi-stage filtering of methods and a deep dive into implementation details, our findings are clear and decisive.
+
+\subsection{Summary of Key Findings}
+
+\begin{itemize}
+    \item \textbf{Gaussian Process Regression (GPR) is the most robust and accurate method overall.} GPR methods consistently occupy the top ranks in both low- and high-noise regimes, making them the most reliable choice for general-purpose derivative estimation.
+    \item \textbf{The optimal method depends on the use case.} While GPR is the best all-arounder, splines like \texttt{Dierckx-5} offer excellent precision for low-noise data, while spectral methods like \texttt{Fourier-Continuation} provide a compelling balance of speed and accuracy. For speed-critical applications, \texttt{Savitzky-Golay} is a robust and effective baseline.
+    \item \textbf{Derivative order is the dominant difficulty factor.} Performance degrades systematically with increasing order across all methods. The problem becomes significantly more challenging beyond order 3, and only a handful of methods produce usable results at orders 6 or 7.
+    \item \textbf{Implementation quality is a critical method characteristic.} Our study found significant performance differences between different software packages implementing the same underlying algorithm, highlighting that practitioners must consider the quality of a specific implementation, not just the theoretical method.
+\end{itemize}
+
+\textbf{The primary recommendation of this work is that for practitioners who require accurate high-order derivatives from real-world, noisy signals, Gaussian Process Regression is the most reliable and effective starting point.}
+
+\subsection{Future Work}
+
+This benchmark, while comprehensive, is not exhaustive. Several avenues for future research are immediately apparent:
+
+\begin{enumerate}
+    \item \textbf{Testing on Diverse Signals:} Our study used ODEs that produce smooth, analytic signals. Future work should include testing on more challenging signals, such as those with discontinuities, sharp peaks, or chaotic behavior.
+    \item \textbf{Evaluating Alternative Noise Models:} The real world is not always Gaussian. A valuable extension would be to evaluate method performance under different noise models, such as multiplicative, Poisson, or heavy-tailed noise.
+    \item \textbf{Larger-Scale Problems:} Our study was limited to a modest number of data points. Investigating how method performance, particularly computational cost, scales to much larger datasets ($N > 1000$) would be of great practical interest.
+\end{enumerate}
+
+\subsection{Broader Implications: The Case for a Composable, Differentiable Ecosystem}
+
+Our findings also underscore a broader trend in scientific computing: the immense value of composable and differentiable software packages. The "Approximant-AD" framework is only possible when libraries for data modeling (e.g., Gaussian Processes) can seamlessly pass their results to libraries for automatic differentiation.
+
+While not all numerical packages are readily differentiable out-of-the-box, our experience suggests that many can be adapted with modest effort. We encourage researchers and developers to prioritize differentiability in their own software and to contribute upstream to make foundational libraries in the ecosystem compatible with AD frameworks. Such efforts create a virtuous cycle, unlocking powerful new hybrid methodologies that benefit the entire scientific community, far beyond the immediate application of derivative estimation.

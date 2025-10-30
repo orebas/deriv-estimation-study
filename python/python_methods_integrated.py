@@ -251,14 +251,13 @@ def main():
         "Fourier-FFT-Adaptive",
         "Fourier-Continuation-Adaptive",
         "ad_trig_adaptive",
+        # Removed AAA-JAX* and SavitzkyGolay_Python per request
         "AAA-Python-Adaptive-Wavelet",
         "AAA-Python-Adaptive-Diff2",
-        "AAA-JAX-Adaptive-Wavelet",
-        "AAA-JAX-Adaptive-Diff2",
         # IFAC25 legacy methods
         "Butterworth_Python",
         "ButterworthSpline_Python",
-        "SavitzkyGolay_Python",
+        # "SavitzkyGolay_Python",  # disabled
         "SVR_Python",
         "KalmanGrad_Python",
         "TVRegDiff_Python",
@@ -318,7 +317,11 @@ def main():
         new_res["predictions"] = _clean_predictions(res.get("predictions", {}), m)
         # Infer success from presence of valid predictions
         new_res["success"] = len(new_res["predictions"]) > 0 and len(res.get("failures", {})) == 0
-        cleaned_results[m] = new_res
+        # Upstream disambiguation: ensure Python FFT-adaptive method is uniquely named
+        display_name = m
+        if m == "Fourier-FFT-Adaptive":
+            display_name = "Fourier-FFT-Adaptive-Python"
+        cleaned_results[display_name] = new_res
 
     output_data = {
         "trial_id": (data.get("config", {}) or {}).get("trial_id", None),

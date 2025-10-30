@@ -1,0 +1,55 @@
+# 2. Summary of Key Findings
+
+Before detailing our experimental journey, we present the primary conclusions of this study. After a comprehensive evaluation across a range of methods, three distinct dynamical systems, and a wide range of noise levels, a clear verdict emerges. Performance was analyzed in two regimes: a "low-noise" regime (≤ 0.1% noise) where precision is paramount, and a "high-noise" regime (1-2% noise) where robustness is key.
+
+The table below summarizes the performance of 21 contender methods that demonstrated full data coverage for derivative orders 0 through 5. Methods are sorted by their overall average rank, giving equal weight to performance in both low- and high-noise regimes. Averages are calculated over orders 0-5.
+
+| Method                |   Avg. Rank (Overall) |   Avg. Rank (Low Noise) | Avg. nRMSE (Low Noise)   |   Avg. Rank (High Noise) | Avg. nRMSE (High Noise)   |
+|:----------------------|----------------------:|------------------------:|:-------------------------|-------------------------:|:--------------------------|
+| GP-Julia-AD           |                   2.6 |                     2.6 | 0.021                    |                      2.6 | 0.314                     |
+| GP-RBF-Iso-Python     |                   2.8 |                     3.1 | 0.025                    |                      2.4 | 0.314                     |
+| GP-RBF-Mean-Py        |                   3.5 |                     3.4 | 0.025                    |                      3.6 | 0.314                     |
+| GP-RBF-Python         |                   3.7 |                     3.9 | 0.025                    |                      3.4 | 0.314                     |
+| Dierckx-5             |                   8.4 |                     6.7 | 0.151                    |                     10.1 | 0.554                     |
+| Fourier-Continuation  |                   9.4 |                    11.7 | 0.435                    |                      7.1 | 0.473                     |
+| Fourier-Interp        |                   9.6 |                     8.8 | 0.415                    |                     10.4 | 2.461                     |
+| FFT-Adaptive-Julia    |                  10.5 |                    10.2 | 0.468                    |                     10.8 | 0.603                     |
+| Fourier-GCV           |                  10.6 |                    12.2 | 0.464                    |                      8.9 | 0.498                     |
+| Fourier               |                  10.8 |                    12.6 | 0.520                    |                      8.9 | 0.559                     |
+| Savitzky-Golay        |                  10.8 |                    12.8 | 0.444                    |                      8.8 | 0.452                     |
+| Fourier-Cont-Adaptive |                  11.9 |                    13.6 | 0.569                    |                     10.1 | 0.575                     |
+| FFT-Adaptive-Py       |                  12.2 |                    12.8 | 0.813                    |                     11.6 | 0.618                     |
+| AAA-Adaptive-Wavelet  |                  12.5 |                     8.0 | >10                      |                     16.9 | >10                       |
+| AAA-Adaptive-Diff2    |                  14.1 |                    11.2 | >10                      |                     16.9 | >10                       |
+| TVRegDiff_Python      |                  14.4 |                    14.1 | 6.666                    |                     14.6 | >10                       |
+| AAA-LowPrec           |                  14.9 |                    10.3 | 0.233                    |                     19.6 | >10                       |
+| GSS                   |                  15.7 |                    16.9 | 0.742                    |                     14.4 | 0.742                     |
+| KalmanGrad_Python     |                  16.9 |                    17.8 | 0.866                    |                     16.1 | 0.866                     |
+| Chebyshev-AICc        |                  17.6 |                    18.8 | 7.499                    |                     16.4 | 7.636                     |
+| Chebyshev             |                  18.2 |                    19.2 | 1.689                    |                     17.2 | 1.689                     |
+
+**Our principal findings are as follows:**
+
+1.  **Gaussian Process Regression (GPR) is the most robust and accurate method overall.** The Julia GPR implementation (`GP-Julia-AD`) and the improved Python variants (`GP-RBF-*`) are the clear winners, consistently occupying the top ranks in both low and high-noise regimes.
+
+2.  **The optimal method depends on the noise level and derivative order.** While GPR is the best all-arounder, splines like `Dierckx-5` offer excellent precision in low-noise environments, making them a top choice for cleaner data. In the high-noise regime, the filtering-based `Savitzky-Golay` provides a computationally cheap and highly effective alternative, ranking solidly in the top half of contenders.
+
+3.  **Theoretical limits matter.** Many common low-degree spline methods are, by definition, incapable of representing high-order derivatives, limiting their applicability.
+
+The subsequent sections of this paper will detail the experimental journey and analysis that led to these conclusions, providing a narrative account of our investigation and offering a practical framework for method selection.
+
+### Visual Confirmation of Findings
+
+The quantitative results in the summary table are powerfully illustrated by a few key visualizations.
+
+![High-Noise Derivative Estimation Comparison](./figures/high_noise_fit_comparison.png)
+**Figure 1: High-Noise Performance.** This figure compares the top-performing methods on a challenging 4th-order derivative estimation task with 2% noise. The `GP-Julia-AD` method tracks the ground truth almost perfectly, while the fixed `GP-RBF-Python` also performs well. `Savitzky-Golay`, a simpler filtering method, provides a robust, if slightly less precise, estimate, demonstrating its value as a baseline.
+
+![Low-Noise Derivative Estimation Comparison](./figures/low_noise_fit_comparison.png)
+**Figure 2: Low-Noise Precision.** In a low-noise environment (1e-8), this figure shows that for a 5th-order derivative, precision-focused methods become highly competitive. `Dierckx-5` (a smoothing spline) and `Fourier-Interp` (a spectral method) match the performance of `GP-Julia-AD`, illustrating that GPR's main advantage lies in its robustness to noise.
+
+![Performance Heatmap Across Derivative Orders](./figures/performance_heatmap.png)
+**Figure 3: Performance Degradation with Increasing Derivative Order.** This heatmap shows the mean nRMSE for top methods at a 1% noise level. The vertical axis is sorted by average performance across all orders. This visualization clearly shows that `GP-Julia-AD` maintains low error across all derivative orders, while other methods like `Dierckx-5` and `GSS` are highly accurate for low orders but degrade significantly as the order increases.
+
+![Speed vs. Accuracy Trade-off](./figures/speed_accuracy_pareto.png)
+**Figure 4: Speed vs. Accuracy Trade-off.** For practitioners, the choice of method often involves a trade-off between computational cost and accuracy. This plot visualizes that trade-off for the contender methods. The black line represents the "Pareto Front"—the set of methods that are optimally efficient. Methods on this line represent the best possible accuracy for a given level of computational cost (or the fastest method for a given level of accuracy). This allows a practitioner to select a method that aligns with their specific computational budget and accuracy requirements. The plot clearly shows that the GPR methods, while the most accurate, are also the most computationally expensive.

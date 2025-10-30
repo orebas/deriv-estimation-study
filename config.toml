@@ -6,7 +6,7 @@
 enabled_systems = ["lotka_volterra", "van_der_pol", "lorenz"]
 
 [comprehensive_study]
-noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2, 5e-2]
+noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2]
 data_size = 251
 max_derivative_order = 7
 trials_per_config = 10

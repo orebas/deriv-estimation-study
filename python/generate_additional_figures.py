@@ -85,7 +85,10 @@ for category in method_summary['category'].unique():
     )
 
 # Annotate top methods
-top_methods = ['GP-Julia-AD', 'AAA-HighPrec', 'Fourier-Interp', 'Central-FD-5pt']
+# Select top methods dynamically (check availability)
+candidate_top_methods = ['GP-Julia-AD', 'AAA-LowPrec', 'Fourier-Interp', 'Central-FD', 'GP_RBF_Python']
+available_top_methods = method_summary['method'].values
+top_methods = [m for m in candidate_top_methods if m in available_top_methods][:4]  # Top 4
 for method in top_methods:
     if method in method_summary['method'].values:
         row = method_summary[method_summary['method'] == method].iloc[0]
@@ -111,7 +114,7 @@ ax.legend(loc='best', frameon=True, ncol=2)
 ax.axhline(y=1.0, color='red', linestyle='--', linewidth=1, alpha=0.5, label='nRMSE=1.0 (acceptable limit)')
 
 plt.tight_layout()
-pareto_file = output_dir / "pareto_frontier.pdf"
+pareto_file = output_dir / "pareto_frontier.png"
 plt.savefig(pareto_file, bbox_inches='tight', dpi=300)
 plt.close()
 
@@ -188,7 +191,7 @@ for idx, order in enumerate(orders):
 fig.suptitle('Performance Across Derivative Orders: Top 7 Methods', fontsize=14, fontweight='bold', y=0.995)
 
 plt.tight_layout(rect=[0, 0, 1, 0.99])
-small_multiples_file = output_dir / "small_multiples_grid.pdf"
+small_multiples_file = output_dir / "small_multiples_grid.png"
 plt.savefig(small_multiples_file, bbox_inches='tight', dpi=300)
 plt.close()
 
@@ -249,11 +252,12 @@ if input_json.exists() and output_json.exists():
     ax1.grid(True, alpha=0.3)
     ax1.legend()
 
-    # Panel B: AAA-HighPrec vs Fourier-Interp
+    # Panel B: AAA vs Fourier-Interp (use available AAA method)
+    aaa_method = 'AAA-LowPrec' if 'AAA-LowPrec' in method_summary['method'].values else 'AAA-Adaptive-Diff2'
     ax2.plot(times, ground_truth, 'k-', linewidth=2, label='Ground Truth', alpha=0.8)
     ax2.set_xlabel('Time')
     ax2.set_ylabel(f'd⁴y/dt⁴')
-    ax2.set_title('Panel B: AAA-HighPrec vs Fourier-Interp', fontweight='bold')
+    ax2.set_title(f'Panel B: {aaa_method} vs Fourier-Interp', fontweight='bold')
     ax2.grid(True, alpha=0.3)
     ax2.legend()
 
@@ -266,7 +270,7 @@ if input_json.exists() and output_json.exists():
     ax3.legend()
 
     plt.tight_layout()
-    qualitative_file = output_dir / "qualitative_comparison.pdf"
+    qualitative_file = output_dir / "qualitative_comparison.png"
     plt.savefig(qualitative_file, bbox_inches='tight', dpi=300)
     plt.close()
 

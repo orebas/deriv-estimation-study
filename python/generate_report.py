@@ -58,7 +58,7 @@ ax.legend(fontsize=9, loc='best')
 ax.grid(True, alpha=0.3)
 ax.set_xticks(range(0, 8))
 plt.tight_layout()
-plt.savefig(REPORT_DIR / "rmse_vs_order.pdf")
+plt.savefig(REPORT_DIR / "rmse_vs_order.png", dpi=300)
 plt.close()
 
 # Plot 2: RMSE vs Noise Level (for order 3, top methods)
@@ -74,7 +74,7 @@ ax.set_title('RMSE vs Noise Level (3rd Derivative)', fontsize=14)
 ax.legend(fontsize=9, loc='best')
 ax.grid(True, alpha=0.3, which='both')
 plt.tight_layout()
-plt.savefig(REPORT_DIR / "rmse_vs_noise.pdf")
+plt.savefig(REPORT_DIR / "rmse_vs_noise.png", dpi=300)
 plt.close()
 
 # Plot 3: Heatmap of RMSE (method vs derivative order, at 1% noise)
@@ -87,7 +87,7 @@ ax.set_title('RMSE Heatmap: Top Methods at 1% Noise', fontsize=14)
 ax.set_xlabel('Derivative Order', fontsize=12)
 ax.set_ylabel('Method', fontsize=12)
 plt.tight_layout()
-plt.savefig(REPORT_DIR / "heatmap_top_methods.pdf")
+plt.savefig(REPORT_DIR / "heatmap_top_methods.png", dpi=300)
 plt.close()
 
 # Plot 4: Method Categories Performance
@@ -99,7 +99,7 @@ ax.set_ylabel('Method Category', fontsize=12)
 ax.set_title('Performance by Method Category', fontsize=14)
 ax.grid(True, axis='x', alpha=0.3)
 plt.tight_layout()
-plt.savefig(REPORT_DIR / "category_performance.pdf")
+plt.savefig(REPORT_DIR / "category_performance.png", dpi=300)
 plt.close()
 
 print("Plots saved to:", REPORT_DIR)
@@ -183,11 +183,11 @@ latex_content += r'''\bottomrule
 
 \subsection{Performance vs Derivative Order}
 
-Figure \ref{fig:rmse_order} shows how RMSE scales with derivative order for the top 5 methods at 1\% noise. AAA-HighPrec maintains sub-0.1 error through 4th derivatives, while most methods degrade exponentially beyond order 3.
+Figure \ref{fig:rmse_order} shows how RMSE scales with derivative order for the top 5 methods at 1\% noise. AAA methods maintain sub-0.1 error through 4th derivatives, while most methods degrade exponentially beyond order 3.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{rmse_vs_order.pdf}
+\includegraphics[width=0.85\textwidth]{rmse_vs_order.png}
 \caption{RMSE vs Derivative Order for top methods at 1\% noise level.}
 \label{fig:rmse_order}
 \end{figure}
@@ -198,7 +198,7 @@ Figure \ref{fig:rmse_noise} demonstrates noise sensitivity for 3rd-order derivat
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{rmse_vs_noise.pdf}
+\includegraphics[width=0.85\textwidth]{rmse_vs_noise.png}
 \caption{RMSE vs Noise Level for 3rd derivative estimation.}
 \label{fig:rmse_noise}
 \end{figure}
@@ -212,7 +212,7 @@ Figure \ref{fig:categories} compares median RMSE by method category (aggregated 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{category_performance.pdf}
+\includegraphics[width=0.85\textwidth]{category_performance.png}
 \caption{Median RMSE by method category (orders 1-3).}
 \label{fig:categories}
 \end{figure}
@@ -292,19 +292,19 @@ latex_content += r'''\section{Conclusions and Recommendations}
 
     \item \textbf{High Noise ($>$ 2\%):} Regularization methods (TV-RegDiff, TrendFilter) become competitive, though all methods struggle significantly.
 
-    \item \textbf{High-Order Derivatives:} Beyond 4th order, nearly all methods degrade rapidly. Only AAA-HighPrec maintains reasonable accuracy through 6th derivatives in low-noise conditions.
+    \item \textbf{High-Order Derivatives:} Beyond 4th order, nearly all methods degrade rapidly. Only AAA methods maintain reasonable accuracy through 6th derivatives in low-noise conditions.
 
-    \item \textbf{Computational Cost:} AAA-HighPrec is 100-1000x slower than spectral methods but provides superior accuracy. GP methods offer good accuracy at moderate cost ($\sim 0.2$s).
+    \item \textbf{Computational Cost:} AAA methods are 100-1000x slower than spectral methods but provide superior accuracy. GP methods offer good accuracy at moderate cost ($\sim 0.2$s).
 \end{enumerate}
 
 \subsection{Method Selection Guide}
 
 \begin{itemize}
-    \item \textbf{For near-noiseless data ($< 10^{-4}$):} Use AAA-HighPrec for maximum accuracy
+    \item \textbf{For near-noiseless data ($< 10^{-4}$):} Use AAA methods for maximum accuracy
     \item \textbf{For moderate noise ($10^{-3}$ to $10^{-2}$):} Use GP-Julia-SE or GP-RBF methods
     \item \textbf{For high noise ($> 2\%$):} Consider TV-RegDiff or accept significant error
     \item \textbf{For real-time applications:} Use Fourier continuation (fast, reasonable accuracy)
-    \item \textbf{For derivatives beyond 4th order:} Strongly prefer AAA-HighPrec; alternatives unreliable
+    \item \textbf{For derivatives beyond 4th order:} Strongly prefer AAA methods; alternatives unreliable
 \end{itemize}
 
 \subsection{Methods to Avoid}
@@ -321,7 +321,7 @@ Figure \ref{fig:heatmap} provides a comprehensive view of RMSE across all top me
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{heatmap_top_methods.pdf}
+\includegraphics[width=\textwidth]{heatmap_top_methods.png}
 \caption{RMSE heatmap for top 10 methods across derivative orders (1\% noise). Darker colors indicate higher error.}
 \label{fig:heatmap}
 \end{figure}

@@ -69,7 +69,7 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 
 	# Define which methods to run (matching original behavior)
 	methods_to_run = [
-		"AAA-HighPrec",
+		# "AAA-HighPrec",  # disabled per request
 		"AAA-LowPrec",
 		"AAA-Adaptive-Diff2",
 		"AAA-Adaptive-Wavelet",
@@ -115,7 +115,7 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 				Dict{Int, Vector{Float64}}(),
 				Dict(0 => string(e)),
 				0.0,
-				false
+				false,
 			)
 			push!(results, error_result)
 		end
@@ -148,6 +148,6 @@ function evaluate_julia_method(method_name::String, x, y, x_eval, orders; params
 		Dict{Int, Vector{Float64}}(),
 		Dict(0 => "Method not found: $method_name"),
 		0.0,
-		false
+		false,
 	)
 end

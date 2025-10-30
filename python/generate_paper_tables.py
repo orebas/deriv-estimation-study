@@ -34,7 +34,7 @@ summary = pd.read_csv(results_dir / "comprehensive_summary.csv")
 print(f"\nLoaded {len(summary)} rows from summary data")
 
 # Noise levels to analyze
-noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2, 5e-2]
+noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2]
 orders = list(range(8))  # 0-7
 
 # Output directory
@@ -173,7 +173,7 @@ for order in orders:
     plt.tight_layout()
 
     # Save
-    plot_file = plots_dir / f"order_{order}_nrmse_filtered.pdf"
+    plot_file = plots_dir / f"order_{order}_nrmse_filtered.png"
     plt.savefig(plot_file, bbox_inches='tight', dpi=300)
     plt.close()
 
@@ -222,7 +222,7 @@ ax.set_ylabel('Method')
 ax.set_title('Top 15 Methods: nRMSE Across Derivative Orders')
 plt.tight_layout()
 
-heatmap_file = plots_dir / "top_methods_heatmap.pdf"
+heatmap_file = plots_dir / "top_methods_heatmap.png"
 plt.savefig(heatmap_file, bbox_inches='tight', dpi=300)
 plt.close()
 
@@ -290,8 +290,10 @@ print(f"  Saved: {latex_ranking.name}")
 
 # Table 2: Performance By Order
 print("\nGenerating tab:performance_by_order...")
-# Select representative methods
-representative_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay', 'AAA-HighPrec']
+# Select representative methods (dynamically check availability)
+candidate_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay', 'AAA-LowPrec', 'GP_RBF_Python']
+available_methods = summary['method'].unique()
+representative_methods = [m for m in candidate_methods if m in available_methods]
 
 perf_by_order = []
 for method in representative_methods:
@@ -332,9 +334,11 @@ timing_data = raw_results.groupby('method').agg({
 }).reset_index()
 timing_data = timing_data.sort_values('timing')
 
-# Select representative methods for comparison
-timing_methods = ['chebyshev', 'fourier', 'Fourier-Interp',
-                  'Savitzky-Golay', 'GP_RBF_Iso_Python', 'AAA-HighPrec', 'GP-Julia-AD']
+# Select representative methods for comparison (dynamically check availability)
+candidate_timing_methods = ['chebyshev', 'fourier', 'Fourier-Interp',
+                            'Savitzky-Golay', 'GP_RBF_Iso_Python', 'AAA-LowPrec', 'GP-Julia-AD']
+available_timing_methods = timing_data['method'].unique()
+timing_methods = [m for m in candidate_timing_methods if m in available_timing_methods]
 timing_subset = timing_data[timing_data['method'].isin(timing_methods)].copy()
 
 # Calculate speedup vs GP-Julia-AD
@@ -366,9 +370,18 @@ order4_pivot = order4_data.pivot_table(
     values='mean_nrmse'
 )
 
-# Select representative methods
-noise_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay', 'AAA-HighPrec']
-order4_subset = order4_pivot.loc[noise_methods]
+# Select representative methods (dynamically check availability)
+candidate_noise_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay', 'AAA-LowPrec', 'GP_RBF_Python']
+available_noise_methods = order4_pivot.index.tolist()
+noise_methods = [m for m in candidate_noise_methods if m in available_noise_methods]
+if len(noise_methods) > 0:
+    order4_subset = order4_pivot.loc[noise_methods]
+else:
+    # Fallback: use top 4 methods by median performance
+    print("  Warning: No candidate methods found, using top 4 by performance")
+    order4_means = order4_pivot.median(axis=1).sort_values()
+    noise_methods = order4_means.head(4).index.tolist()
+    order4_subset = order4_pivot.loc[noise_methods]
 
 latex_noise = output_dir / "tab_noise_sensitivity_order4.tex"
 with open(latex_noise, 'w') as f:

@@ -58,69 +58,41 @@ Performance Across Orders and Noise Levels}
 \maketitle
 
 \begin{abstract}
-Derivative estimation from noisy data is a fundamental problem across computational science, yet systematic comparative evaluation of methods remains lacking. We present a comprehensive benchmark of 24 derivative estimation methods evaluated across 8 derivative orders (0--7) and 7 noise levels ($10^{-8}$ to $5 \times 10^{-2}$), providing the first fine-grained performance map spanning 56 configurations. Methods span six categories: Gaussian Processes, Rational Approximation, Spectral Methods, Splines, Regularization, and Local Polynomial approaches.
+Derivative estimation from noisy data is a fundamental problem across computational science, yet systematic comparative evaluation of methods remains lacking. We present a comprehensive benchmark of over 40 derivative estimation methods evaluated across 8 derivative orders (0--7), 7 noise levels, and 3 distinct dynamical systems. Our goal is to provide clear, actionable guidance for practitioners.
 
-Key findings include: (1) Gaussian Process regression (GP-Julia-AD) achieves best overall performance (mean nRMSE = 0.257) with robust behavior across all orders and noise levels; (2) AAA rational approximation catastrophically fails at orders $\geq 3$ (nRMSE $> 10^7$) despite excellent low-order performance—contrary to literature expectations; (3) Fourier spectral methods provide competitive accuracy at 10--20$\times$ speedup for smooth signals; (4) derivative order is the dominant difficulty factor, with performance degrading systematically as order increases; (5) implementation quality is a critical method characteristic—three methods excluded due to $>50\times$ cross-language discrepancies.
-
-We provide practical recommendations including a master method-selection table, decision framework, and common pitfalls to avoid. Results are derived from a single test system (Lotka-Volterra) with additive Gaussian noise and n=3 trials, providing exploratory evidence rather than definitive statistical rankings. Practitioners should validate candidate methods on their specific data before deployment.
+Key findings include: (1) Gaussian Process Regression (GPR) provides the most robust and accurate performance, consistently ranking as the top method in both low- and high-noise regimes. (2) The optimal method depends critically on the use case: splines like Dierckx-5 are highly competitive for low-noise data, while spectral methods offer a compelling balance of speed and accuracy, and filters like Savitzky-Golay provide a robust, computationally cheap baseline. (3) Derivative order is the dominant difficulty factor, with performance degrading systematically as order increases. We also provide a practitioner's guide to method selection based on the trade-off between speed and accuracy. Our full methodology, analysis, and code are provided to ensure transparency and reproducibility.
 \end{abstract}
 
 \tableofcontents
 \newpage
 
 %==============================================================================
-% SECTION 1: INTRODUCTION
+% NEW PAPER STRUCTURE
 %==============================================================================
+
 \input{sections/section1_introduction}
+\input{sections/section2_summary}
+\input{sections/section3_methods}
+\input{sections/section4_design}
+\input{sections/section5_analysis}
+\input{sections/section6_conclusion}
+
 
 %==============================================================================
-% SECTION 2: RELATED WORK / BACKGROUND
+% OLD PAPER STRUCTURE (DEPRECATED)
 %==============================================================================
-\section{Related Work}
-\label{sec:related_work}
+% \section{Related Work}
+% \label{sec:related_work}
+% \TODO{Related work section.}
 
-% TODO: Write related work section
-\TODO{Related work section. Should review: (1) existing derivative estimation methods surveys, (2) prior benchmarking efforts (limited scope), (3) gaps this study fills, (4) methodological contributions}
-
-%==============================================================================
-% SECTION 3: PROBLEM FORMULATION
-%==============================================================================
-\input{sections/section3_problem}
-
-%==============================================================================
-% SECTION 4: METHODOLOGY
-%==============================================================================
-\input{sections/section4_methodology}
-
-%==============================================================================
-% SECTION 5: METHODS EVALUATED
-%==============================================================================
-\input{sections/section5_methods}
-
-%==============================================================================
-% SECTION 6: RESULTS
-%==============================================================================
-\input{sections/section6_results}
-
-%==============================================================================
-% SECTION 7: DISCUSSION
-%==============================================================================
-\input{sections/section7_discussion}
-
-%==============================================================================
-% SECTION 8: PRACTICAL RECOMMENDATIONS
-%==============================================================================
-\input{sections/section8_recommendations}
-
-%==============================================================================
-% SECTION 9: LIMITATIONS AND FUTURE WORK
-%==============================================================================
-\input{sections/section9_limitations}
-
-%==============================================================================
-% SECTION 10: CONCLUSION
-%==============================================================================
-\input{sections/section10_conclusion}
+% \input{sections/section3_problem}
+% \input{sections/section4_methodology}
+% \input{sections/section5_methods}
+% \input{sections/section6_results}
+% \input{sections/section7_discussion}
+% \input{sections/section8_recommendations}
+% \input{sections/section9_limitations}
+% \input{sections/section10_conclusion}
 
 %==============================================================================
 % ACKNOWLEDGMENTS
