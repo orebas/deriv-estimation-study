@@ -34,6 +34,10 @@ echo ""
 echo "Generating supplemental tables..."
 $PYTHON_VENV python/generate_supplemental_tables.py
 
+echo ""
+echo "Generating exploratory summary tables (orders 3, 5, 7)..."
+$PYTHON_VENV gemini-analysis/generate_exploratory_tables.py
+
 # Check output
 if [ -d "build/tables/publication" ]; then
     echo ""
