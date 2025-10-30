@@ -125,7 +125,9 @@ def table_to_latex(df: pd.DataFrame, caption: str, label: str) -> str:
     latex += "\\midrule\n"
 
     for _, row in df.iterrows():
-        latex += f"{row['Method']} & {row['Avg. Rank (Overall)']} & {row['Avg. Rank (Low Noise)']} & "
+        # Escape underscores in method names for LaTeX
+        method_name = str(row['Method']).replace('_', '\\_')
+        latex += f"{method_name} & {row['Avg. Rank (Overall)']} & {row['Avg. Rank (Low Noise)']} & "
         latex += f"{row['Avg. nRMSE (Low Noise)']} & {row['Avg. Rank (High Noise)']} & "
         latex += f"{row['Avg. nRMSE (High Noise)']} \\\\\n"
 
