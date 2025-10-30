@@ -27,14 +27,14 @@ The quantitative results in the summary table are powerfully illustrated by a fe
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{high_noise_fit_comparison.png}
-\caption{\textbf{High-Noise Performance.} This figure compares the top-performing methods on a challenging 4th-order derivative estimation task with 2\% noise. The \texttt{GP-Julia-AD} method tracks the ground truth almost perfectly, while the fixed \texttt{GP-RBF-Python} also performs well. \texttt{Savitzky-Golay}, a simpler filtering method, provides a robust, if slightly less precise, estimate, demonstrating its value as a baseline.}
+\caption{\textbf{High-Noise Performance (2\% noise, 4th derivative).} Three-panel comparison showing: (top) noisy input data as black points against gray ground truth, emphasizing the challenging signal-to-noise environment; (middle) derivative estimates from four methods representing different algorithmic approaches; (bottom) estimation errors revealing where each method succeeds or fails. \texttt{Fourier-GCV} achieves the lowest RMS error (306), followed by \texttt{GP-Julia-AD} (344), while \texttt{Savitzky-Golay} (457) and \texttt{Dierckx-5} (574) show progressively larger deviations. The error panel reveals that all methods struggle at the trajectory boundaries.}
 \label{fig:high_noise_comp}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{low_noise_fit_comparison.png}
-\caption{\textbf{Low-Noise Precision.} In a low-noise environment (1e-8), this figure shows that for a 5th-order derivative, precision-focused methods become highly competitive. \texttt{Dierckx-5} (a smoothing spline) and \texttt{Fourier-Interp} (a spectral method) match the performance of \texttt{GP-Julia-AD}, illustrating that GPR's main advantage lies in its robustness to noise.}
+\caption{\textbf{Low-Noise Precision (1e-6 noise, 5th derivative).} Three-panel comparison in a low-noise regime: (top) noisy data points (black) are nearly imperceptible against gray ground truth; (middle) 5th-order derivative estimates from the top three methods; (bottom) estimation errors showing clear performance hierarchy. \texttt{GP-Julia-AD} dominates with RMS error of 272k, while \texttt{Dierckx-5} (3.1M) and \texttt{Fourier-GCV} (5.8M) show substantially larger errors. Even in this clean environment, high-order differentiation remains extremely challenging, with \texttt{GP-Julia-AD} achieving more than 10× better accuracy than competing methods.}
 \label{fig:low_noise_comp}
 \end{figure}
 
@@ -45,9 +45,4 @@ The quantitative results in the summary table are powerfully illustrated by a fe
 \label{fig:heatmap}
 \end{figure}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.9\textwidth]{pareto_frontier.png}
-\caption{\textbf{Speed vs. Accuracy Trade-off.} For practitioners, the choice of method often involves a trade-off between computational cost and accuracy. This plot visualizes that trade-off for the contender methods. The black line represents the "Pareto Front"—the set of methods that are optimally efficient. Methods on this line represent the best possible accuracy for a given level of computational cost (or the fastest method for a given level of accuracy). This allows a practitioner to select a method that aligns with their specific computational budget and accuracy requirements. The plot clearly shows that the GPR methods, while the most accurate, are also the most computationally expensive.}
-\label{fig:pareto}
-\end{figure}
+% Computational efficiency considerations are discussed in Section~\ref{sec:efficiency} rather than as a primary finding, due to implementation-dependent variability in timing measurements.

@@ -31,6 +31,10 @@ echo "Generating publication figures..."
 $PYTHON_VENV python/generate_additional_figures.py
 
 echo ""
+echo "Generating qualitative comparison figures..."
+$PYTHON_VENV python/generate_qualitative_comparisons.py
+
+echo ""
 echo "Generating comprehensive per-method and per-order plots..."
 $PYTHON_VENV python/generate_comprehensive_plots.py
 

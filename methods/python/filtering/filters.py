@@ -39,7 +39,8 @@ class FilteringMethods(MethodEvaluator):
         Args:
             method_name: Name of method to evaluate. Supported:
                 - "Whittaker_m2_Python": Whittaker/HP smoothing (m=2)
-                - "SavitzkyGolay_Python": Savitzky-Golay filtering
+                - "SavitzkyGolay_Python": Savitzky-Golay filtering (fixed window=21)
+                - "SavitzkyGolay_Adaptive_Python": Adaptive S-G with noise-dependent window
                 - "KalmanGrad_Python": Kalman RTS smoother
                 - "TVRegDiff_Python": TV-regularized differentiation
 
@@ -50,6 +51,8 @@ class FilteringMethods(MethodEvaluator):
             return self._whittaker_m2()
         elif method_name == "SavitzkyGolay_Python":
             return self._savgol_method()
+        elif method_name == "SavitzkyGolay_Adaptive_Python":
+            return self._savgol_adaptive_method()
         elif method_name == "KalmanGrad_Python":
             return self._kalman_grad()
         elif method_name == "TVRegDiff_Python":
@@ -185,6 +188,121 @@ class FilteringMethods(MethodEvaluator):
                 predictions[order] = [np.nan] * len(self.x_eval)
 
         return {"predictions": predictions, "failures": failures, "meta": {"window": win, "polyorder": poly}}
+
+    def _savgol_adaptive_method(self) -> Dict:
+        """Adaptive Savitzky-Golay filtering with noise-dependent window sizing.
+
+        This method addresses the bias floors observed in fixed-window S-G by adapting
+        the window size based on estimated noise level and signal roughness. Uses larger
+        windows for higher derivative orders to combat variance growth.
+
+        Key features:
+        - Noise-adaptive window sizing using MAD estimator
+        - Polynomial order tiers: r≤3→p=7; 4-5→p=9; 6-7→p=11
+        - Per-order optimization (w_r, p_r) for each derivative
+        - Window scaling: h* ∝ (σ²/ρ²)^{1/(2p+3)} from MISE minimization
+
+        Note: Derivative estimates are optimized independently for each order and are not
+        guaranteed to be mathematically consistent (i.e., d/dt[f^(r)] ≠ f^(r+1)).
+
+        Returns:
+            Dictionary containing:
+                predictions: Dict mapping derivative order to list of predictions
+                failures: Dict of any errors encountered
+                meta: Dict of window/polyorder used for each derivative order
+        """
+        t = self.x_train
+        y = self.y_train
+        n = len(t)
+        dt = float(np.mean(np.diff(t))) if n > 1 else 1.0
+
+        # Robust noise estimation using MAD of first differences
+        # Variance of y[i] - y[i-1] is 2σ², so normalize by sqrt(2)
+        dy = np.diff(y)
+        sigma_hat = np.median(np.abs(dy - np.median(dy))) / (0.6745 * np.sqrt(2.0))
+
+        # Roughness estimation using 4th-order differences (proxy for signal smoothness)
+        # Normalized by dt^4 for scale consistency
+        if n >= 5:
+            d4 = np.diff(y, n=4)
+            rho_hat = np.sqrt(np.mean(d4**2)) / ((dt**4) + 1e-24)
+        else:
+            # Fallback for very small signals
+            rho_hat = 1.0
+
+        # Calibration constants c_{p,r} - empirically tuned for N≈100
+        # These balance bias-variance tradeoff for different (polyorder, deriv_order) combinations
+        # Start with conservative values; can be refined through grid search
+        c_pr = {
+            (7, 0): 1.0, (7, 1): 1.1, (7, 2): 1.2, (7, 3): 1.3,
+            (9, 0): 1.0, (9, 1): 1.1, (9, 2): 1.2, (9, 3): 1.3, (9, 4): 1.4, (9, 5): 1.5,
+            (11, 0): 1.0, (11, 1): 1.1, (11, 2): 1.2, (11, 3): 1.3, (11, 4): 1.4,
+            (11, 5): 1.5, (11, 6): 1.6, (11, 7): 1.7,
+        }
+
+        # Window cap for safety: N/3 for N=101 gives max window of 33
+        max_window = max(5, int(n / 3))
+        if max_window % 2 == 0:
+            max_window -= 1
+
+        predictions = {}
+        failures = {}
+        meta = {}
+
+        for order in self.orders:
+            try:
+                # Determine polynomial order based on derivative order (tiered approach)
+                if order <= 3:
+                    p = 7
+                elif order <= 5:
+                    p = 9
+                else:
+                    p = 11
+
+                # Get calibration constant
+                c = c_pr.get((p, order), 1.0 + 0.1 * order)
+
+                # Compute optimal window via plug-in rule
+                # h* ∝ (σ²/ρ²)^{1/(2p+3)}
+                ratio = max(sigma_hat, 1e-24)**2 / max(rho_hat, 1e-24)**2
+                h_star = c * (ratio ** (1.0 / (2*p + 3)))
+
+                # Convert to window length in samples
+                w_ideal = int(2 * np.floor(h_star / max(dt, 1e-24)) + 1)
+
+                # Apply constraints
+                w = max(w_ideal, p + 3)  # Need at least p+3 for numerical headroom
+                w = min(w, max_window)   # Safety cap
+                w = min(w, n if n % 2 == 1 else n - 1)  # Can't exceed data size
+
+                # Ensure odd
+                if w % 2 == 0:
+                    w -= 1
+
+                # Final check: window must be > polyorder
+                if w <= p:
+                    w = p + 2 if p + 2 <= n else (p + 1 if p + 1 <= n else p)
+                    if w % 2 == 0:
+                        w += 1
+                    if w > n:
+                        w = n if n % 2 == 1 else n - 1
+
+                # Apply Savitzky-Golay filter for this derivative order
+                yd = savgol_filter(y, window_length=w, polyorder=p, deriv=order, delta=dt, mode='interp')
+
+                # Resample to evaluation grid using spline
+                res = self._quintic_spline_derivatives(t, yd)
+                predictions[order] = res["predictions"].get(order, [float(v) for v in yd])
+
+                # Store parameters used
+                meta[order] = {"window": w, "polyorder": p, "noise_est": sigma_hat, "roughness_est": rho_hat}
+
+            except Exception as e:
+                failures[order] = str(e)
+                predictions[order] = [np.nan] * len(self.x_eval)
+                meta[order] = {"error": str(e)}
+
+        return {"predictions": predictions, "failures": failures, "meta": meta}
 
     def _kalman_grad(self) -> Dict:
         """Constant-acceleration Kalman RTSS smoother; pos/vel/acc derivatives; higher via spline.

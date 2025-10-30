@@ -55,8 +55,9 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"Dierckx-5" => evaluate_dierckx,
 		"GSS" => evaluate_gss,
 
-		# Filtering (1 method)
-		"Savitzky-Golay" => evaluate_savitzky_golay,
+		# Filtering (3 methods)
+		"Savitzky-Golay-Fixed" => evaluate_savitzky_golay_fixed,
+		"Savitzky-Golay-Adaptive" => evaluate_savitzky_golay_adaptive,
 
 		# Regularization (3 methods)
 		"TrendFilter-k7" => evaluate_trend_filter_k7,
@@ -83,7 +84,8 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"Fourier-FFT-Adaptive",
 		"Dierckx-5",
 		"GSS",
-		"Savitzky-Golay",
+		"Savitzky-Golay-Fixed",    # Fixed window=15, polyorder=7
+		"Savitzky-Golay-Adaptive", # Noise-adaptive window sizing
 		# TrendFilter methods removed - output is discrete vector, not continuous function
 		# Linear interpolation used previously destroyed C^(k-1) smoothness property
 		# "TrendFilter-k7",

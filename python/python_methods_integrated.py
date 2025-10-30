@@ -135,6 +135,7 @@ class IntegratedMethodEvaluator:
                 # Filtering methods
                 "Whittaker_m2_Python": self._get_filtering_evaluator,
                 "SavitzkyGolay_Python": self._get_filtering_evaluator,
+                "SavitzkyGolay_Adaptive_Python": self._get_filtering_evaluator,
                 "KalmanGrad_Python": self._get_filtering_evaluator,
                 "TVRegDiff_Python": self._get_filtering_evaluator,
 
@@ -257,7 +258,8 @@ def main():
         # IFAC25 legacy methods
         "Butterworth_Python",
         "ButterworthSpline_Python",
-        # "SavitzkyGolay_Python",  # disabled
+        # "SavitzkyGolay_Python",  # disabled (fixed window=21)
+        "SavitzkyGolay_Adaptive_Python",  # NEW: noise-adaptive window sizing
         "SVR_Python",
         "KalmanGrad_Python",
         "TVRegDiff_Python",

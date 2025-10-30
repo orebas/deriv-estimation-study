@@ -52,15 +52,56 @@ A clear pattern emerging from the data is the systematic degradation of performa
     \item \textbf{Orders 6-7 (High-Order):} This regime represents an extreme challenge. Only a very small subset of methods, primarily GPR, are able to produce a usable estimate, and even their errors are significant. For most other methods, the error in this regime constitutes a catastrophic failure. Derivative order is clearly the dominant factor in the difficulty of the estimation problem.
 \end{itemize}
 
+Figure~\ref{fig:small_multiples} provides a comprehensive visual illustration of this systematic degradation. The figure shows performance across all eight derivative orders for the top seven methods, clearly demonstrating how error increases with order and how different methods respond to increasing noise levels at each order.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{small_multiples_grid.png}
+\caption{\textbf{Performance Across All Derivative Orders.} This 4×2 grid shows nRMSE vs noise level for the top 7 methods at each derivative order (0--7). Each panel illustrates the systematic degradation of performance as order increases. Note how GP-Julia-AD (top performer) maintains relatively stable performance across all orders, while other methods show dramatic degradation beyond order 3. The shaded regions indicate performance quality: green (excellent, nRMSE < 0.1), yellow (good, 0.1--0.3), and orange (acceptable, 0.3--1.0).}
+\label{fig:small_multiples}
+\end{figure}
+
 \subsection{The Critical Role of Taylor-Mode AD for High-Order Derivatives}
 A key technical factor in the performance of high-order derivative estimation is the underlying mechanism of the Automatic Differentiation library used. Naively composing first-order AD operations (i.e., nested forward- or reverse-mode AD) to compute a high-order derivative results in an algorithm with exponential complexity, rendering it infeasible for orders beyond a handful.
 
 The success of the \texttt{GP-Julia-AD} method, for instance, is critically dependent on its use of Taylor-mode AD. This mode is specifically designed to compute high-order derivatives efficiently by propagating a full Taylor series expansion through the computation, rather than just a single derivative value. This approach reduces the computational complexity significantly (often to polynomial time), making the computation of 5th, 6th, and 7th order derivatives tractable. This highlights that for practitioners seeking high-order derivatives, the choice of AD implementation is as important as the choice of the approximant itself.
 
-\subsection{Practitioner's Guide: Speed vs. Accuracy Trade-offs}
-The Pareto front plot in our summary of findings (Figure~\ref{fig:pareto}) provides a clear guide for practitioners to select a method based on their specific needs. Based on that analysis, we offer the following explicit recommendations:
+\subsection{Computational Efficiency: Practical Considerations}
+\label{sec:efficiency}
+
+\textbf{Important Caveats:} The computational timing measurements in this study should be interpreted with caution. Unlike the error metrics, which represent fundamental algorithmic characteristics, the timing data has several limitations that prevent it from being elevated to a primary finding:
+
 \begin{itemize}
-    \item \textbf{For Accuracy-Critical Applications:} When the highest possible accuracy is the primary concern and computational cost is secondary, a Gaussian Process method is the unequivocal best choice. Our results show \texttt{GP-Julia-AD} and the Python GPR variants consistently provide the lowest error.
-    \item \textbf{For Balanced Requirements:} For applications that require a strong balance between accuracy and speed, a spectral method is likely the optimal choice. \texttt{Fourier-Continuation} and \texttt{Fourier-Interp} provide accuracy that is competitive with GPR, but with a 10-20x speedup.
-    \item \textbf{For Speed-Critical Applications:} When computational speed is the dominant constraint (e.g., in real-time or large-scale applications), simpler methods are required. \texttt{Savitzky-Golay} offers a robust and extremely fast baseline, providing reasonable accuracy for a very low computational cost. The fastest spectral methods (e.g., \texttt{fourier}) are also excellent choices in this regime. It is also important to note that for very large datasets ($N > 1000$), the cubic scaling of GPR methods may become computationally prohibitive, making fast spectral or filtering methods the only viable options.
+    \item \textbf{Mixed-language implementations:} Our benchmark includes methods implemented in both Julia and Python, with different optimization levels and library maturity.
+    \item \textbf{Small dataset size:} All timing measurements were performed on trajectories with $N=101$ points. Scaling behavior for larger datasets ($N > 1000$) may differ significantly, particularly for methods with non-linear complexity.
+    \item \textbf{Implementation quality variation:} Methods vary in optimization sophistication. Some are production-grade libraries, while others are research prototypes.
+    \item \textbf{No warm-up or statistical rigor:} Timing measurements represent single runs without JIT warm-up for Julia methods or statistical validation across multiple hardware configurations.
 \end{itemize}
+
+Given these limitations, we present the following \textbf{qualitative guidance} based on our observations, rather than quantitative claims:
+
+\textbf{Three-Tier Framework for Method Selection:}
+
+\begin{enumerate}
+    \item \textbf{High-Speed Tier (sub-millisecond):} For real-time or large-scale applications where speed is paramount, filtering methods like \texttt{Savitzky-Golay} provide rapid computation with reasonable accuracy in moderate noise conditions. Basic spectral methods (simple FFT-based approaches) also fall in this category. These methods are particularly suitable when computational budget is the primary constraint.
+
+    \item \textbf{Balanced Tier (milliseconds to tens of milliseconds):} For most scientific applications requiring a strong balance between accuracy and speed, spectral methods represent an excellent middle ground. Methods like \texttt{Fourier-GCV}, \texttt{Fourier-Interp}, and high-degree splines (\texttt{Dierckx-5}) provide accuracy approaching that of GPR methods while maintaining practical computational efficiency. This tier is likely optimal for interactive data analysis and medium-scale studies.
+
+    \item \textbf{High-Accuracy Tier (hundreds of milliseconds):} When the highest possible accuracy is the primary concern and computational cost is secondary, Gaussian Process methods provide the lowest estimation errors across all noise levels and derivative orders. Our results show \texttt{GP-Julia-AD} consistently outperforms all other methods in accuracy. The computational investment is justified in applications where estimation quality is critical and the dataset size is moderate.
+\end{enumerate}
+
+\textbf{Scaling Considerations:} For very large datasets ($N > 1000$), the cubic scaling of standard GPR implementations may become prohibitive, making fast spectral or filtering methods the only viable options unless sparse or approximate GP methods are employed.
+
+% PARETO PLOT CODE (COMMENTED OUT FOR FUTURE USE)
+% Uncomment when timing data has been collected with:
+% - Consistent warm-up procedures
+% - Multiple hardware configurations
+% - Statistical validation (multiple runs)
+% - Larger dataset sizes (N > 1000)
+%
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=0.9\textwidth]{pareto_frontier.png}
+% \caption{\textbf{Speed vs. Accuracy Trade-off: Pareto Frontier.} This plot shows the relationship between mean computation time (x-axis, log scale) and mean nRMSE (y-axis, log scale) for all methods with full coverage of derivative orders 0--5. Diamond markers indicate Pareto-optimal methods—points where no other method is both faster and more accurate. The black dashed line connects the Pareto front. Methods are colored by category (Gaussian Process, Spectral, Spline, etc.). The plot reveals three distinct tiers: (1) sub-millisecond filtering methods like \texttt{Savitzky-Golay}, (2) millisecond-scale balanced methods like \texttt{Dierckx-5} and spectral approaches, and (3) high-accuracy GP methods like \texttt{GP-Julia-AD} that achieve the lowest error at the cost of longer computation time. \textbf{Caveat:} Timing measurements represent implementations of varying optimization levels on a small dataset ($N=101$) and should be interpreted as qualitative guidance rather than definitive benchmarks.}
+% \label{fig:pareto}
+% \end{figure}
