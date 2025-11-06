@@ -17,7 +17,8 @@ The first step was to filter out methods that were fundamentally unsuitable or u
 \end{enumerate}
 
 \subsection{Defining the "Contender" Set}
-After this initial filtering, we were left with a set of robust methods that provided full data coverage (up to order 5 for our main summary). This cohort became our "contender" set for the final analysis. All subsequent rankings and comparisons were performed \textit{only within this group}. This is a crucial methodological point: the ranks presented in the summary table are ranks \textit{among the contenders}, not among the initial, larger pool of all tested methods.
+After this initial filtering, we were left with a set of robust methods that provided full data coverage (up to order 5 for our main summary). This cohort became our "contender" set for the final analysis. All subsequent rankings and comparisons were performed \textit{only within this group}. 
+%This is a crucial methodological point: the ranks presented in the summary table are ranks \textit{among the contenders}, not among the initial, larger pool of all tested methods.
 
 \subsection{Ranking Methodology}
 To produce the final summary table, we followed a two-step ranking process:
@@ -25,8 +26,8 @@ To produce the final summary table, we followed a two-step ranking process:
     \item \textbf{Per-Cell Ranking}: For each individual experimental cell—defined by a unique combination of \texttt{(ODE\_system, noise\_level, derivative\_order)}—we ranked the contender methods against each other based on their mean \texttt{nRMSE} (averaged across the 10 trials for that cell).
     \item \textbf{Averaging Ranks}: We then calculated the final "Avg. Rank" for each method by averaging these per-cell ranks across two distinct regimes:
     \begin{itemize}
-        \item \textbf{Low-Noise Regime}: Averaged across noise levels \texttt{1e-8} and \texttt{1e-6}.
-        \item \textbf{High-Noise Regime}: Averaged across noise levels \texttt{0.01} and \texttt{0.02}.
+        \item \textbf{Low-Noise Regime}: Averaged across noise levels below 1\% (\texttt{1e-8}, \texttt{1e-6}, \texttt{1e-4}, and \texttt{1e-3}).
+        \item \textbf{High-Noise Regime}: Averaged across noise levels of 1\% and above (\texttt{0.01} and \texttt{0.02}).
     \end{itemize}
 \end{enumerate}
 This methodology ensures that the final rank is a robust measure of a method's performance across a wide variety of conditions, and it prevents a single outlier or a particularly favorable test case from dominating the results.
@@ -105,3 +106,5 @@ Given these limitations, we present the following \textbf{qualitative guidance} 
 % \caption{\textbf{Speed vs. Accuracy Trade-off: Pareto Frontier.} This plot shows the relationship between mean computation time (x-axis, log scale) and mean nRMSE (y-axis, log scale) for all methods with full coverage of derivative orders 0--5. Diamond markers indicate Pareto-optimal methods—points where no other method is both faster and more accurate. The black dashed line connects the Pareto front. Methods are colored by category (Gaussian Process, Spectral, Spline, etc.). The plot reveals three distinct tiers: (1) sub-millisecond filtering methods like \texttt{Savitzky-Golay}, (2) millisecond-scale balanced methods like \texttt{Dierckx-5} and spectral approaches, and (3) high-accuracy GP methods like \texttt{GP-Julia-AD} that achieve the lowest error at the cost of longer computation time. \textbf{Caveat:} Timing measurements represent implementations of varying optimization levels on a small dataset ($N=101$) and should be interpreted as qualitative guidance rather than definitive benchmarks.}
 % \label{fig:pareto}
 % \end{figure}
+
+% Removed PyNumDiff analysis subsection - methods are included in main results

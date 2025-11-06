@@ -26,6 +26,7 @@ try:
     from filtering.filters import FilteringMethods
     from adaptive.adaptive import AdaptiveMethods
     from spectral.spectral import SpectralMethods
+    from pynumdiff_wrapper.pynumdiff_methods import PyNumDiffMethods
     EXTRACTED_METHODS_AVAILABLE = True
 except ImportError as e:
     print(f"ERROR: Failed to import extracted methods: {e}")
@@ -74,6 +75,7 @@ class IntegratedMethodEvaluator:
         self._filtering_eval = None
         self._adaptive_eval = None
         self._spectral_eval = None
+        self._pynumdiff_eval = None
 
     def _get_gp_evaluator(self):
         """Get or create GP evaluator."""
@@ -104,6 +106,12 @@ class IntegratedMethodEvaluator:
         if self._spectral_eval is None:
             self._spectral_eval = SpectralMethods(self.x_train, self.y_train, self.x_eval, self.orders)
         return self._spectral_eval
+
+    def _get_pynumdiff_evaluator(self):
+        """Get or create PyNumDiff evaluator."""
+        if self._pynumdiff_eval is None:
+            self._pynumdiff_eval = PyNumDiffMethods(self.x_train, self.y_train, self.x_eval, self.orders)
+        return self._pynumdiff_eval
 
     def evaluate_method(self, method_name: str) -> Dict:
         """
@@ -154,6 +162,44 @@ class IntegratedMethodEvaluator:
                 "ad_trig": self._get_spectral_evaluator,
                 "ad_trig_adaptive": self._get_spectral_evaluator,
                 "SpectralTaper_Python": self._get_spectral_evaluator,
+
+                # PyNumDiff methods - ALL 30 methods
+                # Full orders 0-7 support
+                "PyNumDiff-SavGol-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-SavGol-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Spectral-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Spectral-Tuned": self._get_pynumdiff_evaluator,
+                # Orders 0-1 only - existing methods
+                "PyNumDiff-Butter-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Butter-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Spline-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Spline-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Gaussian-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Gaussian-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Friedrichs-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Friedrichs-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Kalman-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-Kalman-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-TV-Velocity": self._get_pynumdiff_evaluator,
+                "PyNumDiff-TV-Acceleration": self._get_pynumdiff_evaluator,
+                "PyNumDiff-TV-Jerk": self._get_pynumdiff_evaluator,
+                # NEW methods added - high performers
+                "PyNumDiff-TVRegularized-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-TVRegularized-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-PolyDiff-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-PolyDiff-Tuned": self._get_pynumdiff_evaluator,
+                # NEW methods - basic FD
+                "PyNumDiff-FirstOrder": self._get_pynumdiff_evaluator,
+                "PyNumDiff-SecondOrder": self._get_pynumdiff_evaluator,
+                "PyNumDiff-FourthOrder": self._get_pynumdiff_evaluator,
+                # NEW methods - window-based
+                "PyNumDiff-MeanDiff-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-MeanDiff-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-MedianDiff-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-MedianDiff-Tuned": self._get_pynumdiff_evaluator,
+                # NEW methods - RBF (known to fail but included)
+                "PyNumDiff-RBF-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-RBF-Tuned": self._get_pynumdiff_evaluator,
             }
 
             if method_name not in method_map:
@@ -259,7 +305,9 @@ def main():
         "Butterworth_Python",
         "ButterworthSpline_Python",
         # "SavitzkyGolay_Python",  # disabled (fixed window=21)
-        "SavitzkyGolay_Adaptive_Python",  # NEW: noise-adaptive window sizing
+        # "SavitzkyGolay_Adaptive_Python",  # BROKEN: works perfectly at order 0 (nRMSE~0.0001) but
+                                             # catastrophically fails at orders 1+ (nRMSE 3-300).
+                                             # Not worth fixing - use Julia SG methods instead.
         "SVR_Python",
         "KalmanGrad_Python",
         "TVRegDiff_Python",
@@ -271,6 +319,42 @@ def main():
         "GP_Matern_Python",
         "GP_Matern_1.5_Python",
         "GP_Matern_2.5_Python",
+        # PyNumDiff methods
+        "PyNumDiff-Butter-Auto",
+        "PyNumDiff-Butter-Tuned",
+        "PyNumDiff-Spline-Auto",
+        "PyNumDiff-Spline-Tuned",
+        "PyNumDiff-Gaussian-Auto",
+        "PyNumDiff-Gaussian-Tuned",
+        "PyNumDiff-Friedrichs-Auto",
+        "PyNumDiff-Friedrichs-Tuned",
+        "PyNumDiff-Kalman-Auto",
+        "PyNumDiff-Kalman-Tuned",
+        "PyNumDiff-TV-Velocity",
+        "PyNumDiff-TV-Acceleration",
+        "PyNumDiff-TV-Jerk",
+        # NEW PyNumDiff methods with full orders 0-7 support
+        "PyNumDiff-SavGol-Auto",
+        "PyNumDiff-SavGol-Tuned",
+        "PyNumDiff-Spectral-Auto",
+        "PyNumDiff-Spectral-Tuned",
+        # NEW PyNumDiff methods - high performers (orders 0-1 only)
+        "PyNumDiff-TVRegularized-Auto",
+        "PyNumDiff-TVRegularized-Tuned",
+        "PyNumDiff-PolyDiff-Auto",
+        "PyNumDiff-PolyDiff-Tuned",
+        # NEW PyNumDiff methods - basic FD (orders 0-1 only)
+        "PyNumDiff-FirstOrder",
+        "PyNumDiff-SecondOrder",
+        "PyNumDiff-FourthOrder",
+        # NEW PyNumDiff methods - window-based (orders 0-1 only)
+        "PyNumDiff-MeanDiff-Auto",
+        "PyNumDiff-MeanDiff-Tuned",
+        "PyNumDiff-MedianDiff-Auto",
+        "PyNumDiff-MedianDiff-Tuned",
+        # NEW PyNumDiff methods - RBF (orders 0-1 only, known to fail)
+        "PyNumDiff-RBF-Auto",
+        "PyNumDiff-RBF-Tuned",
     ]
 
     # Environment overrides

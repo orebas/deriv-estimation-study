@@ -1,0 +1,110 @@
+"""
+Test window selection with wavelet noise estimator.
+"""
+
+using Random
+using Statistics
+using Wavelets
+
+function estimate_noise_wavelet(y)
+    wt = wavelet(Wavelets.WT.db4)
+    n = length(y)
+    n_pow2 = 2^ceil(Int, log2(n))
+    if n_pow2 > n
+        y_padded = vcat(y, zeros(n_pow2 - n))
+    else
+        y_padded = y
+    end
+
+    decomp = dwt(y_padded, wt, 1)
+    n_detail = n_pow2 ÷ 2
+    detail = decomp[n_detail+1:end]
+    n_detail_orig = min(n_detail, (n + 1) ÷ 2)
+    detail_orig = detail[1:n_detail_orig]
+
+    return median(abs.(detail_orig .- median(detail_orig))) / 0.6745
+end
+
+function test_function(x)
+    return sin.(2π * x) .+ 0.5 * sin.(4π * x)
+end
+
+Random.seed!(12345)
+n = 101
+x = collect(range(0, 1, length=n))
+y_true = test_function(x)
+dx = mean(diff(x))
+
+noise_levels = [1e-8, 1e-6, 1e-4, 1e-3]
+
+# Calibration constants
+c_pr = Dict(
+    (7, 0) => 1.0, (7, 1) => 1.1, (7, 2) => 1.2, (7, 3) => 1.3,
+    (9, 4) => 1.4, (9, 5) => 1.5,
+    (11, 6) => 1.6, (11, 7) => 1.7,
+)
+
+println("Window Selection with WAVELET Noise Estimator:")
+println("=" ^ 80)
+
+for noise_std in noise_levels
+    y_noisy = y_true .+ noise_std * randn(n)
+
+    σ_hat = estimate_noise_wavelet(y_noisy)
+
+    # Roughness estimate
+    d4 = y_noisy
+    for _ in 1:4
+        d4 = diff(d4)
+    end
+    ρ_hat = sqrt(mean(d4 .^ 2)) / (dx^4 + 1e-24)
+
+    ratio = max(σ_hat, 1e-24)^2 / max(ρ_hat, 1e-24)^2
+
+    println("\nNoise: σ = $noise_std (actual)")
+    println("  σ̂ = $(round(σ_hat, sigdigits=4)) (wavelet), ρ̂ = $(round(ρ_hat, sigdigits=4))")
+    println("  σ̂²/ρ̂² = $(round(ratio, sigdigits=4))")
+    println()
+    println("  Window sizes (adaptive vs fixed w=15):")
+
+    for order in 0:7
+        p = if order <= 3; 7 elseif order <= 5; 9 else 11 end
+        c = get(c_pr, (p, order), 1.0 + 0.1 * order)
+
+        h_star = c * (ratio^(1.0 / (2 * p + 3)))
+        w_ideal = Int(2 * floor(h_star / max(dx, 1e-24)) + 1)
+
+        # Apply constraints
+        max_window = 33  # n/3
+        w = max(w_ideal, p + 3)
+        w = min(w, max_window)
+        w = min(w, n)
+
+        if iseven(w)
+            w -= 1
+        end
+
+        if w <= p
+            w = p + 2
+            if iseven(w)
+                w += 1
+            end
+            w = min(w, n)
+            if iseven(w)
+                w -= 1
+            end
+        end
+
+        marker = if w < 15
+            "✓ smaller (less smoothing)"
+        elseif w == 15
+            "= same"
+        elseif w <= 21
+            "  slightly larger"
+        else
+            "✗ much larger (oversmoothing)"
+        end
+
+        println("    Order $order: w=$w (poly=$p) vs Fixed w=15  $marker")
+    end
+end

@@ -148,7 +148,9 @@ def main():
     print(f"Loaded {len(df)} rows from {SUMMARY_CSV}")
 
     # Regime noise levels
-    LOW_NOISE = [1e-8, 1e-6]
+    # Low-noise: everything below 0.01 (1e-8, 1e-6, 1e-4, 1e-3)
+    # High-noise: 0.01 and above (0.01, 0.02)
+    LOW_NOISE = [1e-8, 1e-6, 1e-4, 1e-3]
     HIGH_NOISE = [0.01, 0.02]
 
     # Generate tables for orders 3, 5, and 7

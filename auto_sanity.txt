@@ -1,0 +1,106 @@
+=== Settings ===
+dt=0.000500125, cutoff_est=13.5 Hz, tvgamma=0.0209035
+
+=== Smooth-then-differentiate (first derivative) ===
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py:57: RuntimeWarning: overflow encountered in accumulate
+  return bound(*args, **kwds)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/pynumdiff/finite_difference/_finite_difference.py:59: RuntimeWarning: overflow encountered in divide
+  dxdt_hat /= dt # don't forget to scale by dt, can't skip it this time
+AUTO  butterdiff                   nRMSE=0.0100048 params={'cutoff_freq': np.float64(0.07125976562500005), 'num_iterations': 1, 'filter_order': 2}
+AUTO  gaussiandiff                 nRMSE=0.0473113 params={'window_size': 27, 'num_iterations': 1}
+AUTO  friedrichsdiff               nRMSE=0.0392408 params={'window_size': 15, 'num_iterations': 1}
+AUTO  splinediff                   FAILED: <function splinediff at 0x70b930ede2a0>
+
+=== Smooth-then-differentiate (third derivative) ===
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2792: RuntimeWarning: overflow encountered in dot
+  sqnorm = x.dot(x)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:686: RuntimeWarning: invalid value encountered in subtract
+  df = [f_eval - f0 for f_eval in f_evals]
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py:57: RuntimeWarning: overflow encountered in accumulate
+  return bound(*args, **kwds)
+/home/orebas/tmp/deriv-estimation-study/python/.venv/lib/python3.13/site-packages/pynumdiff/finite_difference/_finite_difference.py:59: RuntimeWarning: overflow encountered in divide
+  dxdt_hat /= dt # don't forget to scale by dt, can't skip it this time
+AUTO  butterdiff→jerk              nRMSE=17.4293 params={'cutoff_freq': np.float64(0.07125976562500005), 'num_iterations': 1, 'filter_order': 2}
+AUTO  gaussiandiff→jerk            nRMSE=46.4397 params={'window_size': 27, 'num_iterations': 1}
+AUTO  friedrichsdiff→jerk          nRMSE=222.565 params={'window_size': 15, 'num_iterations': 1}
+AUTO  splinediff→jerk              FAILED: <function splinediff at 0x70b930ede2a0>
+
+=== Total Variation (first derivative direct) ===
+AUTO  tv.velocity                  nRMSE=0.0140984 params={'gamma': np.float64(0.031375000000000035)}
+
+=== Total Variation (third derivative direct) ===
+AUTO  tv.jerk                      nRMSE=1.00633 params={'gamma': np.float64(105.001220703125)}
+
+=== Kalman RTS (first derivative direct) ===
+AUTO  kalman.rtsdiff               nRMSE=0.00363091 params={'qr_ratio': np.float64(19311523.4375), 'order': 1, 'forwardbackward': False}
+
+=== Kalman RTS (third derivative via spline) ===
+AUTO  kalman.rtsdiff→jerk          nRMSE=7.28109 params={'qr_ratio': np.float64(19311523.4375), 'order': 1, 'forwardbackward': False}

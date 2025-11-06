@@ -5,4 +5,7 @@ matplotlib>=3.7.0
 pandas>=2.0.0
 # AD backend for testing plumbing (lightweight)
 autograd>=1.6.2
+# PyNumDiff for numerical differentiation methods
+pynumdiff>=0.2
+cvxpy>=1.3.0
 # tvregdiff vendored from GitHub into python/tvregdiff.py (no PyPI package)

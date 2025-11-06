@@ -1,0 +1,78 @@
+% Addendum for Section 5 (Analysis) - PyNumDiff Integration
+
+\subsection{Impact of the PyNumDiff Integration}
+\label{sec:pynumdiff_impact}
+
+The expansion of our benchmark from approximately 40 to 74 methods through the integration of the PyNumDiff package provided crucial validation of our initial findings while revealing important nuances about the current state of numerical differentiation software.
+
+\subsubsection{Confirmation of Key Findings}
+
+The addition of 30 PyNumDiff methods strengthened our primary conclusions:
+
+\begin{itemize}
+    \item \textbf{The composable paradigm remains dominant:} Methods that can leverage automatic differentiation on fitted approximants continue to outperform specialized algorithms, particularly for higher-order derivatives.
+
+    \item \textbf{Total Variation methods excel for mixed signals:} The PyNumDiff Total Variation Regularized method achieved an RMSE of 0.038 on our test functions, placing it among the top performers. This validates the effectiveness of TV regularization for signals containing both polynomial and oscillatory components.
+
+    \item \textbf{Simple baselines remain competitive:} The PyNumDiff second-order finite difference method (RMSE: 0.074) outperformed many more complex approaches, reinforcing that computational sophistication does not guarantee superior performance.
+\end{itemize}
+
+\subsubsection{The Order Limitation Challenge}
+
+A striking finding from the PyNumDiff integration is that 26 of the 30 methods are fundamentally limited to computing only first-order derivatives. This limitation is not an implementation choice but an algorithmic constraint—these methods were designed specifically for velocity estimation and cannot be extended to higher orders without completely reformulating their underlying mathematics.
+
+This creates an important dichotomy in our results:
+
+\begin{itemize}
+    \item \textbf{Specialist methods (orders 0--1):} These include some excellent performers like TV Regularized (0.038) and Butterworth (0.029), but their utility is limited to applications requiring only first derivatives.
+
+    \item \textbf{Generalist methods (orders 0--7):} Methods like GPR and spectral approaches that can compute arbitrary-order derivatives have a fundamental advantage in comprehensive applications, even if their first-order performance may occasionally be surpassed by specialists.
+\end{itemize}
+
+\subsubsection{Instructive Failures}
+
+The PyNumDiff integration also provided valuable examples of catastrophic failure modes:
+
+\begin{itemize}
+    \item \textbf{RBF Methods:} The Radial Basis Function implementations showed the worst performance in our entire study, with RMSE values exceeding 700 on polynomial test functions. Investigation revealed severe conditioning problems (condition numbers $> 10^{11}$) when fitting RBFs to polynomial-like growth patterns. This serves as a cautionary tale about the importance of matching method assumptions to signal characteristics.
+
+    \item \textbf{Kalman Filters on Polynomials:} While Kalman filters are excellent for tracking problems with approximately constant velocity or acceleration, they fail dramatically on polynomial signals where the underlying dynamics violate their state-space assumptions. The model mismatch leads to systematic bias that cannot be corrected through parameter tuning.
+\end{itemize}
+
+\subsubsection{Implementation Quality Matters}
+
+The PyNumDiff integration revealed significant performance variations between different implementations of nominally identical algorithms. For example:
+
+\begin{itemize}
+    \item Savitzky-Golay implementations varied by up to 30\% in RMSE depending on the package
+    \item Spline methods showed even greater variation based on the underlying solver and regularization strategy
+    \item Total Variation methods differed substantially based on the optimization algorithm used
+\end{itemize}
+
+This underscores that practitioners should not only choose the right algorithm but also carefully evaluate available implementations.
+
+\subsubsection{Updated Performance Tiers}
+
+With the expanded method set, we can refine our performance tiers:
+
+\begin{table}[h]
+\centering
+\caption{Performance Tiers with PyNumDiff Methods Included}
+\begin{tabular}{@{}llcc@{}}
+\toprule
+\textbf{Tier} & \textbf{Representative Methods} & \textbf{RMSE Range} & \textbf{Max Order} \\
+\midrule
+Elite & GP-Julia-AD, PyNumDiff-Butter* & $< 0.03$ & 7 / 1* \\
+Excellent & PyNumDiff-TVReg*, PyNumDiff-PolyDiff* & 0.03--0.05 & 1 \\
+Strong & Dierckx-5, PyNumDiff-Spline-Auto* & 0.05--0.10 & 7 / 1* \\
+Good & PyNumDiff-SecondOrder*, Fourier-GCV & 0.07--0.15 & 1* / 7 \\
+Baseline & Central-FD, PyNumDiff-FirstOrder* & 0.15--0.30 & 7 / 1* \\
+Poor & PyNumDiff-MeanDiff*, MedianDiff* & 0.30--1.0 & 1 \\
+Catastrophic & PyNumDiff-RBF* & $> 100$ & 1 \\
+\bottomrule
+\end{tabular}
+\\[0.5em]
+\small{*Limited to orders 0--1 only}
+\end{table}
+
+This refined categorization helps practitioners understand not just the accuracy of each method but also its applicability domain. A method in the "Excellent" tier that only supports first derivatives may be perfect for velocity estimation but unsuitable for applications requiring acceleration or jerk computation.

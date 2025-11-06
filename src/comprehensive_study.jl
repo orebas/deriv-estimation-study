@@ -524,21 +524,100 @@ function _retry_config_once(ode_key::String,
 	return results_accum
 end
 
-# Create failure report (methods with missing trials)
+# Create comprehensive failure report (includes methods that completely failed)
 println("Creating failure report...")
-expected_trials = TRIALS_PER_CONFIG * length(enabled_ode_keys)
-failure_report = combine(groupby(summary, [:method, :deriv_order, :noise_level])) do sdf
-	total_trials = sum(sdf.trials)
-	failures = expected_trials - total_trials
-	(
-		total_successful = total_trials,
-		total_failures = failures,
-		failure_rate = failures / expected_trials,
-		affected_odes = join([row.ode_system for row in eachrow(sdf) if row.trials < TRIALS_PER_CONFIG], ", "),
-	)
+
+# Step 1: Collect all Julia methods that were attempted
+julia_methods_attempted = [
+	"AAA-LowPrec",
+	"AAA-Adaptive-Diff2",
+	"AAA-Adaptive-Wavelet",
+	"GP-Julia-AD",
+	"Fourier-Interp",
+	"Fourier-FFT-Adaptive",
+	"Dierckx-5",
+	"GSS",
+	"Savitzky-Golay-Fixed",
+	"Savitzky-Golay-Adaptive",
+	"SG-Package-Fixed",
+	"SG-Package-Hybrid",
+	"SG-Package-Adaptive",
+	"TVRegDiff-Julia",
+	"Central-FD",
+]
+
+# Step 2: Collect all Python methods that were attempted (from output JSON files)
+python_methods_attempted = Set{String}()
+predictions_dir = joinpath(@__DIR__, "..", "build", "results", "comprehensive", "predictions")
+if isdir(predictions_dir)
+	for json_file in readdir(predictions_dir, join=true)
+		if endswith(json_file, ".json")
+			try
+				json_data = JSON3.read(read(json_file, String))
+				if haskey(json_data, :methods)
+					for (method_name, _) in json_data[:methods]
+						if json_data[:methods][method_name][:language] == "Python"
+							push!(python_methods_attempted, String(method_name))
+						end
+					end
+				end
+			catch e
+				# Skip malformed JSON files
+			end
+		end
+	end
 end
-# Sort by failure rate (descending) to show most problematic methods first
-sort!(failure_report, :total_failures, rev = true)
+
+# Combine all attempted methods
+all_methods_attempted = vcat(julia_methods_attempted, collect(python_methods_attempted))
+
+# Step 3: For each (method, ode, noise, order) combination, count successful trials
+expected_trials = TRIALS_PER_CONFIG * length(enabled_ode_keys)
+orders = collect(0:MAX_DERIV)
+
+# Build a dictionary of actual successful trial counts
+success_counts = Dict{Tuple{String, String, Float64, Int}, Int}()
+for row in eachrow(df)
+	key = (row.method, row.ode_system, row.noise_level, row.deriv_order)
+	success_counts[key] = get(success_counts, key, 0) + 1
+end
+
+# Step 4: Generate failure report for all attempted methods
+failure_records = []
+for method in all_methods_attempted
+	for order in orders
+		for noise_level in NOISE_LEVELS
+			# Count successes across all ODEs
+			total_successes = 0
+			affected_odes = String[]
+			for ode_key in enabled_ode_keys
+				key = (method, ode_key, noise_level, order)
+				successes = get(success_counts, key, 0)
+				total_successes += successes
+				if successes < TRIALS_PER_CONFIG
+					push!(affected_odes, ode_key)
+				end
+			end
+
+			failures = expected_trials - total_successes
+			if failures > 0 || total_successes > 0  # Include if any activity (success or failure)
+				push!(failure_records, (
+					method = method,
+					deriv_order = order,
+					noise_level = noise_level,
+					total_successful = total_successes,
+					total_failures = failures,
+					failure_rate = failures / expected_trials,
+					affected_odes = join(affected_odes, ", ")
+				))
+			end
+		end
+	end
+end
+
+# Create DataFrame and sort
+failure_report = DataFrame(failure_records)
+sort!(failure_report, [:total_failures, :method], rev=[true, false])
 CSV.write(joinpath(results_dir, "failure_report.csv"), failure_report)
 
 # Print summary of failures

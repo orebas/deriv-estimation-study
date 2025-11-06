@@ -16,6 +16,7 @@ include("../methods/julia/rational/aaa.jl")
 include("../methods/julia/spectral/fourier.jl")
 include("../methods/julia/splines/splines.jl")
 include("../methods/julia/filtering/filters.jl")
+include("../methods/julia/filtering/savitzky_golay_package.jl")
 include("../methods/julia/regularization/regularized.jl")
 include("../methods/julia/finite_diff/finite_diff.jl")
 
@@ -55,9 +56,12 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"Dierckx-5" => evaluate_dierckx,
 		"GSS" => evaluate_gss,
 
-		# Filtering (3 methods)
+		# Filtering (6 methods)
 		"Savitzky-Golay-Fixed" => evaluate_savitzky_golay_fixed,
 		"Savitzky-Golay-Adaptive" => evaluate_savitzky_golay_adaptive,
+		"SG-Package-Fixed" => evaluate_savitzky_golay_package_fixed,
+		"SG-Package-Hybrid" => evaluate_savitzky_golay_package_hybrid,
+		"SG-Package-Adaptive" => evaluate_savitzky_golay_package_adaptive,
 
 		# Regularization (3 methods)
 		"TrendFilter-k7" => evaluate_trend_filter_k7,
@@ -86,6 +90,9 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"GSS",
 		"Savitzky-Golay-Fixed",    # Fixed window=15, polyorder=7
 		"Savitzky-Golay-Adaptive", # Noise-adaptive window sizing
+		"SG-Package-Fixed",        # Package-based: fixed physical window h
+		"SG-Package-Hybrid",       # Package-based: hybrid adaptive (GPT-5 recommendation)
+		"SG-Package-Adaptive",     # Package-based: pure adaptive for comparison
 		# TrendFilter methods removed - output is discrete vector, not continuous function
 		# Linear interpolation used previously destroyed C^(k-1) smoothness property
 		# "TrendFilter-k7",

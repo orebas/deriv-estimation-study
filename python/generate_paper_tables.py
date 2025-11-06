@@ -291,7 +291,7 @@ print(f"  Saved: {latex_ranking.name}")
 # Table 2: Performance By Order
 print("\nGenerating tab:performance_by_order...")
 # Select representative methods (dynamically check availability)
-candidate_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay', 'AAA-LowPrec', 'GP_RBF_Python']
+candidate_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay-Adaptive', 'AAA-LowPrec', 'GP_RBF_Python']
 available_methods = summary['method'].unique()
 representative_methods = [m for m in candidate_methods if m in available_methods]
 
@@ -336,7 +336,7 @@ timing_data = timing_data.sort_values('timing')
 
 # Select representative methods for comparison (dynamically check availability)
 candidate_timing_methods = ['chebyshev', 'fourier', 'Fourier-Interp',
-                            'Savitzky-Golay', 'GP_RBF_Iso_Python', 'AAA-LowPrec', 'GP-Julia-AD']
+                            'Savitzky-Golay-Adaptive', 'GP_RBF_Iso_Python', 'AAA-LowPrec', 'GP-Julia-AD']
 available_timing_methods = timing_data['method'].unique()
 timing_methods = [m for m in candidate_timing_methods if m in available_timing_methods]
 timing_subset = timing_data[timing_data['method'].isin(timing_methods)].copy()
@@ -371,7 +371,7 @@ order4_pivot = order4_data.pivot_table(
 )
 
 # Select representative methods (dynamically check availability)
-candidate_noise_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay', 'AAA-LowPrec', 'GP_RBF_Python']
+candidate_noise_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay-Adaptive', 'AAA-LowPrec', 'GP_RBF_Python']
 available_noise_methods = order4_pivot.index.tolist()
 noise_methods = [m for m in candidate_noise_methods if m in available_noise_methods]
 if len(noise_methods) > 0:

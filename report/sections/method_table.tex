@@ -1,0 +1,149 @@
+% Method Table for inclusion in section3_methods.tex
+
+\subsection{Complete Method Catalog}
+\label{sec:method_catalog}
+
+Our benchmark comprises 74 methods spanning multiple algorithmic families and implementation languages. Tables~\ref{tab:python_methods} and \ref{tab:julia_methods} provide the complete catalog.
+
+\begin{table}[htbp]
+\centering
+\caption{Python Methods (59 total)}
+\label{tab:python_methods}
+\begin{tabular}{@{}llcc@{}}
+\toprule
+\textbf{Category} & \textbf{Method Name} & \textbf{Orders} & \textbf{Notes} \\
+\midrule
+\multicolumn{4}{l}{\textit{PyNumDiff Package Methods (30)}} \\
+\midrule
+Savitzky-Golay & PyNumDiff-SavGol-\{Auto,Tuned\} & 0--7 & Full support \\
+Spectral & PyNumDiff-Spectral-\{Auto,Tuned\} & 0--7 & Full support \\
+TV Regularized & PyNumDiff-TVRegularized-\{Auto,Tuned\} & 0--1 & Top performer \\
+Polynomial & PyNumDiff-PolyDiff-\{Auto,Tuned\} & 0--1 & Excellent \\
+Butterworth & PyNumDiff-Butter-\{Auto,Tuned\} & 0--1 & Excellent \\
+Spline & PyNumDiff-Spline-\{Auto,Tuned\} & 0--1 & Good \\
+Gaussian Kernel & PyNumDiff-Gaussian-\{Auto,Tuned\} & 0--1 & \\
+Friedrichs & PyNumDiff-Friedrichs-\{Auto,Tuned\} & 0--1 & \\
+Kalman & PyNumDiff-Kalman-\{Auto,Tuned\} & 0--1 & \\
+TV Velocity & PyNumDiff-TV-Velocity & 0--1 & \\
+TV Acceleration & PyNumDiff-TV-Acceleration & 0--1 & \\
+TV Jerk & PyNumDiff-TV-Jerk & 0--1 & \\
+Finite Diff & PyNumDiff-\{First,Second,Fourth\}Order & 0--1 & Baselines \\
+Mean/Median & PyNumDiff-\{Mean,Median\}Diff-\{Auto,Tuned\} & 0--1 & \\
+RBF & PyNumDiff-RBF-\{Auto,Tuned\} & 0--1 & Known issues \\
+\midrule
+\multicolumn{4}{l}{\textit{Gaussian Process Methods (5)}} \\
+\midrule
+GP & GP\_RBF\_Python & 0--7 & Top overall \\
+GP & GP\_RBF\_Iso\_Python & 0--7 & \\
+GP & GP\_Matern\_Python & 0--7 & \\
+GP & GP\_Matern\_1.5\_Python & 0--7 & \\
+GP & GP\_Matern\_2.5\_Python & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Spline \& Interpolation Methods (4)}} \\
+\midrule
+Chebyshev & Chebyshev-AICc & 0--7 & \\
+RKHS & RKHS\_Spline\_m2\_Python & 0--7 & \\
+Butterworth & ButterworthSpline\_Python & 0--7 & \\
+SVR & SVR\_Python & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Filtering Methods (5)}} \\
+\midrule
+Whittaker & Whittaker\_m2\_Python & 0--7 & \\
+Savitzky-Golay & SavitzkyGolay\_Python & 0--7 & \\
+Savitzky-Golay & SavitzkyGolay\_Adaptive\_Python & 0--7 & \\
+Kalman & KalmanGrad\_Python & 0--7 & \\
+TV Regularization & TVRegDiff\_Python & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Adaptive Methods (4)}} \\
+\midrule
+AAA & AAA-Python-Adaptive-Wavelet & 0--7 & \\
+AAA & AAA-Python-Adaptive-Diff2 & 0--7 & \\
+AAA & AAA-JAX-Adaptive-Wavelet & 0--7 & \\
+AAA & AAA-JAX-Adaptive-Diff2 & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Spectral Methods (5)}} \\
+\midrule
+Fourier & Fourier-GCV & 0--7 & \\
+Fourier & Fourier-FFT-Adaptive & 0--7 & \\
+Fourier & Fourier-Continuation-Adaptive & 0--7 & \\
+AD Trig & ad\_trig\_adaptive & 0--7 & \\
+Spectral Taper & SpectralTaper\_Python & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Other Methods (6)}} \\
+\midrule
+Various & chebyshev, fourier, fourier\_continuation & 0--7 & \\
+& gp\_rbf\_mean, ad\_trig & 0--7 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Julia Methods (15 total)}
+\label{tab:julia_methods}
+\begin{tabular}{@{}llcc@{}}
+\toprule
+\textbf{Category} & \textbf{Method Name} & \textbf{Orders} & \textbf{Notes} \\
+\midrule
+\multicolumn{4}{l}{\textit{AAA Rational Approximation (4)}} \\
+\midrule
+AAA & AAA-LowPrec & 0--7 & \\
+AAA & AAA-HighPrec & 0--7 & (when available) \\
+AAA & AAA-Adaptive-Diff2 & 0--7 & \\
+AAA & AAA-Adaptive-Wavelet & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Gaussian Process (1)}} \\
+\midrule
+GP & GP-Julia-AD & 0--7 & AD-enhanced \\
+\midrule
+\multicolumn{4}{l}{\textit{Fourier Methods (2)}} \\
+\midrule
+Fourier & Fourier-Interp & 0--7 & \\
+Fourier & Fourier-FFT-Adaptive & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Spline Methods (2)}} \\
+\midrule
+Dierckx & Dierckx-5 & 0--7 & Low-noise champion \\
+GSS & GSS & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Savitzky-Golay Variants (5)}} \\
+\midrule
+SG & Savitzky-Golay-Fixed & 0--7 & \\
+SG & Savitzky-Golay-Adaptive & 0--7 & \\
+SG Package & SG-Package-Fixed & 0--7 & \\
+SG Package & SG-Package-Hybrid & 0--7 & \\
+SG Package & SG-Package-Adaptive & 0--7 & \\
+\midrule
+\multicolumn{4}{l}{\textit{Other Methods (2)}} \\
+\midrule
+TV & TVRegDiff-Julia & 0--1 & \\
+Finite Diff & Central-FD & 0--7 & Baseline \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Key Implementation Notes}
+
+\paragraph{PyNumDiff Integration.} A major expansion of our benchmark involved integrating the comprehensive PyNumDiff package, which provides 30 methods spanning various algorithmic families. Notably:
+\begin{itemize}
+    \item Only 4 methods (SavGol and Spectral variants) support full orders 0--7
+    \item The remaining 26 methods support orders 0--1 only, which is a fundamental limitation of their algorithms
+    \item Top performers include TV Regularized (RMSE: 0.038), PolyDiff (0.045), and Butterworth (0.029) on our test functions
+\end{itemize}
+
+\paragraph{Method Diversity.} The final set of 74 methods ensures representation from all major algorithmic families:
+\begin{itemize}
+    \item \textbf{Statistical/Probabilistic:} Gaussian Process variants, Kalman filters
+    \item \textbf{Regularization-based:} Total Variation methods, Whittaker smoothing
+    \item \textbf{Local polynomial:} Savitzky-Golay variants, finite differences
+    \item \textbf{Global approximation:} Splines, Chebyshev, rational (AAA)
+    \item \textbf{Frequency domain:} Fourier methods, spectral tapers
+    \item \textbf{Adaptive/hybrid:} Methods with automatic parameter selection
+\end{itemize}
+
+\paragraph{Performance Implications.} The expansion from $\sim$40 to 74 methods revealed important patterns:
+\begin{itemize}
+    \item Methods limited to orders 0--1 often excel in their supported range but cannot compete for higher-order derivatives
+    \item The composable "fit-then-differentiate" paradigm (Section~\ref{sec:composable_framework}) remains dominant
+    \item Implementation quality matters: different packages implementing nominally the same algorithm can have significantly different performance
+\end{itemize}

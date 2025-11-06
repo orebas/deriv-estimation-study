@@ -4,8 +4,8 @@ Generate qualitative comparison figures showing actual derivative estimates vs g
 These figures provide visual evidence of method performance in different noise regimes.
 
 Outputs:
-- high_noise_fit_comparison.png: Shows GP-Julia-AD, GP-RBF-Python, Savitzky-Golay at 2% noise
-- low_noise_fit_comparison.png: Shows GP-Julia-AD, Dierckx-5, Fourier-Interp at 1e-8 noise
+- high_noise_fit_comparison.png: Shows GP-Julia-AD, Savitzky-Golay-Fixed, Dierckx-5, Fourier-GCV at 2% noise
+- low_noise_fit_comparison.png: Shows GP-Julia-AD, Dierckx-5, Fourier-GCV at 1e-6 noise
 """
 
 import json
@@ -22,19 +22,19 @@ REPO_ROOT = SCRIPT_DIR.parent
 HIGH_NOISE_CONFIG = {
     'trial_id': 'lotka_volterra_noise2000000e-8_trial1',
     'derivative_order': 4,
-    'methods': ['GP-Julia-AD', 'Savitzky-Golay', 'Dierckx-5', 'Fourier-GCV'],
+    'methods': ['GP-Julia-AD', 'Savitzky-Golay-Fixed', 'Dierckx-5', 'Fourier-GCV'],
     'output_filename': 'high_noise_fit_comparison.png',
     'title_suffix': 'High Noise (2%)',
     'noise_label': '2% noise',
     'colors': {
         'GP-Julia-AD': '#2ca02c',      # Green
-        'Savitzky-Golay': '#ff7f0e',   # Orange
+        'Savitzky-Golay-Fixed': '#ff7f0e',   # Orange
         'Dierckx-5': '#1f77b4',        # Blue
         'Fourier-GCV': '#d62728',      # Red
     },
     'linestyles': {
         'GP-Julia-AD': '-',
-        'Savitzky-Golay': '--',
+        'Savitzky-Golay-Fixed': '--',
         'Dierckx-5': '-.',
         'Fourier-GCV': ':',
     }

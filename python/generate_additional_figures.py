@@ -237,7 +237,7 @@ top_methods = [
     'GP-Julia-AD',           # Best overall, full 0-7 coverage
     'Fourier-Interp',        # Best spectral low-order, full 0-7 coverage
     'Dierckx-5',             # Best non-GP for orders 2-5, drops at order 6
-    'Savitzky-Golay',        # Filter baseline, drops at order 6
+    'Savitzky-Golay-Adaptive',  # Filter baseline with noise-adaptive window, full 0-7 coverage
     'fourier_continuation',  # Strong spectral, full 0-7 coverage
     'Fourier-GCV',           # Best spectral high-order, full 0-7 coverage
 ]
@@ -452,7 +452,7 @@ specialists_and_generalists = []
 specialists_and_generalists.extend(top_methods[:3])
 
 # Add specialists that don't have full 0-7 coverage but excel at low orders
-candidate_specialists = ['Dierckx-5', 'Central-FD', 'TVRegDiff-Julia', 'Savitzky-Golay']
+candidate_specialists = ['Dierckx-5', 'Central-FD', 'TVRegDiff-Julia', 'Savitzky-Golay-Adaptive']
 for method in candidate_specialists:
     if method in summary_agg['method'].values and method not in specialists_and_generalists:
         specialists_and_generalists.append(method)
