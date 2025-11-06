@@ -14,6 +14,67 @@ This comprehensive study evaluated a wide array of numerical methods for the est
 
 \textbf{The primary recommendation of this work is that for practitioners who require accurate high-order derivatives from real-world, noisy signals, Gaussian Process Regression is the most reliable and effective starting point.}
 
+\subsection{Practitioner's Guide to Method Selection}
+\label{sec:practitioners_guide}
+
+The selection of an appropriate numerical differentiation method depends critically on your specific application constraints. Based on our comprehensive analysis, we provide the following practical guidance:
+
+\textbf{Decision Framework:}
+
+\begin{enumerate}
+    \item \textbf{If real-time performance is essential (sub-millisecond):}
+    \begin{itemize}
+        \item Use \texttt{Savitzky-Golay} for moderate noise levels (up to 1\%)
+        \item Consider basic FFT approaches for periodic signals
+        \item Accept that accuracy will be limited for orders $> 2$
+        \item Implementation tip: Pre-compute filter coefficients when possible
+    \end{itemize}
+
+    \item \textbf{If you need balanced accuracy and speed (1-100 ms):}
+    \begin{itemize}
+        \item Use \texttt{Fourier-GCV} or \texttt{Fourier-Continuation} for smooth, periodic data
+        \item Use \texttt{Dierckx-5} (degree-5 splines) as a robust generalist
+        \item These methods handle orders 0-5 effectively
+        \item Implementation tip: Fourier methods benefit from power-of-2 data lengths
+    \end{itemize}
+
+    \item \textbf{If maximum accuracy is paramount (100+ ms acceptable):}
+    \begin{itemize}
+        \item Use \texttt{GP-Julia-AD} for the most robust performance across all conditions
+        \item Essential for derivative orders $\geq 5$
+        \item Provides best noise robustness (handles 2\% noise effectively)
+        \item Implementation tip: Ensure Taylor-mode AD is available for orders $> 3$
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Additional Considerations:}
+
+\begin{itemize}
+    \item \textbf{Dataset size:} For $N > 1000$ points, be aware that GP methods scale as $O(N^3)$. Consider spectral methods ($O(N \log N)$) or local filters ($O(N)$) for large datasets unless sparse GP approximations are available.
+
+    \item \textbf{Noise characteristics:} If noise level is unknown, GP methods with built-in noise estimation provide the most robust results. For known low noise ($< 0.01\%$), spline methods offer excellent precision.
+
+    \item \textbf{Derivative order:} For orders 0-2, most methods perform adequately. For orders 3-5, use spectral or GP methods. For orders 6-7, only GP methods with Taylor-mode AD remain viable.
+
+    \item \textbf{Implementation quality:} When possible, use established libraries rather than reimplementing. Our results show significant performance variations between implementations of the same algorithm.
+\end{itemize}
+
+\textbf{Quick Reference Table:}
+
+\begin{center}
+\small
+\begin{tabular}{llll}
+\hline
+\textbf{Scenario} & \textbf{Recommended Method} & \textbf{Speed} & \textbf{Max Order} \\
+\hline
+Real-time control & Savitzky-Golay & $<$1 ms & 2-3 \\
+Signal processing & Fourier-GCV & 1-10 ms & 5 \\
+Scientific analysis & Dierckx-5 & 10-50 ms & 5 \\
+High-precision needs & GP-Julia-AD & 100-500 ms & 7 \\
+\hline
+\end{tabular}
+\end{center}
+
 \subsection{Future Work}
 
 This benchmark, while comprehensive, is not exhaustive. Several avenues for future research are immediately apparent:

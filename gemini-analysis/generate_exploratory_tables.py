@@ -64,7 +64,11 @@ def generate_summary_table(df: pd.DataFrame, max_order: int, low_noise_levels: l
         df_c['rank'] = df_c.groupby(['ode_system', 'deriv_order', 'noise_level'])['mean_nrmse'].rank()
         summary = df_c.groupby('method').agg(
             avg_rank=('rank', 'mean'),
-            avg_nrmse=('mean_nrmse', 'mean')
+            median_nrmse=('mean_nrmse', 'median'),
+            q1_nrmse=('mean_nrmse', lambda x: x.quantile(0.25)),
+            q3_nrmse=('mean_nrmse', lambda x: x.quantile(0.75)),
+            success_rate=('mean_nrmse', lambda x: (x < 1.0).mean() * 100),
+            catastrophic_rate=('mean_nrmse', lambda x: (x > 10.0).mean() * 100)
         ).reset_index()
         return summary.sort_values('avg_rank')
 
@@ -79,15 +83,18 @@ def generate_summary_table(df: pd.DataFrame, max_order: int, low_noise_levels: l
         how='inner'
     )
     merged['avg_rank_overall'] = (merged['avg_rank_low'] + merged['avg_rank_high']) / 2
+    merged['success_rate_overall'] = (merged['success_rate_low'] + merged['success_rate_high']) / 2
     merged = merged.sort_values('avg_rank_overall').reset_index(drop=True)
 
     final = pd.DataFrame({
         'Method': merged['method'].map(lambda m: METHOD_MAP.get(m, m)),
-        'Avg. Rank (Overall)': merged['avg_rank_overall'],
-        'Avg. Rank (Low Noise)': merged['avg_rank_low'],
-        'Avg. nRMSE (Low Noise)': merged['avg_nrmse_low'],
-        'Avg. Rank (High Noise)': merged['avg_rank_high'],
-        'Avg. nRMSE (High Noise)': merged['avg_nrmse_high'],
+        'Avg. Rank': merged['avg_rank_overall'],
+        'Median nRMSE (Overall)': (merged['median_nrmse_low'] + merged['median_nrmse_high']) / 2,
+        'Success Rate (%)': merged['success_rate_overall'],
+        'Low Noise Median': merged['median_nrmse_low'],
+        'Low Noise IQR': merged.apply(lambda r: f"[{r['q1_nrmse_low']:.3f}, {r['q3_nrmse_low']:.3f}]", axis=1),
+        'High Noise Median': merged['median_nrmse_high'],
+        'High Noise IQR': merged.apply(lambda r: f"[{r['q1_nrmse_high']:.3f}, {r['q3_nrmse_high']:.3f}]", axis=1),
     })
 
     # 6. Format for markdown output
@@ -100,11 +107,11 @@ def generate_summary_table(df: pd.DataFrame, max_order: int, low_noise_levels: l
             return x
 
     final_fmt = final.copy()
-    final_fmt['Avg. nRMSE (Low Noise)'] = final_fmt['Avg. nRMSE (Low Noise)'].map(cap)
-    final_fmt['Avg. nRMSE (High Noise)'] = final_fmt['Avg. nRMSE (High Noise)'].map(cap)
-    final_fmt['Avg. Rank (Overall)'] = final_fmt['Avg. Rank (Overall)'].map(lambda v: f"{v:.1f}")
-    final_fmt['Avg. Rank (Low Noise)'] = final_fmt['Avg. Rank (Low Noise)'].map(lambda v: f"{v:.1f}")
-    final_fmt['Avg. Rank (High Noise)'] = final_fmt['Avg. Rank (High Noise)'].map(lambda v: f"{v:.1f}")
+    final_fmt['Low Noise Median'] = final_fmt['Low Noise Median'].map(cap)
+    final_fmt['High Noise Median'] = final_fmt['High Noise Median'].map(cap)
+    final_fmt['Median nRMSE (Overall)'] = final_fmt['Median nRMSE (Overall)'].map(cap)
+    final_fmt['Avg. Rank'] = final_fmt['Avg. Rank'].map(lambda v: f"{v:.1f}")
+    final_fmt['Success Rate (%)'] = final_fmt['Success Rate (%)'].map(lambda v: f"{v:.1f}")
 
     return final_fmt
 
@@ -118,18 +125,20 @@ def table_to_latex(df: pd.DataFrame, caption: str, label: str) -> str:
     latex += f"\\caption{{{caption}}}\n"
     latex += f"\\label{{{label}}}\n"
     latex += "\\small\n"
-    latex += "\\begin{tabular}{lrrrrr}\n"
+    latex += "\\begin{tabular}{lrrrllll}\n"
     latex += "\\toprule\n"
-    latex += "\\textbf{Method} & \\textbf{Avg. Rank} & \\textbf{Avg. Rank} & \\textbf{Avg. nRMSE} & \\textbf{Avg. Rank} & \\textbf{Avg. nRMSE} \\\\\n"
-    latex += "& \\textbf{(Overall)} & \\textbf{(Low Noise)} & \\textbf{(Low Noise)} & \\textbf{(High Noise)} & \\textbf{(High Noise)} \\\\\n"
+    latex += "\\textbf{Method} & \\textbf{Avg.} & \\textbf{Median} & \\textbf{Success} & \\textbf{Low Noise} & \\textbf{Low Noise} & \\textbf{High Noise} & \\textbf{High Noise} \\\\\n"
+    latex += "& \\textbf{Rank} & \\textbf{nRMSE} & \\textbf{Rate (\\%)} & \\textbf{Median} & \\textbf{IQR} & \\textbf{Median} & \\textbf{IQR} \\\\\n"
     latex += "\\midrule\n"
 
     for _, row in df.iterrows():
         # Escape underscores in method names for LaTeX
         method_name = str(row['Method']).replace('_', '\\_')
-        latex += f"{method_name} & {row['Avg. Rank (Overall)']} & {row['Avg. Rank (Low Noise)']} & "
-        latex += f"{row['Avg. nRMSE (Low Noise)']} & {row['Avg. Rank (High Noise)']} & "
-        latex += f"{row['Avg. nRMSE (High Noise)']} \\\\\n"
+        latex += f"{method_name} & {row['Avg. Rank']} & {row['Median nRMSE (Overall)']} & "
+        latex += f"{row['Success Rate (%)']} & {row['Low Noise Median']} & "
+        latex += f"{str(row['Low Noise IQR']).replace('[', '').replace(']', '')} & "
+        latex += f"{row['High Noise Median']} & "
+        latex += f"{str(row['High Noise IQR']).replace('[', '').replace(']', '')} \\\\\n"
 
     latex += "\\bottomrule\n"
     latex += "\\end{tabular}\n"
