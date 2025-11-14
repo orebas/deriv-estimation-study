@@ -46,16 +46,18 @@ These methods reframe differentiation as an ill-posed inverse problem to be solv
 
 This category, which includes the top-performing methods in our benchmark, is dominated by Gaussian Process Regression (GPR). As detailed in the canonical text by Rasmussen and Williams~\cite{Rasmussen_Williams_2006}, GPR is a non-parametric Bayesian method that provides a principled, probabilistic approach to learning in kernel machines. Rather than fitting a specific functional form, GPR places a prior distribution over the space of functions itself. When applied to regression, GPR computes a posterior distribution over functions that pass near the noisy data points. The posterior mean function serves as an optimal "approximant" that naturally balances data-fit with smoothness, as defined by a chosen kernel (e.g., the RBF kernel). This makes GPR an exceptionally powerful and robust smoother, and, as our study finds, an ideal candidate for the first step of a derivative estimation pipeline.  
 
-\subsection{From Monolithic Algorithms to Composable Frameworks}
+\subsection{An Emerging Synthesis: Combining Approximation and Automatic Differentiation}
 
-The review above highlights a crucial trend: the maturation of the field from monolithic, single-purpose algorithms (e.g., a "Savitzky-Golay 2nd-derivative algorithm") to a composable, two-step "Approximant-AD" framework. This modern paradigm, which is a core finding of our study, decouples the problem:  
+The methods reviewed above largely represent monolithic, single-purpose algorithms designed specifically for derivative estimation (e.g., a "Savitzky-Golay 1st derivative algorithm"). In parallel to their development, the broader scientific computing ecosystem has independently matured two complementary capabilities: (1) versatile libraries for fitting smooth function approximants (Gaussian Processes, splines, spectral bases) and (2) powerful automatic differentiation (AD) frameworks.
+
+A key insight from our benchmark analysis is that the most robust and accurate derivative estimation strategies emerge not from monolithic algorithms, but from a deliberate two-step composition of these existing tools. We term this pattern the "Approximant-AD" framework, which decouples the problem:
 
 \begin{enumerate}
     \item \textbf{Fit an Approximant:} A smooth, analytic function is fitted to the noisy data using one of the mature methodologies described in Section 2.2 (e.g., GPR, Splines, etc.).
     \item \textbf{Differentiate via AD:} This analytic function is then differentiated to machine precision using Automatic Differentiation (AD).
 \end{enumerate}
 
-This composable pattern allows practitioners to leverage the vast ecosystems of both statistical modeling and AD, as detailed in surveys like Baydin et al.~\cite{Baydin_etal_2018}. However, our benchmark reveals a critical, and previously un-benchmarked, bottleneck in this framework.  
+While the individual components are commonplace in scientific computing, our contribution is to identify and validate this composition as a unifying, high-performing design principle. This composable pattern allows practitioners to leverage the vast ecosystems of both statistical modeling and AD, as detailed in surveys like Baydin et al.~\cite{Baydin_etal_2018}. However, our benchmark reveals a critical, and previously un-benchmarked, bottleneck in this framework.  
 
 \subsubsection{Taylor-Mode AD: The Enabling Technology for High Orders}
 
