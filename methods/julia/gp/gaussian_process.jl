@@ -15,7 +15,8 @@ include("../common.jl")
 using GaussianProcesses
 using Optim
 using LineSearches
-using Suppressor
+using Dates  # For timestamp logging
+# Note: Suppressor removed - @suppress macro causes threading issues (file descriptor conflicts)
 
 # ============================================================================
 # GP-Julia-SE: Analytic SE (RBF) GP with closed-form derivatives
@@ -162,7 +163,7 @@ end
 
 
 # ============================================================================
-# GP-Julia-AD: AD-based GP with generic kernels
+# GP-TaylorAD-Julia: AD-based GP with generic kernels
 # ============================================================================
 
 """
@@ -206,12 +207,17 @@ function fit_gp(x, y; kernel = :SE, optimize = true)
 end
 
 """
-	fit_gp_ad(x, y)
+	fit_gp_ad(x, y; rng=Random.GLOBAL_RNG)
 
 Fit GP using TaylorDiff-based automatic differentiation (simpler, more robust).
 Based on ODEParameterEstimation approach - normalize, optimize, then AD through predictions.
+
+Args:
+	x: Input locations
+	y: Observations
+	rng: Random number generator for reproducible jitter (default: global RNG)
 """
-function fit_gp_ad(x::Vector{Float64}, y::Vector{Float64})
+function fit_gp_ad(x::Vector{Float64}, y::Vector{Float64}; rng = Random.GLOBAL_RNG)
 	@assert length(x) == length(y) "Input arrays must have same length"
 
 	# 1. Normalize y values
@@ -225,14 +231,16 @@ function fit_gp_ad(x::Vector{Float64}, y::Vector{Float64})
 	initial_noise = -2.0
 
 	# Add small amount of jitter to avoid numerical issues
+	# IMPORTANT: Use provided RNG for reproducibility
 	kernel = SEIso(initial_lengthscale, initial_variance)
 	jitter = 1e-8
-	y_jittered = y_normalized .+ jitter * randn(length(y_normalized))
+	y_jittered = y_normalized .+ jitter * randn(rng, length(y_normalized))
 
-	# 2. Do GPR approximation on normalized data with suppressed warnings
+	# 2. Do GPR approximation on normalized data
+	# Note: @suppress removed due to threading issues (file descriptor conflicts in parallel execution)
 	local gp
-	@suppress gp = GP(x, y_jittered, MeanZero(), kernel, initial_noise)
-	@suppress GaussianProcesses.optimize!(gp; method = LBFGS(linesearch = LineSearches.BackTracking()))
+	gp = GP(x, y_jittered, MeanZero(), kernel, initial_noise)
+	GaussianProcesses.optimize!(gp; method = LBFGS(linesearch = LineSearches.BackTracking()))
 
 	# Create a function that evaluates the GPR prediction and denormalizes the output
 	function denormalized_gpr(x_eval)
@@ -249,14 +257,20 @@ end
 # ============================================================================
 
 """
-	fit_gp_matern(x, y; nu=1.5)
+	fit_gp_matern(x, y; nu=1.5, rng=Random.GLOBAL_RNG)
 
 Fit GP with Matérn kernel using TaylorDiff-based automatic differentiation.
 Uses same approach as GP-Julia-AD but with Matérn kernel instead of SE.
 
 Supported nu values: 0.5 (Mat12Iso), 1.5 (Mat32Iso), 2.5 (Mat52Iso)
+
+Args:
+	x: Input locations
+	y: Observations
+	nu: Matérn smoothness parameter
+	rng: Random number generator for reproducible jitter (default: global RNG)
 """
-function fit_gp_matern(x::Vector{Float64}, y::Vector{Float64}; nu::Float64 = 1.5)
+function fit_gp_matern(x::Vector{Float64}, y::Vector{Float64}; nu::Float64 = 1.5, rng = Random.GLOBAL_RNG)
 	@assert length(x) == length(y) "Input arrays must have same length"
 
 	# 1. Normalize y values
@@ -281,13 +295,15 @@ function fit_gp_matern(x::Vector{Float64}, y::Vector{Float64}; nu::Float64 = 1.5
 	end
 
 	# Add small amount of jitter to avoid numerical issues
+	# IMPORTANT: Use provided RNG for reproducibility
 	jitter = 1e-8
-	y_jittered = y_normalized .+ jitter * randn(length(y_normalized))
+	y_jittered = y_normalized .+ jitter * randn(rng, length(y_normalized))
 
-	# 2. Do GPR approximation on normalized data with suppressed warnings
+	# 2. Do GPR approximation on normalized data
+	# Note: @suppress removed due to threading issues (file descriptor conflicts in parallel execution)
 	local gp
-	@suppress gp = GP(x, y_jittered, MeanZero(), kernel, initial_noise)
-	@suppress GaussianProcesses.optimize!(gp; method = LBFGS(linesearch = LineSearches.BackTracking()))
+	gp = GP(x, y_jittered, MeanZero(), kernel, initial_noise)
+	GaussianProcesses.optimize!(gp; method = LBFGS(linesearch = LineSearches.BackTracking()))
 
 	# Create a function that evaluates the GPR prediction and denormalizes the output
 	function denormalized_gpr(x_eval)
@@ -359,9 +375,38 @@ function evaluate_gp_ad(
 	predictions = Dict{Int, Vector{Float64}}()
 	failures = Dict{Int, String}()
 
+	# Setup verbose logging to gitignored file
+	trial_id = get(params, :trial_id, "unknown")
+	log_dir = joinpath(dirname(@__DIR__), "..", "..", "build", "logs", "gp")
+	mkpath(log_dir)
+	log_file = joinpath(log_dir, "$(trial_id).log")
+
+	# Extract RNG from params for reproducibility
+	rng = get(params, :rng, Random.GLOBAL_RNG)
+	rng_seed = get(params, :rng_seed, "unknown")
+
+	# Log trial start
+	open(log_file, "w") do io
+		println(io, "=" ^ 80)
+		println(io, "GP-TaylorAD-Julia Detailed Log")
+		println(io, "=" ^ 80)
+		println(io, "Trial ID: $trial_id")
+		println(io, "Timestamp: $(now())")
+		println(io, "RNG Seed: $rng_seed")
+		println(io)
+		println(io, "Data Statistics:")
+		println(io, "  Number of points: $(length(x))")
+		println(io, "  x range: [$(minimum(x)), $(maximum(x))]")
+		println(io, "  y range: [$(minimum(y)), $(maximum(y))]")
+		println(io, "  y mean: $(mean(y))")
+		println(io, "  y std: $(std(y))")
+		println(io, "  Orders requested: $orders")
+		println(io)
+	end
+
 	try
 		# Fit AD-based GP
-		fitted_func = fit_gp_ad(x, y)
+		fitted_func = fit_gp_ad(x, y; rng = rng)
 
 		# Use TaylorDiff for automatic differentiation (all orders)
 		for order in orders
@@ -374,12 +419,45 @@ function evaluate_gp_ad(
 		end
 
 		timing = time() - t_start
-		return MethodResult("GP-Julia-AD", "Gaussian Process", predictions, failures, timing, true)
+
+		# Log success
+		open(log_file, "a") do io
+			println(io, "Status: SUCCESS")
+			println(io, "Total time: $(timing) seconds")
+			println(io, "Orders computed: $(sort(collect(keys(predictions))))")
+			if !isempty(failures)
+				println(io, "Partial failures: $(sort(collect(keys(failures))))")
+			end
+			println(io, "=" ^ 80)
+		end
+
+		return MethodResult("GP-TaylorAD-Julia", "Gaussian Process", predictions, failures, timing, true)
 
 	catch e
-		@warn "GP-Julia-AD failed" exception=e
+		# Enhanced error logging for debugging GP failures
+		error_details = sprint(showerror, e, catch_backtrace())
 		timing = time() - t_start
-		return MethodResult("GP-Julia-AD", "Error", Dict(), Dict(0 => string(e)), timing, false)
+
+		# Log failure to file
+		open(log_file, "a") do io
+			println(io, "Status: FAILED")
+			println(io, "Total time: $(timing) seconds")
+			println(io)
+			println(io, "Error Details:")
+			println(io, error_details)
+			println(io, "=" ^ 80)
+		end
+
+		# Also log to console
+		@error "GP-TaylorAD-Julia FAILED" exception=(e, catch_backtrace()) data_stats=(
+			n_points=length(x),
+			x_range=(minimum(x), maximum(x)),
+			y_range=(minimum(y), maximum(y)),
+			y_std=std(y),
+			y_mean=mean(y)
+		)
+
+		return MethodResult("GP-TaylorAD-Julia", "Error", Dict(), Dict(0 => error_details), timing, false)
 	end
 end
 
@@ -405,7 +483,9 @@ function evaluate_gp_matern(
 
 	try
 		# Fit Matérn GP
-		fitted_func = fit_gp_matern(x, y; nu = nu)
+		# Extract RNG from params for reproducibility
+		rng = get(params, :rng, Random.GLOBAL_RNG)
+		fitted_func = fit_gp_matern(x, y; nu = nu, rng = rng)
 
 		# Use TaylorDiff for automatic differentiation (all orders)
 		for order in orders

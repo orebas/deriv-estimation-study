@@ -236,12 +236,12 @@ function evaluate_savitzky_golay_fixed(
 		end
 
 		timing = time() - t_start
-		return MethodResult("Savitzky-Golay-Fixed", "Local Polynomial", predictions, failures, timing, true)
+		return MethodResult("SavitzkyGolay-Fixed", "Local Polynomial", predictions, failures, timing, true)
 
 	catch e
 		@warn "Savitzky-Golay-Fixed failed" exception = e
 		timing = time() - t_start
-		return MethodResult("Savitzky-Golay-Fixed", "Error", Dict(), Dict(0 => string(e)), timing, false)
+		return MethodResult("SavitzkyGolay-Fixed", "Error", Dict(), Dict(0 => string(e)), timing, false)
 	end
 end
 
@@ -436,11 +436,11 @@ function evaluate_savitzky_golay_adaptive(
 		end
 
 		timing = time() - t_start
-		return MethodResult("Savitzky-Golay-Adaptive", "Local Polynomial", predictions, failures, timing, true)
+		return MethodResult("SavitzkyGolay-Adaptive", "Local Polynomial", predictions, failures, timing, true)
 
 	catch e
 		@warn "Savitzky-Golay-Adaptive failed" exception = e
 		timing = time() - t_start
-		return MethodResult("Savitzky-Golay-Adaptive", "Error", Dict(), Dict(0 => string(e)), timing, false)
+		return MethodResult("SavitzkyGolay-Adaptive", "Error", Dict(), Dict(0 => string(e)), timing, false)
 	end
 end

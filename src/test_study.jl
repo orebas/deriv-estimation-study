@@ -375,21 +375,21 @@ println("Creating failure report...")
 
 # Step 1: Collect all Julia methods that were attempted
 julia_methods_attempted = [
-	"AAA-LowPrec",
+	"AAA-LowTol",
 	"AAA-Adaptive-Diff2",
 	"AAA-Adaptive-Wavelet",
-	"GP-Julia-AD",
+	"GP-TaylorAD-Julia",
 	"Fourier-Interp",
-	"Fourier-FFT-Adaptive",
-	"Dierckx-5",
-	"GSS",
-	"Savitzky-Golay-Fixed",
-	"Savitzky-Golay-Adaptive",
-	"SG-Package-Fixed",
-	"SG-Package-Hybrid",
-	"SG-Package-Adaptive",
+	"Fourier-Adaptive-Julia",
+	"Spline-Dierckx-5",
+	"Spline-GSS",
+	"SavitzkyGolay-Fixed",
+	"SavitzkyGolay-Adaptive",
+	"SavitzkyGolay-Julia-Fixed",
+	"SavitzkyGolay-Julia-Hybrid",
+	"SavitzkyGolay-Julia-Adaptive",
 	"TVRegDiff-Julia",
-	"Central-FD",
+	"FiniteDiff-Central",
 ]
 
 # Step 2: Collect all Python methods that were attempted (from output JSON files)

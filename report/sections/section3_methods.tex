@@ -1,55 +1,54 @@
-\section{Method Catalog and Implementation}
+\section{Methodology and Implementation}
 \label{sec:methods}
 
-This study did not begin with a fixed set of methods. Rather, it followed an exploratory research path, starting with methods known to work on noiseless data and progressively incorporating more sophisticated techniques in response to the challenges posed by noisy signals. This section provides a narrative of that journey, cataloging the methods investigated and detailing the significant implementation work required to create a fair and robust comparison.
+The derivative estimation methods evaluated in this study were selected through a systematic survey and filtering process designed to cover a broad range of algorithmic approaches. The foundational background for the method families considered in this work—including local polynomial filters, splines, global basis functions, regularization, and probabilistic methods—is detailed in Section~\ref{sec:foundational_methodologies}.
 
-\subsection{A Composable Framework: Approximation + Automatic Differentiation}
-\label{sec:composable_framework}
+This section details the specific criteria for method selection, key implementation choices for computing high-order derivatives, and the precise implementation of our top-performing Gaussian Process Regression approach.
 
-A core finding of our study is the power of a composable, two-step framework for numerical differentiation. Rather than relying on bespoke algorithms for each derivative order, the most successful methods, particularly Gaussian Process Regression, implicitly or explicitly follow a simple and highly effective recipe:
+\subsection{Systematic Filtering and Final Selection}
+\label{sec:filtering_criteria}
 
-\begin{enumerate}
-    \item \textbf{Fit an Approximant:} First, a smooth, analytic function (the "approximant") is fitted to the noisy data. This function can be a Gaussian Process, a spline, a spectral representation, or any other differentiable model. The goal of this step is to capture the underlying signal while filtering out noise.
-    \item \textbf{Differentiate via AD:} Second, this fitted function is differentiated using Automatic Differentiation (AD). Because the approximant is a well-defined mathematical function, AD can compute its derivatives to machine precision, free from the truncation and differencing errors that plague finite difference methods.
-\end{enumerate}
+From the initial survey, a rigorous multi-stage filtering process was applied to identify methods suitable for benchmarking:
 
-This "Approximant-AD" pattern is exceptionally powerful because it decouples the problem of noise-robust smoothing from the problem of differentiation. It allows practitioners to leverage the vast and mature ecosystems of both statistical modeling and automatic differentiation, effectively bringing the full power of modern AD frameworks to bear on a classical numerical problem.
+\textbf{Stage 1: Stability Assessment.} Methods were first evaluated for numerical stability on noisy data. For example, the Adaptive Antoulas-Anderson (AAA) algorithm, while exceptionally powerful for rational approximation in noise-free contexts~\cite{Nakatsukasa_etal_2018, Bassik_etal_2023} (and our preferred interpolation method in that context), demonstrated significant instability when applied to noisy signals. The resulting derivative estimates frequently contained errors several orders of magnitude larger than other methods. The least stable methods were excluded from further analysis.
 
-\textbf{The Critical Role of Taylor-Mode AD for High Orders:} While the Approximant-AD framework provides an elegant solution, the choice of AD implementation becomes paramount when targeting high-order derivatives (orders 5, 6, and 7). Naively composing first-order AD operations—either forward or reverse mode—to compute a $k$-th derivative results in exponential computational complexity, rendering it infeasible for orders beyond a handful.
 
-To overcome this barrier, our framework employs \textbf{Taylor-mode automatic differentiation}. Instead of propagating only first-order derivative information, Taylor-mode AD propagates a full Taylor series expansion through the computation. By computing and carrying forward the Taylor coefficients at each step, it can calculate all derivatives up to order $k$ in a single pass with polynomial complexity. This efficiency gain is not merely an optimization but an enabling technology: the success of our top-performing methods, particularly \texttt{GP-Julia-AD}, is critically dependent on their use of Taylor-mode AD. As demonstrated in our results, the choice of AD implementation is as fundamental to success as the choice of the approximant itself.
+\textbf{Stage 2: Coverage Requirement.} We initially planned to require packages to support arbitrary derivative orders. In practice, orders $6$–$7$ (and often $5$) are both rarer in applications and substantially more fragile. Accordingly, our \emph{primary ranking} requires methods to produce valid derivatives for orders $0$–$5$ (across all systems and noise levels). Methods with narrower scope—whether due to theoretical limits (e.g., low-degree local polynomials) or implementation constraints—are documented but omitted from the primary comparison. Orders $6$–$7$ are reported separately as a stress test (Appendix~X). This criterion preserves a like-for-like comparison among methods with comparable capabilities.
 
-\subsection{Breadth of the Study}
-\label{sec:breadth}
+\textbf{Stage 3: Implementation Verification.} Each remaining method was verified to produce valid output across all test configurations (three dynamical systems, seven noise levels). Methods that failed consistently on specific systems or noise regimes were excluded.
 
-For practitioners, the choice of a specific software package can be as consequential as the choice of the underlying algorithm. To this end, our study intentionally includes multiple implementations of similar or identical algorithms (e.g., several variants of Gaussian Process Regression and Fourier-based methods) to assess whether real-world performance differences arise from implementation details. While we could not be exhaustive, we sought to include representatives from all major methodological families as well as several novel approaches.
+This systematic filtering yielded a final cohort of 28 methods that demonstrated both numerical stability and complete coverage for orders 0--5, forming the basis for the comparative analysis presented in Section~\ref{sec:results}. Methods are implemented in both Python and Julia, spanning the algorithmic families described above: Gaussian Process methods, spline interpolation, spectral approaches, filtering techniques, and Total Variation regularization.
 
-\subsection{Method Selection and Refinement}
-\label{sec:method_selection}
-
-The selection of numerical differentiation methods for this benchmark was an iterative process, beginning with a broad survey of established techniques and culminating in a rigorously filtered cohort of 31 contenders. This process can be understood as a sequence of three overlapping phases of exploration, expansion, and systematic refinement.
-
-\begin{enumerate}
-    \item \textbf{Initial Foray with Established Methods:} Our investigation began with methods well-established in noise-free or low-noise contexts. This initial pool included classical finite difference schemes, smoothing splines, and the Savitzky-Golay filter, which combines local polynomial regression with differentiation. We also evaluated the Adaptive Antoulas-Anderson (AAA) algorithm, a powerful tool for rational approximation in noise-free settings. However, during preliminary testing on noisy signals, the AAA-based differentiation methods demonstrated significant instability. The resulting derivative estimates frequently contained errors several orders of magnitude larger than those from other methods, rendering them unsuitable for this benchmark's focus on noisy time-series data. Consequently, while acknowledging its utility in other domains, the AAA method was the first to be excluded from our candidate pool.
-
-    \item \textbf{Expansion to Noise-Robust Approaches:} Recognizing the limitations of methods not explicitly designed for noise, the second phase expanded our search to include techniques with inherent denoising or statistical modeling capabilities. This broadened the candidate pool to include methods based on wavelet filtering, Gaussian Process Regression (GPR), Total Variation Regularization, and Kalman filtering. These approaches are theoretically better suited to the challenges of differentiating noisy data, and their inclusion ensured the benchmark would cover a diverse range of modern, noise-robust strategies. This phase concluded with a comprehensive, albeit heterogeneous, collection of potential methods for systematic evaluation.
-
-    \item \textbf{Systematic Filtering and Final Cohort Definition:} The final phase involved a rigorous, systematic filtering of all collected candidates to establish a final, consistent, and comparable set for analysis. Each method was evaluated against two primary criteria: stability (as discussed for AAA) and completeness of coverage across the required derivative orders (0 through 7) and test systems. Several promising algorithms were excluded at this stage because they either failed to compute derivatives for the entire range of orders or produced failures on specific dynamical systems, leaving gaps in the results matrix.
-
-    This stringent filtering process yielded the final cohort of 31 methods that provided complete data coverage. From this group, we define the primary \textit{contender set} as those methods that successfully produced stable estimates for all systems up to the 5th derivative, forming the basis for the core analysis in this paper. The cohort includes implementations in both Python and Julia, spanning multiple algorithmic families: Gaussian Process methods, spline interpolation, spectral approaches, filtering techniques, and Total Variation regularization. This multi-stage refinement ensures that our benchmark compares only the most robust and broadly applicable differentiation techniques.
-\end{enumerate}
-
-\subsection{Implementation: The Challenge of High-Order Derivatives}
+\subsection{Implementation Considerations for High-Order Derivatives}
 \label{sec:implementation_challenges}
 
-A significant practical challenge was that almost no off-the-shelf package natively supports the computation of arbitrarily high-order derivatives. Overcoming this required substantial implementation effort.
+A significant practical challenge in benchmarking derivative estimation methods is the computation of arbitrarily high-order derivatives, as most existing packages support only first or second derivatives. Three complementary approaches were employed in this study to address this limitation:
 
 \begin{itemize}
-    \item \textbf{Augmentation with Automatic Differentiation:} For methods whose underlying approximant was differentiable (e.g., Gaussian Processes), we augmented the implementation with Automatic Differentiation (AD) to compute the derivatives. Where possible, we used Taylor-mode AD, which is essential for the efficient computation of high-order derivatives, as naive nested AD has exponential complexity.
-    \item \textbf{Analytic Derivatives:} For other methods, such as those based on splines or Fourier series, we derived and implemented the analytical expressions for their higher-order derivatives directly.
-    \item \textbf{Noise Model Integration:} In some cases, we also had to implement custom noise-estimation steps to provide the algorithms with required hyperparameters, using techniques such as wavelet MAD or simple finite-difference-based noise estimation.
+    \item \textbf{Augmentation with Automatic Differentiation:} For methods whose underlying approximant was differentiable (e.g., Gaussian Processes), implementations were augmented with AD capabilities. Our Julia implementation leverages Taylor-mode AD~\cite{TaylorDiff_jl} for efficient computation of high-order derivatives.
+    
+    \item \textbf{Analytic Derivative Computation:} For methods such as splines or Fourier series, analytic expressions for higher-order derivatives were derived and implemented directly. This approach provides exact derivatives of the approximant function while maintaining computational efficiency.
+    
+    \item \textbf{Noise Estimation Integration:} Several methods require noise level estimates as hyperparameters. Where not provided by the original implementation, noise estimation routines based on wavelet MAD (Median Absolute Deviation)~\cite{Donoho_Johnstone_1994} or simple finite-difference variance estimation~\cite{Gasser_etal_1986} were integrated.
 \end{itemize}
 
-This substantial, and often non-trivial, implementation work was a prerequisite for creating the level playing field upon which this benchmark is built.
+These implementation enhancements ensured a level playing field for comparison while maintaining the essential characteristics of each method.
 
-% Method catalog removed - 31 tested methods listed in results
+\subsection{Gaussian Process Regression Implementation}
+\label{sec:gpr_implementation}
+
+Given the exceptional performance of Gaussian Process methods in our results, we provide specific implementation details for reproducibility. Our GPR approach~\cite{Fairbrother_etal_2022} follows a standard but carefully optimized workflow:
+
+\begin{enumerate}
+    \item \textbf{Kernel Selection:} We employ the squared exponential (RBF) kernel~\cite{Rasmussen_Williams_2006}: $k(x, x') = \sigma^2_f \exp(-\|x - x'\|^2 / 2\ell^2)$, where $\ell$ is the length scale and $\sigma_f$ is the signal variance.
+
+    \item \textbf{Hyperparameter Optimization:} The hyperparameters $(\ell, \sigma_f, \sigma_n)$ are optimized via maximum likelihood estimation using L-BFGS-B optimization~\cite{Byrd_etal_1995} on the log marginal likelihood.
+
+    \item \textbf{Derivative Computation:} Rather than using kernel derivatives, we extract the posterior mean function and differentiate it directly using automatic differentiation. This approach provides exact derivatives of the smooth interpolant.
+
+    \item \textbf{Taylor-mode AD:} The Julia implementation leverages Taylor-mode automatic differentiation~\cite{TaylorDiff_jl} for efficient computation of derivatives up to order 7 in a single forward pass. Python implementations lack this capability, explaining their 10× slower performance.
+\end{enumerate}
+
+This ``fit-then-differentiate'' approach treats GPR as a sophisticated smoothing method, discarding the uncertainty quantification machinery after fitting to focus solely on the mean prediction and its derivatives.
+
+% Method catalog removed - 31 tested methods are listed in results section and detailed in Appendix A

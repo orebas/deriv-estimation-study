@@ -68,7 +68,7 @@ This report summarizes the performance of derivative estimation methods across t
 - The top performers are broadly consistent, with GP and spectral methods leading. However, the chaotic nature of the Lorenz system appears to challenge some methods more than the periodic oscillators.
 
 **2. Do catastrophic failures (like AAA) persist across all systems?**
-- Yes. The `AAA-HighPrec` and `AAA-LowPrec` methods show extremely high average nRMSE across all three systems, confirming their instability is not specific to one type of dynamic.
+- Yes. The `AAA-HighTol` and `AAA-LowTol` methods show extremely high average nRMSE across all three systems, confirming their instability is not specific to one type of dynamic.
 
 **3. Are there new failures on the chaotic system?**
 - The list of worst performers is similar across systems, dominated by the AAA methods. This initial analysis doesn't show a method that was good on Lotka-Volterra but failed completely on Lorenz. A deeper dive would be needed to see how performance degrades for moderately-good methods.

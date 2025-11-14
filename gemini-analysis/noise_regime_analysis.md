@@ -78,9 +78,9 @@ The analysis reveals significant shifts in method performance between low and hi
 - In the high-noise regime, Gaussian Process methods (`GP-*`) are the undisputed champions across all three systems. Their inherent regularization and noise modeling provide superior robustness.
 
 **2. Splines & Spectral Methods Excel in Low Noise.**
-- In the low-noise regime, methods like `Dierckx-5` and various Fourier-based spectral methods are extremely competitive, sometimes outperforming the GP methods. They are excellent choices for high-precision applications where noise is not a primary concern.
+- In the low-noise regime, methods like `Spline-Dierckx-5` and various Fourier-based spectral methods are extremely competitive, sometimes outperforming the GP methods. They are excellent choices for high-precision applications where noise is not a primary concern.
 
 **3. System Dynamics Matter.**
-- The chaotic Lorenz system shows the most dramatic performance drop-off in the high-noise regime. While `GP-Julia-AD` remains the best, its error increases significantly, highlighting the combined challenge of chaos and noise.
+- The chaotic Lorenz system shows the most dramatic performance drop-off in the high-noise regime. While `GP-TaylorAD-Julia` remains the best, its error increases significantly, highlighting the combined challenge of chaos and noise.
 
 **Conclusion for Narrative:** The data strongly supports splitting the recommendation. The story should be: 'For clean data, you have several excellent, fast options. For noisy data, the field narrows considerably, and Gaussian Processes are the only reliable choice.'

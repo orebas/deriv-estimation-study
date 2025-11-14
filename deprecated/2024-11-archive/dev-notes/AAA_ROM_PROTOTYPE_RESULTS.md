@@ -15,7 +15,7 @@
 
 ## Results
 
-### PyNumDiff-SavGol-Tuned
+### PyNumDiff-SavitzkyGolay-Tuned
 
 | Order | PyNumDiff Native | AAA-ROM | Status |
 |-------|------------------|---------|--------|

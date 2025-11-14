@@ -57,7 +57,7 @@ A concise summary of the narrative: We explore the challenge of high-order deriv
     *   Make this the primary recommendation.
 *   **4.2. Honorable Mentions: Viable Alternatives:**
     *   Acknowledge `Dierckx` splines for their strong performance, particularly on chaotic systems (despite theoretical limits at very high orders).
-    *   Mention `GSS` (if data supports).
+    *   Mention `Spline-GSS` (if data supports).
     *   Highlight the best spectral method as a computationally cheaper, effective alternative for smooth/periodic data.
 *   **4.3. A Practical Decision Tree:** Provide a simple flowchart or bulleted list to help a practitioner choose a method based on their specific needs (noise level, derivative order, signal type, computational budget).
 

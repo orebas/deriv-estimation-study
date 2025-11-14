@@ -33,6 +33,15 @@ summary = pd.read_csv(results_dir / "comprehensive_summary.csv")
 
 print(f"\nLoaded {len(summary)} rows from summary data")
 
+# Consolidate functionally equivalent GP-Python methods
+# These three methods have identical performance (confirmed by analysis)
+gp_python_variants = ['GP-RBF-Iso-Python', 'GP-RBF-MeanSub-Python']
+summary['method'] = summary['method'].replace(gp_python_variants, 'GP-RBF-Python')
+
+# Deduplicate after consolidation
+summary = summary.drop_duplicates(subset=['ode_system', 'method', 'deriv_order', 'noise_level'], keep='first')
+print(f"Consolidated GP-Python variants into single method and deduplicated")
+
 # Noise levels to analyze
 noise_levels = [1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 2e-2]
 orders = list(range(8))  # 0-7
@@ -72,6 +81,12 @@ for order in orders:
     pivot['average'] = pivot.mean(axis=1)
     pivot = pivot.sort_values('average')
 
+    # Limit to top 50 methods for orders 0 and 1 (they have too many to fit on page)
+    if order in [0, 1] and len(pivot) > 50:
+        original_count = len(pivot)
+        pivot = pivot.head(50)
+        print(f"  Limiting to top 50 methods (out of {original_count} total)")
+
     # Format values: cap at 1000, format to 2 decimals
     def format_value(x):
         if pd.isna(x):
@@ -95,11 +110,24 @@ for order in orders:
     latex_file = tables_dir / f"order_{order}_nrmse.tex"
     with open(latex_file, 'w') as f:
         f.write("% nRMSE values for derivative order {}\n".format(order))
-        f.write(formatted.to_latex(
-            caption=f"Normalized RMSE for derivative order {order}",
-            label=f"tab:nrmse_order_{order}",
+
+        # Escape underscores in the index (method names)
+        formatted.index = formatted.index.str.replace('_', '\\_', regex=False)
+
+        # Remove column and index names
+        formatted.columns.name = None
+        formatted.index.name = None
+
+        latex_str = formatted.to_latex(
+            caption=None,  # Remove caption from fragment
+            label=None,    # Remove label from fragment
             escape=False
-        ))
+        )
+
+        # Add "Method" as the first column header (replace leading " &" with "Method &")
+        latex_str = latex_str.replace('\\toprule\n &', '\\toprule\nMethod &')
+
+        f.write(latex_str)
 
     # Save as CSV for reference
     csv_file = tables_dir / f"order_{order}_nrmse.csv"
@@ -187,9 +215,19 @@ print("\n" + "="*80)
 print("GENERATING SUMMARY HEATMAP")
 print("="*80)
 
-# Get top 15 methods overall
-overall_avg = summary.groupby('method')['mean_nrmse'].mean().sort_values()
+# Filter to methods that have ALL derivative orders (0-7)
+# Count how many derivative orders each method has
+method_order_counts = summary.groupby('method')['deriv_order'].nunique()
+full_order_methods = method_order_counts[method_order_counts == 8].index.tolist()
+
+print(f"Methods with full derivative order coverage (0-7): {len(full_order_methods)}")
+
+# Get top 15 methods from those with full coverage
+full_coverage_summary = summary[summary['method'].isin(full_order_methods)]
+overall_avg = full_coverage_summary.groupby('method')['mean_nrmse'].mean().sort_values()
 top_methods = overall_avg.head(15).index.tolist()
+
+print(f"Top 15 methods with full coverage: {top_methods[:5]}... (showing first 5)")
 
 # Create pivot for heatmap
 heatmap_data = summary[summary['method'].isin(top_methods)].pivot_table(
@@ -291,7 +329,7 @@ print(f"  Saved: {latex_ranking.name}")
 # Table 2: Performance By Order
 print("\nGenerating tab:performance_by_order...")
 # Select representative methods (dynamically check availability)
-candidate_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay-Adaptive', 'AAA-LowPrec', 'GP_RBF_Python']
+candidate_methods = ['GP-TaylorAD-Julia', 'Spline-Dierckx-5', 'SavitzkyGolay-Fixed', 'Fourier-GCV', 'GP-RBF-Python']
 available_methods = summary['method'].unique()
 representative_methods = [m for m in candidate_methods if m in available_methods]
 
@@ -335,14 +373,16 @@ timing_data = raw_results.groupby('method').agg({
 timing_data = timing_data.sort_values('timing')
 
 # Select representative methods for comparison (dynamically check availability)
-candidate_timing_methods = ['chebyshev', 'fourier', 'Fourier-Interp',
-                            'Savitzky-Golay-Adaptive', 'GP_RBF_Iso_Python', 'AAA-LowPrec', 'GP-Julia-AD']
+# Includes 4 Pareto-optimal methods + representative methods across speed ranges
+candidate_timing_methods = ['SavitzkyGolay-Fixed', 'ButterworthSpline_Python', 'Spline-Dierckx-5',
+                            'Fourier-Continuation-Python', 'Fourier-GCV', 'Fourier-Adaptive-Julia',
+                            'GP-RBF-Python', 'GP-TaylorAD-Julia']
 available_timing_methods = timing_data['method'].unique()
 timing_methods = [m for m in candidate_timing_methods if m in available_timing_methods]
 timing_subset = timing_data[timing_data['method'].isin(timing_methods)].copy()
 
 # Calculate speedup vs GP-Julia-AD
-gp_time = timing_subset[timing_subset['method'] == 'GP-Julia-AD']['timing'].values[0]
+gp_time = timing_subset[timing_subset['method'] == 'GP-TaylorAD-Julia']['timing'].values[0]
 timing_subset['speedup'] = gp_time / timing_subset['timing']
 
 latex_timing = output_dir / "tab_timing_comparison.tex"
@@ -355,7 +395,8 @@ with open(latex_timing, 'w') as f:
     f.write("\\midrule\n")
     for _, row in timing_subset.iterrows():
         speedup_str = f"{row['speedup']:.1f}$\\times$" if row['speedup'] != 1.0 else "1.0$\\times$ (baseline)"
-        f.write(f"{row['method']} & {row['timing']:.4f} & {format_nrmse_sci(row['nrmse'])} & {speedup_str} \\\\\n")
+        method_escaped = str(row['method']).replace('_', '\\_')
+        f.write(f"{method_escaped} & {row['timing']:.4f} & {format_nrmse_sci(row['nrmse'])} & {speedup_str} \\\\\n")
     f.write("\\bottomrule\n")
     f.write("\\end{tabular}\n")
 
@@ -371,7 +412,7 @@ order4_pivot = order4_data.pivot_table(
 )
 
 # Select representative methods (dynamically check availability)
-candidate_noise_methods = ['GP-Julia-AD', 'Fourier-Interp', 'Savitzky-Golay-Adaptive', 'AAA-LowPrec', 'GP_RBF_Python']
+candidate_noise_methods = ['GP-TaylorAD-Julia', 'Spline-Dierckx-5', 'SavitzkyGolay-Fixed', 'Fourier-GCV', 'GP-RBF-Python']
 available_noise_methods = order4_pivot.index.tolist()
 noise_methods = [m for m in candidate_noise_methods if m in available_noise_methods]
 if len(noise_methods) > 0:
@@ -394,7 +435,8 @@ with open(latex_noise, 'w') as f:
         f.write(f" & \\textbf{{{nl:.0e}}}")
     f.write(" \\\\\n\\midrule\n")
     for method, row in order4_subset.iterrows():
-        f.write(f"{method}")
+        method_escaped = str(method).replace('_', '\\_')
+        f.write(f"{method_escaped}")
         for nl in noise_levels:
             val = row[nl]
             f.write(f" & {format_nrmse_sci(val)}")

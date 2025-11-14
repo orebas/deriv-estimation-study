@@ -36,32 +36,32 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 	# Map of method names to evaluation functions
 	method_map = Dict(
 		# GP methods (5 methods)
-		"GP-Julia-SE" => evaluate_gp_se,
-		"GP-Julia-AD" => evaluate_gp_ad,
+		# "GP-Julia-SE" => evaluate_gp_se,  # Removed: old method, replaced by GP-TaylorAD-Julia
+		"GP-TaylorAD-Julia" => evaluate_gp_ad,
 		"GP-Julia-Matern-0.5" => evaluate_gp_matern_05,
 		"GP-Julia-Matern-1.5" => evaluate_gp_matern_15,
 		"GP-Julia-Matern-2.5" => evaluate_gp_matern_25,
 
 		# AAA/Rational methods (4 methods)
-		"AAA-HighPrec" => evaluate_aaa_highprec,
-		"AAA-LowPrec" => evaluate_aaa_lowprec,
+		"AAA-HighTol" => evaluate_aaa_highprec,
+		"AAA-LowTol" => evaluate_aaa_lowprec,
 		"AAA-Adaptive-Diff2" => evaluate_aaa_adaptive_diff2,
 		"AAA-Adaptive-Wavelet" => evaluate_aaa_adaptive_wavelet,
 
 		# Spectral methods (2 methods)
 		"Fourier-Interp" => evaluate_fourier_interp,
-		"Fourier-FFT-Adaptive" => evaluate_fourier_fft_adaptive,
+		"Fourier-Adaptive-Julia" => evaluate_fourier_fft_adaptive,
 
 		# Splines (2 methods)
-		"Dierckx-5" => evaluate_dierckx,
-		"GSS" => evaluate_gss,
+		"Spline-Dierckx-5" => evaluate_dierckx,
+		"Spline-GSS" => evaluate_gss,
 
 		# Filtering (6 methods)
-		"Savitzky-Golay-Fixed" => evaluate_savitzky_golay_fixed,
-		"Savitzky-Golay-Adaptive" => evaluate_savitzky_golay_adaptive,
-		"SG-Package-Fixed" => evaluate_savitzky_golay_package_fixed,
-		"SG-Package-Hybrid" => evaluate_savitzky_golay_package_hybrid,
-		"SG-Package-Adaptive" => evaluate_savitzky_golay_package_adaptive,
+		"SavitzkyGolay-Fixed" => evaluate_savitzky_golay_fixed,
+		"SavitzkyGolay-Adaptive" => evaluate_savitzky_golay_adaptive,
+		"SavitzkyGolay-Julia-Fixed" => evaluate_savitzky_golay_package_fixed,
+		"SavitzkyGolay-Julia-Hybrid" => evaluate_savitzky_golay_package_hybrid,
+		"SavitzkyGolay-Julia-Adaptive" => evaluate_savitzky_golay_package_adaptive,
 
 		# Regularization (3 methods)
 		"TrendFilter-k7" => evaluate_trend_filter_k7,
@@ -69,36 +69,36 @@ function evaluate_all_julia_methods(x, y, x_eval, orders; params = Dict())
 		"TVRegDiff-Julia" => evaluate_tvregdiff,
 
 		# Finite Diff (1 method)
-		"Central-FD" => evaluate_central_fd,
+		"FiniteDiff-Central" => evaluate_central_fd,
 	)
 
 	# Define which methods to run (matching original behavior)
 	methods_to_run = [
-		# "AAA-HighPrec",  # disabled per request
-		"AAA-LowPrec",
+		# "AAA-HighTol",  # disabled per request
+		"AAA-LowTol",
 		"AAA-Adaptive-Diff2",
 		"AAA-Adaptive-Wavelet",
 		# "GP-Julia-SE" removed per user request
-		"GP-Julia-AD",  # AD-based GP (simpler, more robust)
+		"GP-TaylorAD-Julia",  # AD-based GP (simpler, more robust)
 		# Matérn methods disabled by default (can be enabled)
 		# "GP-Julia-Matern-0.5",
 		# "GP-Julia-Matern-1.5",
 		# "GP-Julia-Matern-2.5",
 		"Fourier-Interp",
-		"Fourier-FFT-Adaptive",
-		"Dierckx-5",
-		"GSS",
-		"Savitzky-Golay-Fixed",    # Fixed window=15, polyorder=7
-		"Savitzky-Golay-Adaptive", # Noise-adaptive window sizing
-		"SG-Package-Fixed",        # Package-based: fixed physical window h
-		"SG-Package-Hybrid",       # Package-based: hybrid adaptive (GPT-5 recommendation)
-		"SG-Package-Adaptive",     # Package-based: pure adaptive for comparison
+		"Fourier-Adaptive-Julia",
+		"Spline-Dierckx-5",
+		"Spline-GSS",
+		"SavitzkyGolay-Fixed",    # Fixed window=15, polyorder=7
+		"SavitzkyGolay-Adaptive", # Noise-adaptive window sizing
+		"SavitzkyGolay-Julia-Fixed",        # Package-based: fixed physical window h
+		"SavitzkyGolay-Julia-Hybrid",       # Package-based: hybrid adaptive (GPT-5 recommendation)
+		"SavitzkyGolay-Julia-Adaptive",     # Package-based: pure adaptive for comparison
 		# TrendFilter methods removed - output is discrete vector, not continuous function
 		# Linear interpolation used previously destroyed C^(k-1) smoothness property
 		# "TrendFilter-k7",
 		# "TrendFilter-k2",
 		"TVRegDiff-Julia",
-		"Central-FD",
+		"FiniteDiff-Central",
 	]
 
 	results = MethodResult[]

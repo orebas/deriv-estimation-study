@@ -50,12 +50,12 @@ This report filters out known catastrophic failures (AAA-*) and methods with lim
 ### Narrative Adherence Check
 
 **Claim 1: GPR methods are top performers and broadly similar.**
-- **Verdict: Supported.** The various GP implementations consistently appear in the top 5 across all systems. While `GP-Julia-AD` is often the best, the others are close behind, confirming the strength of the general GPR approach.
+- **Verdict: Supported.** The various GP implementations consistently appear in the top 5 across all systems. While `GP-TaylorAD-Julia` is often the best, the others are close behind, confirming the strength of the general GPR approach.
 
 **Claim 2: Dierckx and GSS are worthy of honorable mention.**
 - **Verdict: Partially supported.**
-  - `Dierckx-5` is a strong performer, ranking #4 on Lorenz and #1 on Van der Pol among this filtered group. It definitely deserves an honorable mention.
-  - `GSS` (presumably `gss_spline`) does not appear in the top 10 for any system. It may not be a strong enough performer for an honorable mention. We should consider highlighting a spectral method instead.
+  - `Spline-Dierckx-5` is a strong performer, ranking #4 on Lorenz and #1 on Van der Pol among this filtered group. It definitely deserves an honorable mention.
+  - `Spline-GSS` (presumably `gss_spline`) does not appear in the top 10 for any system. It may not be a strong enough performer for an honorable mention. We should consider highlighting a spectral method instead.
 
 **Claim 3: Spectral methods are a good alternative.**
 - **Verdict: Supported.** Methods like `Fourier-GCV`, `ad_trig_adaptive`, and `Fourier-Continuation-Adaptive` consistently rank in the top 10, often right behind the GP methods. They are excellent candidates for the 'honorable mention' and 'computationally cheaper alternative' roles.

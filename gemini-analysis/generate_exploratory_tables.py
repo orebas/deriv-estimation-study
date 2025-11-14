@@ -17,22 +17,21 @@ OUT_DIR_TEX = REPO_ROOT / 'build/tables/publication'  # LaTeX goes to publicatio
 # Method name mapping for pretty printing
 METHOD_MAP = {
     'Savitzky-Golay': 'Savitzky-Golay',
-    'GP-Julia-AD': 'GP-Julia-AD',
-    'Dierckx-5': 'Dierckx-5',
+    'GP-TaylorAD-Julia': 'GP-TaylorAD-Julia',
+    'Spline-Dierckx-5': 'Spline-Dierckx-5',
     'Fourier-GCV': 'Fourier-GCV',
-    'fourier_continuation': 'Fourier-Continuation',
-    'GP_RBF_Python': 'GP-RBF-Python',
-    'GP_RBF_Iso_Python': 'GP-RBF-Iso-Python',
-    'Fourier-FFT-Adaptive-Python': 'FFT-Adaptive-Py',
-    'gp_rbf_mean': 'GP-RBF-Mean-Py',
+    'Fourier-Continuation-Python': 'Fourier-Continuation',
+    'GP-RBF-Python': 'GP-RBF-Python',
+    # Removed GP-RBF-Iso-Python and GP-RBF-MeanSub-Python (consolidated into GP-RBF-Python)
+    'Fourier-Adaptive-Python': 'FFT-Adaptive-Py',
     'Fourier-Continuation-Adaptive': 'Fourier-Cont-Adaptive',
-    'fourier': 'Fourier',
-    'GSS': 'GSS',
-    'chebyshev': 'Chebyshev',
+    'Fourier-Basic-Python': 'Fourier',
+    'Spline-GSS': 'Spline-GSS',
+    'Chebyshev-Basic-Python': 'Chebyshev',
     'Chebyshev-AICc': 'Chebyshev-AICc',
-    'Fourier-FFT-Adaptive': 'FFT-Adaptive-Julia',
+    'Fourier-Adaptive-Julia': 'FFT-Adaptive-Julia',
     'GP-Julia-SE': 'GP-Julia-SE',
-    'Central-FD': 'Central-FD',
+    'FiniteDiff-Central': 'FiniteDiff-Central',
     'TVRegDiff-Julia': 'TVRegDiff-Julia',
 }
 
@@ -41,8 +40,8 @@ def generate_summary_table(df: pd.DataFrame, max_order: int, low_noise_levels: l
     """
     Generates a summary table for methods with full coverage up to a max derivative order.
     """
-    # 1. Filter data to the specified order range
-    df_filtered_order = df[df.deriv_order <= max_order].copy()
+    # 1. Filter data to the specified order range (excluding order 0 - function approximation)
+    df_filtered_order = df[(df.deriv_order > 0) & (df.deriv_order <= max_order)].copy()
 
     # 2. Determine contenders based on coverage within this order range
     union_df = df_filtered_order[df_filtered_order.noise_level.isin(low_noise_levels + high_noise_levels)].copy()
@@ -89,12 +88,10 @@ def generate_summary_table(df: pd.DataFrame, max_order: int, low_noise_levels: l
     final = pd.DataFrame({
         'Method': merged['method'].map(lambda m: METHOD_MAP.get(m, m)),
         'Avg. Rank': merged['avg_rank_overall'],
-        'Median nRMSE (Overall)': (merged['median_nrmse_low'] + merged['median_nrmse_high']) / 2,
-        'Success Rate (%)': merged['success_rate_overall'],
+        'Low Noise Rank': merged['avg_rank_low'],
         'Low Noise Median': merged['median_nrmse_low'],
-        'Low Noise IQR': merged.apply(lambda r: f"[{r['q1_nrmse_low']:.3f}, {r['q3_nrmse_low']:.3f}]", axis=1),
+        'High Noise Rank': merged['avg_rank_high'],
         'High Noise Median': merged['median_nrmse_high'],
-        'High Noise IQR': merged.apply(lambda r: f"[{r['q1_nrmse_high']:.3f}, {r['q3_nrmse_high']:.3f}]", axis=1),
     })
 
     # 6. Format for markdown output
@@ -109,9 +106,9 @@ def generate_summary_table(df: pd.DataFrame, max_order: int, low_noise_levels: l
     final_fmt = final.copy()
     final_fmt['Low Noise Median'] = final_fmt['Low Noise Median'].map(cap)
     final_fmt['High Noise Median'] = final_fmt['High Noise Median'].map(cap)
-    final_fmt['Median nRMSE (Overall)'] = final_fmt['Median nRMSE (Overall)'].map(cap)
     final_fmt['Avg. Rank'] = final_fmt['Avg. Rank'].map(lambda v: f"{v:.1f}")
-    final_fmt['Success Rate (%)'] = final_fmt['Success Rate (%)'].map(lambda v: f"{v:.1f}")
+    final_fmt['Low Noise Rank'] = final_fmt['Low Noise Rank'].map(lambda v: f"{v:.1f}")
+    final_fmt['High Noise Rank'] = final_fmt['High Noise Rank'].map(lambda v: f"{v:.1f}")
 
     return final_fmt
 
@@ -125,20 +122,18 @@ def table_to_latex(df: pd.DataFrame, caption: str, label: str) -> str:
     latex += f"\\caption{{{caption}}}\n"
     latex += f"\\label{{{label}}}\n"
     latex += "\\small\n"
-    latex += "\\begin{tabular}{lrrrllll}\n"
+    latex += "\\begin{tabular}{l|r|r@{\\hspace{0.5em}}r|r@{\\hspace{0.5em}}r}\n"
     latex += "\\toprule\n"
-    latex += "\\textbf{Method} & \\textbf{Avg.} & \\textbf{Median} & \\textbf{Success} & \\textbf{Low Noise} & \\textbf{Low Noise} & \\textbf{High Noise} & \\textbf{High Noise} \\\\\n"
-    latex += "& \\textbf{Rank} & \\textbf{nRMSE} & \\textbf{Rate (\\%)} & \\textbf{Median} & \\textbf{IQR} & \\textbf{Median} & \\textbf{IQR} \\\\\n"
+    latex += "\\textbf{Method} & \\textbf{Avg.} & \\multicolumn{2}{c}{\\textbf{Low Noise}} & \\multicolumn{2}{c}{\\textbf{High Noise}} \\\\\n"
+    latex += "& \\textbf{Rank} & \\textbf{Rank} & \\textbf{Median nRMSE} & \\textbf{Rank} & \\textbf{Median nRMSE} \\\\\n"
     latex += "\\midrule\n"
 
     for _, row in df.iterrows():
         # Escape underscores in method names for LaTeX
         method_name = str(row['Method']).replace('_', '\\_')
-        latex += f"{method_name} & {row['Avg. Rank']} & {row['Median nRMSE (Overall)']} & "
-        latex += f"{row['Success Rate (%)']} & {row['Low Noise Median']} & "
-        latex += f"{str(row['Low Noise IQR']).replace('[', '').replace(']', '')} & "
-        latex += f"{row['High Noise Median']} & "
-        latex += f"{str(row['High Noise IQR']).replace('[', '').replace(']', '')} \\\\\n"
+        latex += f"{method_name} & {row['Avg. Rank']} & "
+        latex += f"{row['Low Noise Rank']} & {row['Low Noise Median']} & "
+        latex += f"{row['High Noise Rank']} & {row['High Noise Median']} \\\\\n"
 
     latex += "\\bottomrule\n"
     latex += "\\end{tabular}\n"
@@ -155,6 +150,16 @@ def main():
 
     df = pd.read_csv(SUMMARY_CSV)
     print(f"Loaded {len(df)} rows from {SUMMARY_CSV}")
+
+    # Consolidate functionally equivalent GP-Python methods
+    # These three methods have identical performance (confirmed by analysis)
+    gp_python_variants = ['GP-RBF-Iso-Python', 'GP-RBF-MeanSub-Python']
+    df['method'] = df['method'].replace(gp_python_variants, 'GP-RBF-Python')
+
+    # Deduplicate after consolidation (keep one representative row per cell)
+    # Since the three GP methods have identical performance, we can safely deduplicate
+    df = df.drop_duplicates(subset=['ode_system', 'method', 'deriv_order', 'noise_level'], keep='first')
+    print(f"Consolidated GP-Python variants into single method and deduplicated")
 
     # Regime noise levels
     # Low-noise: everything below 0.01 (1e-8, 1e-6, 1e-4, 1e-3)
@@ -180,8 +185,8 @@ def main():
 
         for order, table in tables.items():
             f.write(f"## Table: Contenders with Full Coverage up to Order {order}\n\n")
-            f.write(f"Methods included here have complete data for all noise levels and ODE systems for derivative orders 0 through {order}. ")
-            f.write("Averages and ranks are computed over this range.\n\n")
+            f.write(f"Methods included here have complete data for all noise levels and ODE systems for derivative orders 1 through {order}. ")
+            f.write("Averages and ranks are computed over this range (excluding order 0 function approximation).\n\n")
             f.write(table.to_markdown(index=False))
             f.write("\n\n")
 
@@ -189,9 +194,9 @@ def main():
 
     # Write LaTeX files
     captions = {
-        3: "Contender Method Performance Summary (Orders 0-3)",
-        5: "Contender Method Performance Summary (Orders 0-5)",
-        7: "Contender Method Performance Summary (Orders 0-7)",
+        3: "Contender Method Performance Summary (Orders 1-3)",
+        5: "Contender Method Performance Summary (Orders 1-5)",
+        7: "Contender Method Performance Summary (Orders 1-7)",
     }
 
     for order, table in tables.items():

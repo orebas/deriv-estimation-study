@@ -49,12 +49,12 @@ function evaluate_aaa_highprec(
 		end
 
 		timing = time() - t_start
-		return MethodResult("AAA-HighPrec", "Rational", predictions, failures, timing, true)
+		return MethodResult("AAA-HighTol", "Rational", predictions, failures, timing, true)
 
 	catch e
 		@warn "AAA-HighPrec failed" exception=e
 		timing = time() - t_start
-		return MethodResult("AAA-HighPrec", "Error", Dict(), Dict(0 => string(e)), timing, false)
+		return MethodResult("AAA-HighTol", "Error", Dict(), Dict(0 => string(e)), timing, false)
 	end
 end
 
@@ -96,12 +96,12 @@ function evaluate_aaa_lowprec(
 		end
 
 		timing = time() - t_start
-		return MethodResult("AAA-LowPrec", "Rational", predictions, failures, timing, true)
+		return MethodResult("AAA-LowTol", "Rational", predictions, failures, timing, true)
 
 	catch e
 		@warn "AAA-LowPrec failed" exception=e
 		timing = time() - t_start
-		return MethodResult("AAA-LowPrec", "Error", Dict(), Dict(0 => string(e)), timing, false)
+		return MethodResult("AAA-LowTol", "Error", Dict(), Dict(0 => string(e)), timing, false)
 	end
 end
 

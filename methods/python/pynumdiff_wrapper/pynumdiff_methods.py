@@ -68,8 +68,8 @@ class PyNumDiffMethods(MethodEvaluator):
         Args:
             method_name: Name of method to evaluate. Supported:
                 Full orders 0-7 support:
-                - "PyNumDiff-SavGol-Auto": Savitzky-Golay with automatic parameters
-                - "PyNumDiff-SavGol-Tuned": Savitzky-Golay with tuned parameters
+                - "PyNumDiff-SavitzkyGolay-Auto": Savitzky-Golay with automatic parameters
+                - "PyNumDiff-SavitzkyGolay-Tuned": Savitzky-Golay with tuned parameters
                 - "PyNumDiff-Spectral-Auto": Spectral method with automatic parameters
                 - "PyNumDiff-Spectral-Tuned": Spectral method with tuned parameters
 
@@ -111,9 +111,9 @@ class PyNumDiffMethods(MethodEvaluator):
             }
 
         # Full orders 0-7 support
-        if method_name == "PyNumDiff-SavGol-Auto":
+        if method_name == "PyNumDiff-SavitzkyGolay-Auto":
             return self._savgol(regime="auto")
-        elif method_name == "PyNumDiff-SavGol-Tuned":
+        elif method_name == "PyNumDiff-SavitzkyGolay-Tuned":
             return self._savgol(regime="tuned")
         elif method_name == "PyNumDiff-Spectral-Auto":
             return self._spectral(regime="auto")
@@ -225,6 +225,13 @@ class PyNumDiffMethods(MethodEvaluator):
                 # Extract window_size and degree from optimized params
                 window_size = opt["params"].get("window_size", 15)
                 degree = opt["params"].get("degree", 7)
+
+                # CRITICAL FIX: Ensure degree is at least max_order to support all requested derivatives
+                # PyNumDiff's optimizer may select a low degree (e.g., 3) based on noise/smoothness,
+                # but we need degree >= max_order to compute higher derivatives
+                max_order = max(self.orders) if self.orders else 7
+                if degree < max_order:
+                    degree = max_order
             except Exception as e:
                 return {"predictions": {}, "failures": {"error": f"savgol_auto_failed: {e}"}}
         else:  # tuned

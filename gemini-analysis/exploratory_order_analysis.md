@@ -4,103 +4,110 @@ This file contains alternative summary tables based on different maximum derivat
 
 ## Table: Contenders with Full Coverage up to Order 3
 
-Methods included here have complete data for all noise levels and ODE systems for derivative orders 0 through 3. Averages and ranks are computed over this range.
+Methods included here have complete data for all noise levels and ODE systems for derivative orders 1 through 3. Averages and ranks are computed over this range (excluding order 0 function approximation).
 
-| Method                   |   Avg. Rank | Median nRMSE (Overall)   |   Success Rate (%) |   Low Noise Median | Low Noise IQR   | High Noise Median   | High Noise IQR      |
-|:-------------------------|------------:|:-------------------------|-------------------:|-------------------:|:----------------|:--------------------|:--------------------|
-| GP-Julia-AD              |         3.2 | 0.044                    |              100   |              0.001 | [0.000, 0.014]  | 0.087               | [0.017, 0.240]      |
-| GP-RBF-Python            |         3.4 | 0.045                    |              100   |              0.002 | [0.000, 0.014]  | 0.088               | [0.018, 0.239]      |
-| GP-RBF-Iso-Python        |         3.6 | 0.045                    |              100   |              0.002 | [0.000, 0.014]  | 0.088               | [0.018, 0.239]      |
-| GP-RBF-Mean-Py           |         3.7 | 0.045                    |              100   |              0.002 | [0.000, 0.014]  | 0.088               | [0.018, 0.239]      |
-| PyNumDiff-SavGol-Tuned   |         8.4 | 0.066                    |               95.8 |              0.009 | [0.002, 0.060]  | 0.122               | [0.034, 0.465]      |
-| Fourier-Interp           |        11.3 | 0.099                    |               93.8 |              0.039 | [0.003, 0.158]  | 0.158               | [0.041, 0.557]      |
-| Dierckx-5                |        12.2 | 0.151                    |               95.8 |              0.012 | [0.002, 0.039]  | 0.289               | [0.101, 0.564]      |
-| SG-Package-Fixed         |        12.3 | 0.139                    |               91.7 |              0.018 | [0.003, 0.072]  | 0.260               | [0.045, 0.527]      |
-| Savitzky-Golay-Fixed     |        12.3 | 0.102                    |               95.8 |              0.062 | [0.013, 0.107]  | 0.142               | [0.061, 0.385]      |
-| SG-Package-Hybrid        |        12.3 | 0.103                    |               89.6 |              0.013 | [0.002, 0.073]  | 0.192               | [0.036, 0.763]      |
-| SG-Package-Adaptive      |        12.9 | 0.163                    |               85.4 |              0.011 | [0.002, 0.040]  | 0.315               | [0.079, 1.638]      |
-| PyNumDiff-Spectral-Auto  |        13.6 | 0.158                    |               87.5 |              0.038 | [0.001, 0.322]  | 0.278               | [0.035, 1.062]      |
-| Fourier-Continuation     |        13.6 | 0.159                    |              100   |              0.143 | [0.036, 0.518]  | 0.176               | [0.042, 0.524]      |
-| Savitzky-Golay-Adaptive  |        13.9 | 0.135                    |               89.6 |              0.027 | [0.005, 0.080]  | 0.242               | [0.079, 0.715]      |
-| Fourier-GCV              |        15   | 0.173                    |              100   |              0.149 | [0.030, 0.566]  | 0.198               | [0.062, 0.571]      |
-| FFT-Adaptive-Julia       |        15   | 0.307                    |              100   |              0.226 | [0.030, 0.486]  | 0.389               | [0.089, 0.754]      |
-| Fourier                  |        15.5 | 0.173                    |               91.7 |              0.149 | [0.030, 0.585]  | 0.198               | [0.058, 0.591]      |
-| FFT-Adaptive-Py          |        15.9 | 0.312                    |               90.6 |              0.157 | [0.007, 0.699]  | 0.466               | [0.088, 0.779]      |
-| Fourier-Cont-Adaptive    |        16.6 | 0.292                    |              100   |              0.291 | [0.056, 0.577]  | 0.293               | [0.058, 0.586]      |
-| PyNumDiff-Spectral-Tuned |        16.9 | 0.531                    |              100   |              0.531 | [0.084, 0.775]  | 0.531               | [0.089, 0.775]      |
-| TVRegDiff_Python         |        17.5 | 0.305                    |               78.1 |              0.246 | [0.123, 0.626]  | 0.364               | [0.136, 1.302]      |
-| AAA-Adaptive-Wavelet     |        18.6 | 0.346                    |               67.7 |              0.019 | [0.005, 0.194]  | 0.672               | [0.241, 88.364]     |
-| AAA-Adaptive-Diff2       |        21.2 | 0.485                    |               69.8 |              0.266 | [0.019, 0.499]  | 0.704               | [0.246, 57.204]     |
-| AAA-LowPrec              |        21.7 | >10                      |               65.6 |              0.086 | [0.042, 0.269]  | >10                 | [0.271, 142534.580] |
-| GSS                      |        22.6 | 0.721                    |               83.3 |              0.721 | [0.308, 0.993]  | 0.721               | [0.309, 0.993]      |
-| Chebyshev-AICc           |        23   | 0.555                    |               66.7 |              0.553 | [0.157, 1.679]  | 0.557               | [0.157, 1.692]      |
-| KalmanGrad_Python        |        24.5 | 0.946                    |               91.7 |              0.946 | [0.624, 0.994]  | 0.946               | [0.624, 0.994]      |
-| Chebyshev                |        25.1 | 0.845                    |               50   |              0.845 | [0.329, 1.813]  | 0.845               | [0.329, 1.815]      |
+| Method                        |   Avg. Rank |   Low Noise Rank |   Low Noise Median |   High Noise Rank | High Noise Median   |
+|:------------------------------|------------:|-----------------:|-------------------:|------------------:|:--------------------|
+| GP-TaylorAD-Julia             |         1.9 |              1.4 |              0.003 |               2.5 | 0.131               |
+| GP-RBF-Python                 |         2.5 |              2.2 |              0.004 |               2.8 | 0.131               |
+| PyNumDiff-SavitzkyGolay-Tuned |         7.7 |              6.6 |              0.022 |               8.7 | 0.242               |
+| SavitzkyGolay-Fixed           |         9.6 |             11   |              0.088 |               8.2 | 0.238               |
+| Spline-Dierckx-5              |        10.3 |              6.9 |              0.029 |              13.6 | 0.432               |
+| ButterworthSpline_Python      |        11.1 |             15.4 |              0.141 |               6.9 | 0.213               |
+| Fourier-Interp                |        11.6 |             11.9 |              0.1   |              11.4 | 0.357               |
+| SavitzkyGolay-Julia-Fixed     |        11.8 |              8.7 |              0.049 |              14.8 | 0.356               |
+| SavitzkyGolay-Julia-Hybrid    |        12.1 |              8   |              0.047 |              16.1 | 0.367               |
+| SavitzkyGolay-Adaptive        |        13.1 |              8.2 |              0.042 |              18   | 0.395               |
+| Fourier-Continuation          |        13.1 |             17   |              0.316 |               9.3 | 0.318               |
+| SavitzkyGolay-Julia-Adaptive  |        13.6 |              6.4 |              0.015 |              20.9 | 0.684               |
+| PyNumDiff-SavitzkyGolay-Auto  |        13.7 |              9.7 |              0.076 |              17.7 | 0.432               |
+| Fourier-GCV                   |        14.4 |             17.7 |              0.467 |              11.1 | 0.467               |
+| RKHS_Spline_m2_Python         |        14.7 |             14.9 |              0.153 |              14.4 | 0.252               |
+| Fourier                       |        15.6 |             18.8 |              0.493 |              12.3 | 0.493               |
+| PyNumDiff-Spectral-Auto       |        15.6 |             13.6 |              0.049 |              17.7 | 0.514               |
+| Fourier-Cont-Adaptive         |        17.1 |             20.9 |              0.381 |              13.3 | 0.390               |
+| FFT-Adaptive-Julia            |        18.3 |             19.3 |              0.354 |              17.3 | 0.575               |
+| Whittaker_m2_Python           |        18.8 |             22.4 |              0.497 |              15.1 | 0.500               |
+| AAA-Adaptive-Wavelet          |        19.7 |             14.4 |              0.035 |              24.9 | 2.928               |
+| FFT-Adaptive-Py               |        19.7 |             21.2 |              0.445 |              18.1 | 0.575               |
+| Butterworth_Python            |        19.9 |             23.4 |              0.55  |              16.3 | 0.550               |
+| PyNumDiff-Spectral-Tuned      |        21.6 |             24.9 |              0.58  |              18.3 | 0.580               |
+| TVRegDiff-Python              |        22.1 |             22.8 |              0.319 |              21.3 | 0.589               |
+| AAA-Adaptive-Diff2            |        22.4 |             19.9 |              0.476 |              24.8 | 2.896               |
+| AAA-LowTol                    |        23.7 |             16.9 |              0.142 |              30.5 | >10                 |
+| Spline-GSS                    |        24.4 |             27.2 |              0.917 |              21.6 | 0.917               |
+| Chebyshev-AICc                |        26.1 |             28.2 |              0.867 |              24   | 0.859               |
+| Kalman-Gradient               |        26.4 |             28.5 |              0.988 |              24.3 | 0.988               |
+| SVR_Python                    |        27.2 |             29.1 |              0.987 |              25.2 | 0.987               |
+| Chebyshev                     |        28.4 |             30.3 |              1.433 |              26.4 | 1.436               |
 
 ## Table: Contenders with Full Coverage up to Order 5
 
-Methods included here have complete data for all noise levels and ODE systems for derivative orders 0 through 5. Averages and ranks are computed over this range.
+Methods included here have complete data for all noise levels and ODE systems for derivative orders 1 through 5. Averages and ranks are computed over this range (excluding order 0 function approximation).
 
-| Method                   |   Avg. Rank | Median nRMSE (Overall)   |   Success Rate (%) |   Low Noise Median | Low Noise IQR   | High Noise Median   | High Noise IQR           |
-|:-------------------------|------------:|:-------------------------|-------------------:|-------------------:|:----------------|:--------------------|:-------------------------|
-| GP-Julia-AD              |         3.2 | 0.126                    |              100   |              0.005 | [0.000, 0.059]  | 0.247               | [0.047, 0.527]           |
-| GP-RBF-Python            |         3.4 | 0.128                    |              100   |              0.011 | [0.001, 0.059]  | 0.245               | [0.047, 0.528]           |
-| GP-RBF-Iso-Python        |         3.5 | 0.128                    |              100   |              0.011 | [0.001, 0.059]  | 0.245               | [0.047, 0.528]           |
-| GP-RBF-Mean-Py           |         3.7 | 0.128                    |              100   |              0.011 | [0.001, 0.059]  | 0.245               | [0.047, 0.528]           |
-| PyNumDiff-SavGol-Tuned   |        10   | 0.277                    |               83.3 |              0.06  | [0.004, 0.294]  | 0.493               | [0.076, 1.168]           |
-| Savitzky-Golay-Fixed     |        11.5 | 0.245                    |               90.3 |              0.104 | [0.021, 0.281]  | 0.385               | [0.105, 0.870]           |
-| Dierckx-5                |        11.7 | 0.303                    |               91   |              0.039 | [0.007, 0.295]  | 0.566               | [0.180, 0.860]           |
-| SG-Package-Fixed         |        12.7 | 0.284                    |               81.9 |              0.05  | [0.010, 0.290]  | 0.519               | [0.117, 3.405]           |
-| Fourier-Continuation     |        13   | 0.433                    |               94.4 |              0.359 | [0.044, 0.774]  | 0.507               | [0.114, 0.780]           |
-| SG-Package-Hybrid        |        13.1 | 0.325                    |               77.8 |              0.058 | [0.006, 0.256]  | 0.591               | [0.115, 5.112]           |
-| Fourier-Interp           |        13.4 | 0.377                    |               76.4 |              0.182 | [0.019, 0.624]  | 0.573               | [0.083, 1.468]           |
-| Savitzky-Golay-Adaptive  |        13.5 | 0.343                    |               81.2 |              0.046 | [0.007, 0.159]  | 0.640               | [0.145, 4.086]           |
-| SG-Package-Adaptive      |        14.2 | 0.979                    |               70.1 |              0.03  | [0.003, 0.140]  | 1.928               | [0.182, 9.275]           |
-| Fourier-GCV              |        14.4 | 0.462                    |               88.9 |              0.429 | [0.078, 0.883]  | 0.496               | [0.105, 0.881]           |
-| FFT-Adaptive-Julia       |        14.7 | 0.623                    |              100   |              0.486 | [0.130, 0.818]  | 0.760               | [0.314, 0.958]           |
-| Fourier                  |        14.7 | 0.478                    |               83.3 |              0.442 | [0.073, 0.928]  | 0.515               | [0.113, 0.929]           |
-| PyNumDiff-Spectral-Auto  |        15.2 | 0.593                    |               72.9 |              0.141 | [0.006, 0.849]  | 1.046               | [0.103, 5.309]           |
-| FFT-Adaptive-Py          |        16   | 0.611                    |               85.4 |              0.445 | [0.062, 1.132]  | 0.776               | [0.313, 0.972]           |
-| Fourier-Cont-Adaptive    |        16   | 0.603                    |               88.9 |              0.6   | [0.187, 0.878]  | 0.606               | [0.189, 0.880]           |
-| PyNumDiff-Spectral-Tuned |        16.5 | 0.762                    |              100   |              0.762 | [0.313, 0.978]  | 0.762               | [0.314, 0.978]           |
-| AAA-Adaptive-Wavelet     |        18.9 | 0.997                    |               57.6 |              0.037 | [0.011, 32.569] | 1.956               | [0.449, 7491.893]        |
-| TVRegDiff_Python         |        20.1 | 1.241                    |               52.1 |              0.726 | [0.199, 2.637]  | 1.757               | [0.214, 10.762]          |
-| GSS                      |        20.6 | 0.904                    |               88.9 |              0.904 | [0.572, 0.998]  | 0.904               | [0.575, 0.998]           |
-| AAA-Adaptive-Diff2       |        20.9 | 1.240                    |               59   |              0.476 | [0.049, 1.473]  | 2.005               | [0.450, 5162.898]        |
-| AAA-LowPrec              |        21.6 | >10                      |               56.2 |              0.142 | [0.043, 0.522]  | >10                 | [0.813, 14545977439.150] |
-| KalmanGrad_Python        |        22.2 | 0.995                    |               94.4 |              0.995 | [0.791, 0.998]  | 0.995               | [0.791, 0.998]           |
-| Chebyshev-AICc           |        23.5 | 2.068                    |               44.4 |              2.064 | [0.231, 5.372]  | 2.072               | [0.230, 5.297]           |
-| Chebyshev                |        23.9 | 1.503                    |               33.3 |              1.503 | [0.618, 2.543]  | 1.503               | [0.618, 2.539]           |
+| Method                        |   Avg. Rank |   Low Noise Rank |   Low Noise Median |   High Noise Rank | High Noise Median   |
+|:------------------------------|------------:|-----------------:|-------------------:|------------------:|:--------------------|
+| GP-TaylorAD-Julia             |         2   |              1.6 |              0.014 |               2.5 | 0.331               |
+| GP-RBF-Python                 |         2.6 |              2.4 |              0.02  |               2.9 | 0.331               |
+| SavitzkyGolay-Fixed           |         9.6 |              9.8 |              0.11  |               9.3 | 0.591               |
+| PyNumDiff-SavitzkyGolay-Tuned |        10.1 |              7.5 |              0.105 |              12.6 | 0.848               |
+| Spline-Dierckx-5              |        10.3 |              8.3 |              0.1   |              12.2 | 0.673               |
+| ButterworthSpline_Python      |        10.7 |             13.9 |              0.368 |               7.5 | 0.437               |
+| SavitzkyGolay-Julia-Fixed     |        12.6 |              9.1 |              0.083 |              16.1 | 0.660               |
+| Fourier-Continuation          |        12.9 |             16.7 |              0.502 |               9.1 | 0.554               |
+| SavitzkyGolay-Adaptive        |        13   |              8.1 |              0.08  |              18   | 0.706               |
+| SavitzkyGolay-Julia-Hybrid    |        13.3 |              8.6 |              0.092 |              18.1 | 0.972               |
+| Fourier-GCV                   |        14.1 |             17.4 |              0.519 |              10.8 | 0.609               |
+| Fourier-Interp                |        14.6 |             14.3 |              0.321 |              14.9 | 0.848               |
+| Fourier                       |        14.9 |             18.1 |              0.519 |              11.7 | 0.660               |
+| RKHS_Spline_m2_Python         |        15.2 |             14.8 |              0.335 |              15.7 | 0.772               |
+| SavitzkyGolay-Julia-Adaptive  |        15.4 |              7.7 |              0.048 |              23.2 | 3.789               |
+| PyNumDiff-SavitzkyGolay-Auto  |        16.5 |             12   |              0.185 |              21   | 1.917               |
+| Fourier-Cont-Adaptive         |        16.5 |             20.4 |              0.734 |              12.6 | 0.749               |
+| FFT-Adaptive-Julia            |        16.9 |             18.6 |              0.643 |              15.3 | 0.828               |
+| Whittaker_m2_Python           |        17.4 |             20.7 |              0.744 |              14   | 0.751               |
+| PyNumDiff-Spectral-Auto       |        17.5 |             14.6 |              0.284 |              20.4 | 2.022               |
+| Butterworth_Python            |        18   |             22   |              0.805 |              13.9 | 0.806               |
+| FFT-Adaptive-Py               |        18.9 |             21.4 |              0.697 |              16.3 | 0.837               |
+| PyNumDiff-Spectral-Tuned      |        19.9 |             23.5 |              0.896 |              16.3 | 0.895               |
+| AAA-Adaptive-Wavelet          |        20.3 |             16.6 |              0.048 |              24.1 | >10                 |
+| Spline-GSS                    |        22   |             25.3 |              0.991 |              18.7 | 0.991               |
+| AAA-Adaptive-Diff2            |        22.4 |             20.8 |              0.499 |              24   | >10                 |
+| AAA-LowTol                    |        23.6 |             16.1 |              0.269 |              31.1 | >10                 |
+| Kalman-Gradient               |        23.7 |             26.5 |              0.998 |              21   | 0.998               |
+| SVR_Python                    |        24.4 |             27.1 |              0.998 |              21.7 | 0.998               |
+| TVRegDiff-Python              |        24.8 |             25.6 |              1.196 |              24.1 | 3.760               |
+| Chebyshev                     |        26.9 |             29.4 |              1.633 |              24.3 | 1.633               |
+| Chebyshev-AICc                |        26.9 |             29.1 |              3.012 |              24.7 | 3.036               |
 
 ## Table: Contenders with Full Coverage up to Order 7
 
-Methods included here have complete data for all noise levels and ODE systems for derivative orders 0 through 7. Averages and ranks are computed over this range.
+Methods included here have complete data for all noise levels and ODE systems for derivative orders 1 through 7. Averages and ranks are computed over this range (excluding order 0 function approximation).
 
-| Method                   |   Avg. Rank | Median nRMSE (Overall)   |   Success Rate (%) |   Low Noise Median | Low Noise IQR     | High Noise Median   | High Noise IQR                |
-|:-------------------------|------------:|:-------------------------|-------------------:|-------------------:|:------------------|:--------------------|:------------------------------|
-| GP-Julia-AD              |         3.1 | 0.224                    |              100   |              0.022 | [0.001, 0.164]    | 0.425               | [0.095, 0.803]                |
-| GP-RBF-Python            |         3.4 | 0.228                    |              100   |              0.033 | [0.002, 0.164]    | 0.423               | [0.095, 0.801]                |
-| GP-RBF-Iso-Python        |         3.5 | 0.228                    |              100   |              0.033 | [0.002, 0.164]    | 0.423               | [0.095, 0.801]                |
-| GP-RBF-Mean-Py           |         3.6 | 0.228                    |              100   |              0.033 | [0.002, 0.164]    | 0.423               | [0.095, 0.801]                |
-| PyNumDiff-SavGol-Tuned   |         9.8 | 0.560                    |               78.6 |              0.179 | [0.009, 0.686]    | 0.941               | [0.128, 1.441]                |
-| Savitzky-Golay-Fixed     |        10.6 | 0.459                    |               85.9 |              0.18  | [0.062, 0.686]    | 0.738               | [0.147, 1.068]                |
-| Fourier-Continuation     |        12.1 | 0.648                    |               86.5 |              0.572 | [0.157, 0.976]    | 0.725               | [0.177, 0.981]                |
-| SG-Package-Fixed         |        12.2 | 0.528                    |               74.5 |              0.245 | [0.018, 0.564]    | 0.812               | [0.261, 8.376]                |
-| Savitzky-Golay-Adaptive  |        12.3 | 0.543                    |               70.8 |              0.084 | [0.028, 0.474]    | 1.002               | [0.243, 5.361]                |
-| SG-Package-Hybrid        |        12.8 | 0.838                    |               68.2 |              0.095 | [0.012, 0.447]    | 1.582               | [0.208, 13.702]               |
-| Fourier-GCV              |        12.9 | 0.675                    |               83.3 |              0.638 | [0.172, 0.984]    | 0.712               | [0.199, 0.985]                |
-| FFT-Adaptive-Julia       |        13.3 | 0.830                    |              100   |              0.746 | [0.226, 0.972]    | 0.915               | [0.389, 0.994]                |
-| Fourier                  |        13.3 | 0.719                    |               78.1 |              0.652 | [0.172, 0.996]    | 0.786               | [0.199, 0.998]                |
-| Fourier-Interp           |        13.9 | 0.728                    |               61.5 |              0.444 | [0.046, 1.133]    | 1.011               | [0.179, 3.903]                |
-| SG-Package-Adaptive      |        13.9 | 2.688                    |               60.9 |              0.063 | [0.011, 0.317]    | 5.314               | [0.330, 29.819]               |
-| Fourier-Cont-Adaptive    |        14.5 | 0.805                    |               83.3 |              0.803 | [0.331, 0.987]    | 0.808               | [0.332, 0.987]                |
-| FFT-Adaptive-Py          |        14.7 | 0.829                    |               82.8 |              0.739 | [0.163, 1.343]    | 0.920               | [0.494, 0.995]                |
-| PyNumDiff-Spectral-Tuned |        14.9 | 0.914                    |              100   |              0.914 | [0.552, 0.995]    | 0.914               | [0.552, 0.995]                |
-| PyNumDiff-Spectral-Auto  |        15.1 | 1.721                    |               62   |              0.351 | [0.039, 0.998]    | 3.091               | [0.294, 9.685]                |
-| AAA-Adaptive-Wavelet     |        17.2 | 3.297                    |               50.5 |              0.054 | [0.020, 5328.108] | 6.540               | [0.577, 3653435.788]          |
-| GSS                      |        17.7 | 0.988                    |               91.7 |              0.988 | [0.731, 0.998]    | 0.988               | [0.731, 0.998]                |
-| AAA-Adaptive-Diff2       |        19.1 | 3.467                    |               49.5 |              0.499 | [0.161, 24.560]   | 6.436               | [0.613, 1005598.973]          |
-| AAA-LowPrec              |        19.4 | >10                      |               51.6 |              0.269 | [0.047, 0.757]    | >10                 | [64.233, 223422920321788.094] |
-| Chebyshev                |        20.4 | 1.266                    |               29.2 |              1.265 | [0.911, 2.323]    | 1.266               | [0.911, 2.324]                |
-| Chebyshev-AICc           |        21.3 | 2.955                    |               33.3 |              2.953 | [0.574, 16.840]   | 2.957               | [0.580, 16.677]               |
+| Method                        |   Avg. Rank |   Low Noise Rank |   Low Noise Median |   High Noise Rank | High Noise Median   |
+|:------------------------------|------------:|-----------------:|-------------------:|------------------:|:--------------------|
+| GP-TaylorAD-Julia             |         1.9 |              1.7 |              0.04  |               2.1 | 0.535               |
+| GP-RBF-Python                 |         2.6 |              2.6 |              0.059 |               2.6 | 0.535               |
+| SavitzkyGolay-Fixed           |         8.2 |              9.1 |              0.282 |               7.3 | 0.820               |
+| PyNumDiff-SavitzkyGolay-Tuned |         8.5 |              7.4 |              0.3   |               9.6 | 0.986               |
+| SavitzkyGolay-Adaptive        |        10.4 |              7.1 |              0.16  |              13.6 | 1.135               |
+| Fourier-Continuation          |        10.4 |             13.6 |              0.741 |               7.2 | 0.777               |
+| SavitzkyGolay-Julia-Fixed     |        10.7 |              8.2 |              0.277 |              13.2 | 1.027               |
+| Fourier-GCV                   |        10.8 |             13.7 |              0.733 |               7.9 | 0.812               |
+| Fourier                       |        11.5 |             14.3 |              0.783 |               8.6 | 0.839               |
+| SavitzkyGolay-Julia-Hybrid    |        11.6 |              7.8 |              0.244 |              15.3 | 2.581               |
+| FFT-Adaptive-Julia            |        12.4 |             14.5 |              0.834 |              10.2 | 0.962               |
+| Fourier-Cont-Adaptive         |        12.7 |             16   |              0.878 |               9.4 | 0.881               |
+| Fourier-Interp                |        13   |             13.4 |              0.626 |              12.7 | 1.202               |
+| SavitzkyGolay-Julia-Adaptive  |        13   |              7.6 |              0.092 |              18.5 | 9.036               |
+| PyNumDiff-SavitzkyGolay-Auto  |        13.9 |             11.2 |              0.382 |              16.6 | 5.829               |
+| FFT-Adaptive-Py               |        14   |             16.7 |              0.919 |              11.3 | 0.972               |
+| PyNumDiff-Spectral-Tuned      |        14.3 |             17.5 |              0.974 |              11   | 0.974               |
+| PyNumDiff-Spectral-Auto       |        14.4 |             12.8 |              0.423 |              16.1 | 3.948               |
+| Spline-GSS                    |        15.4 |             18.4 |              0.997 |              12.5 | 0.997               |
+| AAA-Adaptive-Wavelet          |        15.9 |             13.5 |              0.113 |              18.2 | >10                 |
+| AAA-Adaptive-Diff2            |        17.5 |             17   |              0.744 |              18   | >10                 |
+| AAA-LowTol                    |        18.2 |             12.8 |              0.38  |              23.6 | >10                 |
+| Chebyshev                     |        18.6 |             21   |              1.573 |              16.2 | 1.572               |
+| Chebyshev-AICc                |        20.2 |             22.1 |              3.95  |              18.2 | 3.969               |
 

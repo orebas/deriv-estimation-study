@@ -1,0 +1,54 @@
+\section{High-Order Derivatives (Orders 6-7)}
+\label{app:high_order}
+
+High-order derivatives (6th and 7th order) present a particularly challenging test case for numerical differentiation methods. These orders are rarely required in practice but serve as a valuable stress test to understand method behavior at the limits of numerical stability.
+
+\subsection{Challenges at High Orders}
+
+Computing 6th and 7th order derivatives numerically is fundamentally difficult due to:
+
+\begin{itemize}
+    \item \textbf{Noise Amplification}: Each order of differentiation approximately multiplies the noise effect by a factor related to the inverse of the sampling interval, leading to exponential growth in uncertainty.
+    \item \textbf{Numerical Precision}: Finite precision arithmetic introduces round-off errors that compound with each derivative order.
+    \item \textbf{Method Limitations}: Many methods are theoretically limited to lower orders (e.g., low-degree polynomial approximations) or become numerically unstable at high orders.
+\end{itemize}
+
+As a result, only 24 out of 62 tested methods successfully produce valid predictions for both orders 6 and 7 across all test configurations.
+
+\subsection{Performance Across Noise Regimes}
+
+Figure~\ref{fig:high_order_heatmap} presents a three-panel comparison showing how the top 15 methods perform on orders 6-7 across different noise regimes. The panels reveal three key insights:
+
+\begin{enumerate}
+    \item \textbf{Overall Performance (All Noise Levels)}: Gaussian Process methods (\texttt{GP-TaylorAD-Julia} and \texttt{GP-RBF-Python}) substantially outperform all alternatives, achieving mean nRMSE $\approx 0.5$ compared to $\approx 0.9$ for the next-best Fourier methods.
+
+    \item \textbf{Low-Noise Regime ($\le 0.1\%$)}: In clean data conditions, GP methods maintain excellent performance (nRMSE $\approx 0.32-0.34$), demonstrating their ability to extract high-order derivatives when signal quality permits. Savitzky-Golay variants emerge as the next-best alternatives (nRMSE $\approx 0.65-0.79$).
+
+    \item \textbf{High-Noise Regime ($\ge 1\%$)}: At realistic noise levels, all methods struggle significantly. GP methods remain the most robust (nRMSE $\approx 0.88$), but even they approach the threshold of practical utility. Fourier methods show comparable robustness (nRMSE $\approx 0.95-0.97$), suggesting that frequency-domain approaches may be competitive when high precision is unattainable.
+\end{enumerate}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{heatmap_orders_6to7_by_noise_regime.png}
+\caption{\textbf{High-Order Derivatives (Orders 6-7) Performance Across Noise Regimes.} Three-panel heatmap showing the top 15 methods for computing 6th and 7th order derivatives. \textbf{Left:} Overall performance averaged across all six noise levels. \textbf{Center:} Low-noise regime ($\le 0.1\%$: noise levels 1e-8, 1e-6, 1e-4, 1e-3) where clean data permits better extraction of high-order information. \textbf{Right:} High-noise regime ($\ge 1\%$: noise levels 0.01, 0.02) representing challenging real-world conditions. The heatmap reveals that while GP methods dominate across all regimes, the absolute performance gap narrows in high-noise conditions where all methods struggle. Note the different color scale on the high-noise panel (0-3.0 vs 0-2.0) reflecting the overall degradation in performance.}
+\label{fig:high_order_heatmap}
+\end{figure}
+
+\FloatBarrier
+\subsection{Practical Recommendations}
+
+Based on this analysis, we offer the following guidance for practitioners needing high-order derivatives:
+
+\begin{itemize}
+    \item \textbf{First choice}: \texttt{GP-TaylorAD-Julia} provides the best performance across all noise regimes and is the recommended method when computational cost is acceptable.
+
+    \item \textbf{Low-noise alternative}: In clean data environments ($< 0.1\%$ noise), \texttt{SavitzkyGolay-Adaptive} offers a computationally cheaper alternative with acceptable accuracy.
+
+    \item \textbf{High-noise reality}: At noise levels $\ge 1\%$, computing reliable 6th and 7th order derivatives may be fundamentally impractical. Consider whether the application truly requires these high orders, or if lower-order approximations suffice.
+
+    \item \textbf{Avoid high orders when possible}: The dramatic performance degradation at orders 6-7 (compared to orders 1-5 shown in Figure~\ref{fig:heatmap}) suggests that applications should avoid requiring these orders unless absolutely necessary.
+\end{itemize}
+
+\subsection{Comparison to Primary Results}
+
+The methods ranked highly for orders 1-5 (Figure~\ref{fig:heatmap}) generally maintain their relative performance at orders 6-7, with one notable exception: Savitzky-Golay methods (both \texttt{SavitzkyGolay-Adaptive} and \texttt{SavitzkyGolay-Fixed}) move from mid-tier performers at low orders to being among the top alternatives to GP methods at high orders in low-noise conditions. This suggests that local polynomial fitting, while not optimal overall, has specific advantages for high-order differentiation when data quality is sufficient.

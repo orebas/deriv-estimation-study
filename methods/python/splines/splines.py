@@ -41,7 +41,7 @@ class SplineMethods(MethodEvaluator):
 
         Args:
             method_name: Name of method to evaluate. Supported:
-                - "chebyshev": Global Chebyshev polynomial (fixed degree)
+                - "Chebyshev-Basic-Python": Global Chebyshev polynomial (fixed degree)
                 - "Chebyshev-AICc": Chebyshev with adaptive degree selection
                 - "RKHS_Spline_m2_Python": RKHS smoothing spline (m=2)
                 - "Butterworth_Python": Butterworth lowpass + quintic spline
@@ -51,7 +51,7 @@ class SplineMethods(MethodEvaluator):
         Returns:
             Dictionary with predictions, failures, and metadata
         """
-        if method_name == "chebyshev":
+        if method_name == "Chebyshev-Basic-Python":
             return self._chebyshev()
         elif method_name == "Chebyshev-AICc":
             return self._chebyshev_aicc()

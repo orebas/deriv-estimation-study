@@ -36,6 +36,17 @@ raw_results = pd.read_csv(results_dir / "comprehensive_results.csv")
 
 print(f"\nLoaded {len(summary)} summary rows, {len(raw_results)} raw result rows")
 
+# Consolidate functionally equivalent GP-Python methods
+# These three methods have identical performance (confirmed by analysis)
+gp_python_variants = ['GP-RBF-Iso-Python', 'GP-RBF-MeanSub-Python']
+summary['method'] = summary['method'].replace(gp_python_variants, 'GP-RBF-Python')
+raw_results['method'] = raw_results['method'].replace(gp_python_variants, 'GP-RBF-Python')
+
+# Deduplicate after consolidation
+summary = summary.drop_duplicates(subset=['ode_system', 'method', 'deriv_order', 'noise_level'], keep='first')
+raw_results = raw_results.drop_duplicates(subset=['ode_system', 'method', 'deriv_order', 'noise_level', 'trial'], keep='first')
+print(f"Consolidated GP-Python variants into single method and deduplicated")
+
 # Output directory
 output_dir = Path(__file__).parent.parent / "build" / "figures" / "publication"
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -61,7 +72,7 @@ method_summary = summary_orders_0_5.groupby(['method', 'category']).agg({
 
 print(f"Methods before filtering: {len(method_summary)}")
 
-# Filter out unstable methods (AAA) and extreme outliers (nRMSE > 10)
+# Filter out unstable methods (AAA) and extreme outliers (nRMSE > 1.0)
 # Also filter to only methods with full coverage (orders 0-5) to avoid coverage bias
 methods_with_full_coverage = []
 for method in summary_orders_0_5['method'].unique():
@@ -73,7 +84,7 @@ print(f"Methods with full coverage (0-5): {len(methods_with_full_coverage)}")
 
 method_summary = method_summary[
     ~method_summary['method'].str.contains('AAA', case=False) &
-    (method_summary['mean_nrmse'] <= 10) &
+    (method_summary['mean_nrmse'] <= 1.0) &  # Changed from 10 to 1.0 for stricter filtering
     method_summary['method'].isin(methods_with_full_coverage)
 ].reset_index(drop=True)
 
@@ -234,11 +245,11 @@ overall_avg_full = (summary_agg[summary_agg['method'].isin(methods_full_0_7)]
 # MANUALLY CURATED methods showing algorithmic diversity
 # Show data only where it exists (methods can drop out in later panels)
 top_methods = [
-    'GP-Julia-AD',           # Best overall, full 0-7 coverage
+    'GP-TaylorAD-Julia',           # Best overall, full 0-7 coverage
     'Fourier-Interp',        # Best spectral low-order, full 0-7 coverage
-    'Dierckx-5',             # Best non-GP for orders 2-5, drops at order 6
-    'Savitzky-Golay-Adaptive',  # Filter baseline with noise-adaptive window, full 0-7 coverage
-    'fourier_continuation',  # Strong spectral, full 0-7 coverage
+    'Spline-Dierckx-5',             # Best non-GP for orders 2-5, drops at order 6
+    'SavitzkyGolay-Adaptive',  # Filter baseline with noise-adaptive window, full 0-7 coverage
+    'Fourier-Continuation-Python',  # Strong spectral, full 0-7 coverage
     'Fourier-GCV',           # Best spectral high-order, full 0-7 coverage
 ]
 
@@ -410,7 +421,7 @@ if input_json.exists() and output_json.exists():
     ax1.legend()
 
     # Panel B: AAA vs Fourier-Interp (use available AAA method)
-    aaa_method = 'AAA-LowPrec' if 'AAA-LowPrec' in method_summary['method'].values else 'AAA-Adaptive-Diff2'
+    aaa_method = 'AAA-LowTol' if 'AAA-LowTol' in method_summary['method'].values else 'AAA-Adaptive-Diff2'
     ax2.plot(times, ground_truth, 'k-', linewidth=2, label='Ground Truth', alpha=0.8)
     ax2.set_xlabel('Time')
     ax2.set_ylabel(f'd⁴y/dt⁴')
@@ -452,7 +463,7 @@ specialists_and_generalists = []
 specialists_and_generalists.extend(top_methods[:3])
 
 # Add specialists that don't have full 0-7 coverage but excel at low orders
-candidate_specialists = ['Dierckx-5', 'Central-FD', 'TVRegDiff-Julia', 'Savitzky-Golay-Adaptive']
+candidate_specialists = ['Spline-Dierckx-5', 'FiniteDiff-Central', 'TVRegDiff-Julia', 'SavitzkyGolay-Adaptive']
 for method in candidate_specialists:
     if method in summary_agg['method'].values and method not in specialists_and_generalists:
         specialists_and_generalists.append(method)

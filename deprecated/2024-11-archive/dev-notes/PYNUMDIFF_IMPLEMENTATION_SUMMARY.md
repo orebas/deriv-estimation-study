@@ -66,8 +66,8 @@ We investigated whether `polydiff` could support higher derivatives:
 **Method mappings:**
 ```python
 # Full orders 0-7 support
-"PyNumDiff-SavGol-Auto" -> _savgol(regime="auto")
-"PyNumDiff-SavGol-Tuned" -> _savgol(regime="tuned")
+"PyNumDiff-SavitzkyGolay-Auto" -> _savgol(regime="auto")
+"PyNumDiff-SavitzkyGolay-Tuned" -> _savgol(regime="tuned")
 "PyNumDiff-Spectral-Auto" -> _spectral(regime="auto")
 "PyNumDiff-Spectral-Tuned" -> _spectral(regime="tuned")
 

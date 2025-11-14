@@ -47,10 +47,10 @@ class SpectralMethods(MethodEvaluator):
 
         Args:
             method_name: Name of method to evaluate. Supported:
-                - "fourier": Trigonometric polynomial (fixed harmonics)
+                - "Fourier-Basic-Python": Trigonometric polynomial (fixed harmonics)
                 - "Fourier-GCV": Fourier with GCV harmonics selection
-                - "Fourier-FFT-Adaptive": FFT with adaptive noise filtering
-                - "fourier_continuation": Trend-removed Fourier (non-periodic)
+                - "Fourier-Adaptive-Julia": FFT with adaptive noise filtering
+                - "Fourier-Continuation-Python": Trend-removed Fourier (non-periodic)
                 - "Fourier-Continuation-Adaptive": Adaptive trend + harmonics
                 - "AD_Trig": AD-backed trigonometric polynomial
                 - "AD-Trig-Adaptive": AD-trig with GCV harmonics
@@ -59,13 +59,13 @@ class SpectralMethods(MethodEvaluator):
         Returns:
             Dictionary with predictions, failures, and metadata
         """
-        if method_name == "fourier":
+        if method_name == "Fourier-Basic-Python":
             return self._fourier()
         elif method_name == "Fourier-GCV":
             return self._fourier_gcv()
-        elif method_name == "Fourier-FFT-Adaptive":
+        elif method_name == "Fourier-Adaptive-Julia":
             return self._fourier_fft_adaptive()
-        elif method_name == "fourier_continuation":
+        elif method_name == "Fourier-Continuation-Python":
             return self._fourier_continuation()
         elif method_name == "Fourier-Continuation-Adaptive":
             return self._fourier_continuation_adaptive()

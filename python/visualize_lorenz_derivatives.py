@@ -18,7 +18,7 @@ import sys
 ODE_SYSTEM = "lorenz"
 NOISE_LEVEL = 0.01  # 1% noise
 TRIAL = 1
-METHOD_TO_VISUALIZE = "GP-Julia-AD"
+METHOD_TO_VISUALIZE = "GP-TaylorAD-Julia"
 
 # Output directory
 OUTPUT_DIR = Path("build/figures/lorenz_diagnostics")

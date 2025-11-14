@@ -22,11 +22,11 @@ TRIAL = 1  # Use first trial for visualization
 
 # User-requested methods
 METHODS_TO_PLOT = [
-    "GP-Julia-AD",
+    "GP-TaylorAD-Julia",
     "Fourier-GCV",
     "AAA-Adaptive-Wavelet",
-    "Dierckx-5",
-    "GSS"
+    "Spline-Dierckx-5",
+    "Spline-GSS"
 ]
 
 # Derivative orders to process

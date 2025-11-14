@@ -87,6 +87,12 @@ if [ "${SKIP_PAPER:-0}" != "1" ]; then
     echo ""
 fi
 
+# Step 6: Flatten TeX for LLM parsing
+if [ "${SKIP_FLATTEN:-0}" != "1" ]; then
+    bash "$SCRIPT_DIR/06_flatten_tex.sh"
+    echo ""
+fi
+
 echo "========================================"
 echo "BUILD COMPLETE!"
 echo "========================================"
@@ -114,9 +120,18 @@ if [ -d "build/paper" ]; then
         echo "    ✓ build/paper/paper.pdf"
     fi
 fi
+if [ -d "build/flattened" ]; then
+    echo "  Flattened (for LLM parsing):"
+    if [ -f "build/flattened/paper_flattened.tex" ]; then
+        echo "    ✓ build/flattened/paper_flattened.tex"
+    fi
+    if [ -f "build/flattened/paper_text.txt" ]; then
+        echo "    ✓ build/flattened/paper_text.txt"
+    fi
+fi
 echo ""
 echo "Useful commands:"
 echo "  Clean build artifacts:  ./scripts/clean.sh"
 echo "  Setup environments:     ./scripts/setup.sh"
-echo "  Skip specific steps:    SKIP_PILOT=1 SKIP_COMPREHENSIVE=1 SKIP_FIGURES=1 SKIP_TABLES=1 SKIP_PAPER=1"
+echo "  Skip specific steps:    SKIP_PILOT=1 SKIP_COMPREHENSIVE=1 SKIP_FIGURES=1 SKIP_TABLES=1 SKIP_PAPER=1 SKIP_FLATTEN=1"
 echo "========================================"

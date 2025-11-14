@@ -125,15 +125,15 @@ class IntegratedMethodEvaluator:
             # Map method names to evaluator getters (pass public name to evaluator)
             method_map = {
                 # GP methods
-                "gp_rbf_mean": self._get_gp_evaluator,
-                "GP_RBF_Python": self._get_gp_evaluator,
-                "GP_RBF_Iso_Python": self._get_gp_evaluator,
+                "GP-RBF-MeanSub-Python": self._get_gp_evaluator,
+                "GP-RBF-Python": self._get_gp_evaluator,
+                "GP-RBF-Iso-Python": self._get_gp_evaluator,
                 "GP_Matern_Python": self._get_gp_evaluator,
                 "GP_Matern_1.5_Python": self._get_gp_evaluator,
                 "GP_Matern_2.5_Python": self._get_gp_evaluator,
 
                 # Splines methods
-                "chebyshev": self._get_splines_evaluator,
+                "Chebyshev-Basic-Python": self._get_splines_evaluator,
                 "Chebyshev-AICc": self._get_splines_evaluator,
                 "RKHS_Spline_m2_Python": self._get_splines_evaluator,
                 "Butterworth_Python": self._get_splines_evaluator,
@@ -144,8 +144,8 @@ class IntegratedMethodEvaluator:
                 "Whittaker_m2_Python": self._get_filtering_evaluator,
                 "SavitzkyGolay_Python": self._get_filtering_evaluator,
                 "SavitzkyGolay_Adaptive_Python": self._get_filtering_evaluator,
-                "KalmanGrad_Python": self._get_filtering_evaluator,
-                "TVRegDiff_Python": self._get_filtering_evaluator,
+                "Kalman-Gradient": self._get_filtering_evaluator,
+                "TVRegDiff-Python": self._get_filtering_evaluator,
 
                 # Adaptive methods
                 "AAA-Python-Adaptive-Wavelet": self._get_adaptive_evaluator,
@@ -154,10 +154,10 @@ class IntegratedMethodEvaluator:
                 "AAA-JAX-Adaptive-Diff2": self._get_adaptive_evaluator,
 
                 # Spectral methods
-                "fourier": self._get_spectral_evaluator,
+                "Fourier-Basic-Python": self._get_spectral_evaluator,
                 "Fourier-GCV": self._get_spectral_evaluator,
-                "Fourier-FFT-Adaptive": self._get_spectral_evaluator,
-                "fourier_continuation": self._get_spectral_evaluator,
+                "Fourier-Adaptive-Julia": self._get_spectral_evaluator,
+                "Fourier-Continuation-Python": self._get_spectral_evaluator,
                 "Fourier-Continuation-Adaptive": self._get_spectral_evaluator,
                 "ad_trig": self._get_spectral_evaluator,
                 "ad_trig_adaptive": self._get_spectral_evaluator,
@@ -165,8 +165,8 @@ class IntegratedMethodEvaluator:
 
                 # PyNumDiff methods - ALL 30 methods
                 # Full orders 0-7 support
-                "PyNumDiff-SavGol-Auto": self._get_pynumdiff_evaluator,
-                "PyNumDiff-SavGol-Tuned": self._get_pynumdiff_evaluator,
+                "PyNumDiff-SavitzkyGolay-Auto": self._get_pynumdiff_evaluator,
+                "PyNumDiff-SavitzkyGolay-Tuned": self._get_pynumdiff_evaluator,
                 "PyNumDiff-Spectral-Auto": self._get_pynumdiff_evaluator,
                 "PyNumDiff-Spectral-Tuned": self._get_pynumdiff_evaluator,
                 # Orders 0-1 only - existing methods
@@ -287,15 +287,15 @@ def main():
     # Methods to evaluate (matching original list)
     methods = [
         # Analytic/closed-form
-        "chebyshev",
-        "fourier",
-        "fourier_continuation",
-        "gp_rbf_mean",
+        "Chebyshev-Basic-Python",
+        "Fourier-Basic-Python",
+        "Fourier-Continuation-Python",
+        # "GP-RBF-MeanSub-Python",  # Removed: identical performance to GP-RBF-Python
         "ad_trig",
         # Adaptive hyperparameter methods
         "Chebyshev-AICc",
         "Fourier-GCV",
-        "Fourier-FFT-Adaptive",
+        "Fourier-Adaptive-Julia",
         "Fourier-Continuation-Adaptive",
         "ad_trig_adaptive",
         # Removed AAA-JAX* and SavitzkyGolay_Python per request
@@ -309,13 +309,13 @@ def main():
                                              # catastrophically fails at orders 1+ (nRMSE 3-300).
                                              # Not worth fixing - use Julia SG methods instead.
         "SVR_Python",
-        "KalmanGrad_Python",
-        "TVRegDiff_Python",
+        "Kalman-Gradient",
+        "TVRegDiff-Python",
         "RKHS_Spline_m2_Python",
         "SpectralTaper_Python",
         "Whittaker_m2_Python",
-        "GP_RBF_Python",
-        "GP_RBF_Iso_Python",
+        "GP-RBF-Python",
+        # "GP-RBF-Iso-Python",  # Removed: identical performance to GP-RBF-Python
         "GP_Matern_Python",
         "GP_Matern_1.5_Python",
         "GP_Matern_2.5_Python",
@@ -334,8 +334,8 @@ def main():
         "PyNumDiff-TV-Acceleration",
         "PyNumDiff-TV-Jerk",
         # NEW PyNumDiff methods with full orders 0-7 support
-        "PyNumDiff-SavGol-Auto",
-        "PyNumDiff-SavGol-Tuned",
+        "PyNumDiff-SavitzkyGolay-Auto",
+        "PyNumDiff-SavitzkyGolay-Tuned",
         "PyNumDiff-Spectral-Auto",
         "PyNumDiff-Spectral-Tuned",
         # NEW PyNumDiff methods - high performers (orders 0-1 only)
@@ -405,8 +405,8 @@ def main():
         new_res["success"] = len(new_res["predictions"]) > 0 and len(res.get("failures", {})) == 0
         # Upstream disambiguation: ensure Python FFT-adaptive method is uniquely named
         display_name = m
-        if m == "Fourier-FFT-Adaptive":
-            display_name = "Fourier-FFT-Adaptive-Python"
+        if m == "Fourier-Adaptive-Julia":
+            display_name = "Fourier-Adaptive-Python"
         cleaned_results[display_name] = new_res
 
     output_data = {

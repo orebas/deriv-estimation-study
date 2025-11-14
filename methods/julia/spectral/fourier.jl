@@ -217,11 +217,11 @@ function evaluate_fourier_fft_adaptive(
 		end
 
 		timing = time() - t_start
-		return MethodResult("Fourier-FFT-Adaptive", "Spectral", predictions, failures, timing, true)
+		return MethodResult("Fourier-Adaptive-Julia", "Spectral", predictions, failures, timing, true)
 
 	catch e
 		@warn "Fourier-FFT-Adaptive failed" exception=e
 		timing = time() - t_start
-		return MethodResult("Fourier-FFT-Adaptive", "Error", Dict(), Dict(0 => string(e)), timing, false)
+		return MethodResult("Fourier-Adaptive-Julia", "Error", Dict(), Dict(0 => string(e)), timing, false)
 	end
 end

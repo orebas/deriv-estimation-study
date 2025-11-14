@@ -1,190 +1,146 @@
 """
-Replicate GP-Julia-AD Failure
+Test script to reproduce GP-TaylorAD-Julia failures
 
-Tests the exact conditions that cause GP-Julia-AD to fail:
-- Lotka-Volterra system
-- Noise level: 1e-8
-- Trial: 1
+This script replicates the exact conditions of failing GP trials to help debug
+and add robustness improvements.
+
+Usage:
+    julia --project=. src/test_gp_failure.jl
 """
 
 include("ground_truth.jl")
 include("noise_model.jl")
 include("julia_methods_integrated.jl")
+include("config_loader.jl")
 
 using Random
+using Printf
 
-println("=" ^ 80)
-println("REPLICATING GP-Julia-AD FAILURE")
-println("=" ^ 80)
+# Known failing configurations from comprehensive study
+FAILING_CONFIGS = [
+    # (ode_key, noise_level, trial)
+    ("lotka_volterra", 1.0e-8, 1),
+    ("lotka_volterra", 1.0e-8, 5),
+    ("lotka_volterra", 0.01, 6),
+    ("van_der_pol", 0.001, 1),
+    ("lorenz", 1.0e-8, 1),
+    ("lorenz", 0.0001, 5),
+    ("lorenz", 0.001, 3),
+    ("lorenz", 0.001, 6),
+    ("lorenz", 0.01, 5),
+]
+
+println("="^80)
+println("GP-TaylorAD-Julia Failure Reproduction Test")
+println("="^80)
 println()
 
-# Test Case 1: Lotka-Volterra, noise 1e-8, trial 1
-function test_lotka_volterra_trial1()
-    println("Test Case: Lotka-Volterra, noise=1e-8, trial=1")
-    println("-" ^ 80)
+# Load configuration
+const CONFIG = get_comprehensive_config()
+const DATA_SIZE = CONFIG.data_size
+const MAX_DERIV = CONFIG.max_derivative_order
 
-    # Generate same data as comprehensive study
-    sys_def = lotka_volterra_system()
-    times = collect(range(sys_def.tspan[1], sys_def.tspan[2], length=251))
-    truth = generate_ground_truth(sys_def, times, 7)
+# Load ODE systems
+enabled_ode_keys = get_enabled_ode_systems()
+ode_systems = get_all_ode_systems(enabled_ode_keys)
 
-    # Use exact same seed calculation
-    noise_level = 1e-8
-    trial = 1
-    config_idx = 1  # lotka_volterra is first in the list
-    rng = MersenneTwister(98765 + trial + config_idx * 1000)
-    noisy = add_noise_to_data(truth, noise_level, rng; model=ConstantGaussian)
+println("Testing $(length(FAILING_CONFIGS)) known failing configurations...")
+println()
 
-    # Extract observable 1 (x population)
+success_count = 0
+failure_count = 0
+failure_details = []
+
+for (ode_key, noise_level, trial) in FAILING_CONFIGS
+    trial_id = "$(ode_key)_noise$(Int(noise_level*1e8))e-8_trial$(trial)"
+
+    print("Testing $trial_id... ")
+    flush(stdout)
+
+    # Generate ground truth for this ODE system
+    sys_def = ode_systems[ode_key]
+    times = collect(range(sys_def.tspan[1], sys_def.tspan[2], length = DATA_SIZE))
+    truth = generate_ground_truth(sys_def, times, MAX_DERIV)
+
+    # Add noise with same seed as comprehensive study
+    config_idx = 1  # Simplified - in real study this would be calculated
+    seed = 98765 + trial + config_idx * 1000
+    rng = MersenneTwister(seed)
+    noisy = add_noise_to_data(truth, noise_level, rng; model = ConstantGaussian)
+
+    # Extract observable 1
+    y_true = truth[:obs][1][0]
     y_noisy = noisy[:obs][1][0]
 
-    println("Setup:")
-    println("  Data points: ", length(times))
-    println("  Noise level: ", noise_level)
-    println("  y_noisy range: [", round(minimum(y_noisy), digits=6), ", ", round(maximum(y_noisy), digits=6), "]")
-    println("  Seed: ", 98765 + trial + config_idx * 1000)
-    println()
+    # Test GP-TaylorAD-Julia specifically
+    orders = collect(0:MAX_DERIV)
 
-    # Test GP-Julia-AD with timeout
-    println("Running GP-Julia-AD...")
-    println("(Will timeout after 60 seconds if hanging)")
-    println()
+    try
+        result = evaluate_gp_ad(times, y_noisy, times, orders; params=Dict())
 
-    orders = collect(0:7)
-    result = nothing
-
-    # Run in a task with timeout
-    task = @async begin
-        try
-            evaluate_julia_method("GP-Julia-AD", times, y_noisy, times, orders; params=Dict())
-        catch e
-            (error=true, exception=e, backtrace=catch_backtrace())
+        if result.success
+            println("✓ SUCCESS")
+            success_count += 1
+        else
+            println("✗ FAILED (returned success=false)")
+            failure_count += 1
+            push!(failure_details, (
+                trial_id = trial_id,
+                error = result.failures,
+                data_stats = (
+                    n_points = length(times),
+                    y_range = (minimum(y_noisy), maximum(y_noisy)),
+                    y_std = std(y_noisy),
+                    noise_level = noise_level
+                )
+            ))
         end
+    catch e
+        println("✗ EXCEPTION")
+        failure_count += 1
+        error_msg = sprint(showerror, e, catch_backtrace())
+        push!(failure_details, (
+            trial_id = trial_id,
+            error = error_msg,
+            exception_type = typeof(e),
+            data_stats = (
+                n_points = length(times),
+                y_range = (minimum(y_noisy), maximum(y_noisy)),
+                y_std = std(y_noisy),
+                noise_level = noise_level
+            )
+        ))
     end
-
-    # Wait with timeout
-    timeout_sec = 60
-    if timedwait(() -> istaskdone(task), timeout_sec) == :timed_out
-        println("✗ TIMEOUT after $(timeout_sec)s - GP optimization hung!")
-        println()
-        println("This is the failure mode observed in comprehensive study.")
-        println("The GP hyperparameter optimization fails to converge.")
-        return nothing
-    else
-        result = fetch(task)
-    end
-
-    # Check result
-    if haskey(result, :error) && result.error
-        println("✗ EXCEPTION during evaluation:")
-        showerror(stdout, result.exception, result.backtrace)
-        println()
-        return nothing
-    end
-
-    if result.success
-        println("✓ SUCCESS - GP-Julia-AD completed")
-        println("  Available orders: ", sort(collect(keys(result.predictions))))
-        println("  Timing: ", round(result.timing, digits=3), " seconds")
-
-        # Check for NaN/Inf in predictions
-        for order in orders
-            if haskey(result.predictions, order)
-                pred = result.predictions[order]
-                n_valid = sum(isfinite.(pred))
-                n_total = length(pred)
-                if n_valid < n_total
-                    println("  ⚠ Order $order: Only $n_valid/$n_total valid predictions")
-                end
-            end
-        end
-    else
-        println("✗ FAILURE - GP-Julia-AD returned success=false")
-        println("  Failures: ", result.failures)
-    end
-
-    return result
 end
 
-# Test Case 2: Van der Pol, noise 1e-8, trial 8
-function test_van_der_pol_trial8()
-    println()
-    println("=" ^ 80)
-    println("Test Case: Van der Pol, noise=1e-8, trial=8")
-    println("-" ^ 80)
+println()
+println("="^80)
+println("SUMMARY")
+println("="^80)
+println("Total tests: $(length(FAILING_CONFIGS))")
+println("Successes: $success_count")
+println("Failures: $failure_count")
+println()
 
-    sys_def = van_der_pol_system()
-    times = collect(range(sys_def.tspan[1], sys_def.tspan[2], length=251))
-    truth = generate_ground_truth(sys_def, times, 7)
-
-    noise_level = 1e-8
-    trial = 8
-    config_idx = 8  # van_der_pol after lotka_volterra (7 noise levels)
-    rng = MersenneTwister(98765 + trial + config_idx * 1000)
-    noisy = add_noise_to_data(truth, noise_level, rng; model=ConstantGaussian)
-
-    y_noisy = noisy[:obs][1][0]
-
-    println("Setup:")
-    println("  Data points: ", length(times))
-    println("  Noise level: ", noise_level)
-    println("  y_noisy range: [", round(minimum(y_noisy), digits=6), ", ", round(maximum(y_noisy), digits=6), "]")
-    println("  Seed: ", 98765 + trial + config_idx * 1000)
+if failure_count > 0
+    println("="^80)
+    println("FAILURE DETAILS")
+    println("="^80)
     println()
 
-    println("Running GP-Julia-AD...")
-    println("(Will timeout after 60 seconds if hanging)")
-    println()
-
-    orders = collect(0:7)
-    task = @async begin
-        try
-            evaluate_julia_method("GP-Julia-AD", times, y_noisy, times, orders; params=Dict())
-        catch e
-            (error=true, exception=e, backtrace=catch_backtrace())
+    for (i, detail) in enumerate(failure_details)
+        println("[$i] $(detail.trial_id)")
+        println("    Error: $(detail.error)")
+        if haskey(detail, :exception_type)
+            println("    Exception type: $(detail.exception_type)")
         end
-    end
-
-    timeout_sec = 60
-    if timedwait(() -> istaskdone(task), timeout_sec) == :timed_out
-        println("✗ TIMEOUT after $(timeout_sec)s - GP optimization hung!")
+        println("    Data stats:")
+        println("      Points: $(detail.data_stats.n_points)")
+        println("      Y range: $(detail.data_stats.y_range)")
+        println("      Y std: $(detail.data_stats.y_std)")
+        println("      Noise level: $(detail.data_stats.noise_level)")
         println()
-        return nothing
-    else
-        result = fetch(task)
     end
-
-    if haskey(result, :error) && result.error
-        println("✗ EXCEPTION during evaluation:")
-        showerror(stdout, result.exception, result.backtrace)
-        println()
-        return nothing
-    end
-
-    if result.success
-        println("✓ SUCCESS")
-        println("  Available orders: ", sort(collect(keys(result.predictions))))
-        println("  Timing: ", round(result.timing, digits=3), " seconds")
-    else
-        println("✗ FAILURE")
-        println("  Failures: ", result.failures)
-    end
-
-    return result
 end
 
-# Run tests
-println()
-result1 = test_lotka_volterra_trial1()
-
-# Uncomment to also test van der pol
-# result2 = test_van_der_pol_trial8()
-
-println()
-println("=" ^ 80)
-println("TEST COMPLETE")
-println("=" ^ 80)
-println()
-println("If you see TIMEOUT or FAILURE above, that's the bug!")
-println("These are the exact conditions from the comprehensive study failures.")
-println()
+println("="^80)

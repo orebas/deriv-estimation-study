@@ -7,73 +7,58 @@ This comprehensive study evaluated a wide array of numerical methods for the est
 
 \begin{itemize}
     \item \textbf{Gaussian Process Regression (GPR) is the most robust and accurate method overall.} GPR methods consistently occupy the top ranks in both low- and high-noise regimes, making them the most reliable choice for general-purpose derivative estimation.
-    \item \textbf{The optimal method depends on the use case.} While GPR is the best all-arounder, splines like \texttt{Dierckx-5} offer excellent precision for low-noise data, while spectral methods like \texttt{Fourier-Continuation} provide a compelling balance of speed and accuracy. For speed-critical applications, \texttt{Savitzky-Golay} is a robust and effective baseline.
+    \item \textbf{The optimal method depends on the use case.} While GPR is the best all-arounder, splines like \texttt{Spline-Dierckx-5} offer excellent precision for low-noise data, while spectral methods provide moderate accuracy at interactive speeds. For real-time applications requiring sub-10ms response, \texttt{Savitzky-Golay} remains the most practical choice despite lower accuracy.
     \item \textbf{Derivative order is the dominant difficulty factor.} Performance degrades systematically with increasing order across all methods. The problem becomes significantly more challenging beyond order 3, and only a handful of methods produce usable results at orders 6 or 7.
     \item \textbf{Implementation quality is a critical method characteristic.} Our study found significant performance differences between different software packages implementing the same underlying algorithm, highlighting that practitioners must consider the quality of a specific implementation, not just the theoretical method.
 \end{itemize}
 
 \textbf{The primary recommendation of this work is that for practitioners who require accurate high-order derivatives from real-world, noisy signals, Gaussian Process Regression is the most reliable and effective starting point.}
 
-\subsection{Practitioner's Guide to Method Selection}
+\subsection{Computational Cost and Method Selection}
 \label{sec:practitioners_guide}
 
-The selection of an appropriate numerical differentiation method depends critically on your specific application constraints. Based on our comprehensive analysis, we provide the following practical guidance:
+Computational costs vary significantly across methods, from milliseconds for filters to seconds for Gaussian Processes. The smoothing/fitting step dominates timing; derivative order has minimal impact on computational cost. Table~\ref{tab:timing} shows representative methods spanning the speed-accuracy spectrum.
 
-\textbf{Decision Framework:}
+\begin{table}[!ht]
+\centering
+\caption{Computational Cost vs Accuracy Trade-Off}
+\label{tab:timing}
+\input{../build/tables/publication/tab_timing_comparison.tex}
+\end{table}
 
-\begin{enumerate}
-    \item \textbf{If real-time performance is essential (sub-millisecond):}
-    \begin{itemize}
-        \item Use \texttt{Savitzky-Golay} for moderate noise levels (up to 1\%)
-        \item Consider basic FFT approaches for periodic signals
-        \item Accept that accuracy will be limited for orders $> 2$
-        \item Implementation tip: Pre-compute filter coefficients when possible
-    \end{itemize}
+\textbf{Speed-Accuracy Tradeoff:}
 
-    \item \textbf{If you need balanced accuracy and speed (1-100 ms):}
-    \begin{itemize}
-        \item Use \texttt{Fourier-GCV} or \texttt{Fourier-Continuation} for smooth, periodic data
-        \item Use \texttt{Dierckx-5} (degree-5 splines) as a robust generalist
-        \item These methods handle orders 0-5 effectively
-        \item Implementation tip: Fourier methods benefit from power-of-2 data lengths
-    \end{itemize}
-
-    \item \textbf{If maximum accuracy is paramount (100+ ms acceptable):}
-    \begin{itemize}
-        \item Use \texttt{GP-Julia-AD} for the most robust performance across all conditions
-        \item Essential for derivative orders $\geq 5$
-        \item Provides best noise robustness (handles 2\% noise effectively)
-        \item Implementation tip: Ensure Taylor-mode AD is available for orders $> 3$
-    \end{itemize}
-\end{enumerate}
-
-\textbf{Additional Considerations:}
-
+Figure~\ref{fig:pareto} illustrates the speed-accuracy tradeoff at noise level 0.0001 and derivative order 3. Remarkably, only four methods define the Pareto frontier:
 \begin{itemize}
-    \item \textbf{Dataset size:} For $N > 1000$ points, be aware that GP methods scale as $O(N^3)$. Consider spectral methods ($O(N \log N)$) or local filters ($O(N)$) for large datasets unless sparse GP approximations are available.
-
-    \item \textbf{Noise characteristics:} If noise level is unknown, GP methods with built-in noise estimation provide the most robust results. For known low noise ($< 0.01\%$), spline methods offer excellent precision.
-
-    \item \textbf{Derivative order:} For orders 0-2, most methods perform adequately. For orders 3-5, use spectral or GP methods. For orders 6-7, only GP methods with Taylor-mode AD remain viable.
-
-    \item \textbf{Implementation quality:} When possible, use established libraries rather than reimplementing. Our results show significant performance variations between implementations of the same algorithm.
+    \item \texttt{SavitzkyGolay-Fixed} (1.1 ms): Fastest method on the frontier (nRMSE = 0.52)
+    \item \texttt{ButterworthSpline\_Python} (4.0 ms): Fast filtering approach (nRMSE = 0.38)
+    \item \texttt{Spline-Dierckx-5} (8.8 ms): High-degree spline interpolation (nRMSE = 0.32)
+    \item \texttt{GP-TaylorAD-Julia} (1.78 s): Best accuracy, three orders of magnitude slower (nRMSE = 0.14)
 \end{itemize}
 
-\textbf{Quick Reference Table:}
+The large gap between sub-millisecond filters and second-scale GP methods suggests an opportunity for methods that better balance speed and accuracy in the 10--100 ms range.
 
-\begin{center}
-\small
-\begin{tabular}{llll}
-\hline
-\textbf{Scenario} & \textbf{Recommended Method} & \textbf{Speed} & \textbf{Max Order} \\
-\hline
-Real-time control & Savitzky-Golay & $<$1 ms & 2-3 \\
-Signal processing & Fourier-GCV & 1-10 ms & 5 \\
-Scientific analysis & Dierckx-5 & 10-50 ms & 5 \\
-High-precision needs & GP-Julia-AD & 100-500 ms & 7 \\
-\hline
-\end{tabular}
-\end{center}
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.8\textwidth]{pareto_frontier.png}
+\caption{\textbf{Speed-accuracy tradeoff for derivative estimation methods.} Log-log plot showing normalized RMSE versus computation time for all methods at noise level 0.0001 and derivative order 3. Methods are colored by category. The dashed line connects the four methods on the Pareto frontier, showing the tradeoff between fast filters and accurate GP methods.}
+\label{fig:pareto}
+\end{figure}
+
+\FloatBarrier
+\textbf{Practical Recommendations:}
+
+When accuracy is paramount, \texttt{GP-TaylorAD-Julia} consistently delivers the best results across all derivative orders. For applications with timing constraints:
+
+\begin{itemize}
+    \item \textbf{Real-time (< 10 ms):} \texttt{SavitzkyGolay-Fixed}, \texttt{ButterworthSpline\_Python}, or \texttt{Spline-Dierckx-5} provide acceptable accuracy for orders 0--3.
+
+    \item \textbf{Interactive (10--100 ms):} \texttt{Fourier-GCV} offers good accuracy/speed balance.
+
+    \item \textbf{Offline analysis:} \texttt{GP-TaylorAD-Julia} (1.8 s) remains practical for batch processing.
+\end{itemize}
+
+Note that GP methods scale as $O(N^3)$ with data size, while spectral methods scale as $O(N \log N)$, making the latter preferable for very large datasets.
 
 \subsection{Future Work}
 

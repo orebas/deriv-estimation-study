@@ -41,8 +41,8 @@ class FilteringMethods(MethodEvaluator):
                 - "Whittaker_m2_Python": Whittaker/HP smoothing (m=2)
                 - "SavitzkyGolay_Python": Savitzky-Golay filtering (fixed window=21)
                 - "SavitzkyGolay_Adaptive_Python": Adaptive S-G with noise-dependent window
-                - "KalmanGrad_Python": Kalman RTS smoother
-                - "TVRegDiff_Python": TV-regularized differentiation
+                - "Kalman-Gradient": Kalman RTS smoother
+                - "TVRegDiff-Python": TV-regularized differentiation
 
         Returns:
             Dictionary with predictions, failures, and metadata
@@ -53,9 +53,9 @@ class FilteringMethods(MethodEvaluator):
             return self._savgol_method()
         elif method_name == "SavitzkyGolay_Adaptive_Python":
             return self._savgol_adaptive_method()
-        elif method_name == "KalmanGrad_Python":
+        elif method_name == "Kalman-Gradient":
             return self._kalman_grad()
-        elif method_name == "TVRegDiff_Python":
+        elif method_name == "TVRegDiff-Python":
             return self._tvregdiff_method()
         else:
             return {

@@ -82,12 +82,12 @@ function evaluate_dierckx(
 		end
 
 		timing = time() - t_start
-		return MethodResult("Dierckx-5", "Spline", predictions, failures, timing, true)
+		return MethodResult("Spline-Dierckx-5", "Spline", predictions, failures, timing, true)
 
 	catch e
 		@warn "Dierckx-5 failed" exception=e
 		timing = time() - t_start
-		return MethodResult("Dierckx-5", "Error", Dict(), Dict(0 => string(e)), timing, false)
+		return MethodResult("Spline-Dierckx-5", "Error", Dict(), Dict(0 => string(e)), timing, false)
 	end
 end
 
@@ -214,11 +214,11 @@ function evaluate_gss(
 		end
 
 		timing = time() - t_start
-		return MethodResult("GSS", "Spline", predictions, failures, timing, true)
+		return MethodResult("Spline-GSS", "Spline", predictions, failures, timing, true)
 
 	catch e
 		@warn "GSS failed" exception = e
 		timing = time() - t_start
-		return MethodResult("GSS", "Error", Dict(), Dict(0 => string(e)), timing, false)
+		return MethodResult("Spline-GSS", "Error", Dict(), Dict(0 => string(e)), timing, false)
 	end
 end

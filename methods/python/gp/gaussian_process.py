@@ -81,14 +81,14 @@ class GPMethods(MethodEvaluator):
 
 		Args:
 			method_name: Name of method to evaluate. Supported:
-				- "gp_rbf_mean", "GP_RBF_Python", "GP_RBF_Iso_Python": RBF kernel GP
+				- "GP-RBF-MeanSub-Python", "GP-RBF-Python", "GP-RBF-Iso-Python": RBF kernel GP
 				- "GP_Matern_Python", "GP_Matern_1.5_Python": Matérn(1.5) kernel GP
 				- "GP_Matern_2.5_Python": Matérn(2.5) kernel GP
 
 		Returns:
 			Dictionary with predictions, failures, and metadata
 		"""
-		if method_name in ["gp_rbf_mean", "GP_RBF_Python", "GP_RBF_Iso_Python"]:
+		if method_name in ["GP-RBF-MeanSub-Python", "GP-RBF-Python", "GP-RBF-Iso-Python"]:
 			return self._gp_rbf_mean_derivative()
 		elif method_name in ["GP_Matern_Python", "GP_Matern_1.5_Python"]:
 			return self._gp_matern(nu=1.5)

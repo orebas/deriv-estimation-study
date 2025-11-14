@@ -223,7 +223,7 @@ function evaluate_savitzky_golay_package_fixed(x::Vector{Float64}, y::Vector{Flo
     end
 
     timing = time() - t_start
-    return MethodResult("SG-Package-Fixed", "Local Polynomial", predictions, failures, timing, true)
+    return MethodResult("SavitzkyGolay-Julia-Fixed", "Local Polynomial", predictions, failures, timing, true)
 end
 
 """
@@ -303,7 +303,7 @@ function evaluate_savitzky_golay_package_hybrid(x::Vector{Float64}, y::Vector{Fl
     end
 
     timing = time() - t_start
-    return MethodResult("SG-Package-Hybrid", "Local Polynomial", predictions, failures, timing, true)
+    return MethodResult("SavitzkyGolay-Julia-Hybrid", "Local Polynomial", predictions, failures, timing, true)
 end
 
 """
@@ -374,5 +374,5 @@ function evaluate_savitzky_golay_package_adaptive(x::Vector{Float64}, y::Vector{
     end
 
     timing = time() - t_start
-    return MethodResult("SG-Package-Adaptive", "Local Polynomial", predictions, failures, timing, true)
+    return MethodResult("SavitzkyGolay-Julia-Adaptive", "Local Polynomial", predictions, failures, timing, true)
 end

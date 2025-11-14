@@ -77,6 +77,8 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
 
 	# === Export to JSON for Python ===
 	input_json_path = joinpath(@__DIR__, "..", "build", "data", "input", "$(trial_id).json")
+	# Save RNG seed for reproducibility in retry/rerun scenarios
+	rng_seed = 98765 + trial + config_idx * 1000
 	input_data = Dict(
 		"system" => sys_def.name,
 		"ode_key" => ode_key,
@@ -94,6 +96,7 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
 			"noise_level" => noise_level,
 			"trial" => trial,
 			"tspan" => [sys_def.tspan[1], sys_def.tspan[2]],
+			"rng_seed" => rng_seed,  # For reproducibility
 		),
 	)
 
@@ -137,10 +140,20 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
 		println("  Running Julia methods...")
 	end
 	orders = collect(0:MAX_DERIV)
+	# Pass trial-specific RNG and metadata for reproducibility and logging
 	julia_results = evaluate_all_julia_methods(
 		times, y_noisy, times, orders;
-		params = Dict(),
+		params = Dict(:rng => rng, :trial_id => trial_id, :rng_seed => rng_seed),
 	)
+
+	# Log any Julia method failures for debugging
+	for result in julia_results
+		if !result.success
+			lock(io_lock) do
+				@error "Julia method failed" trial_id=trial_id method=result.name failure_info=result.failures
+			end
+		end
+	end
 
 	# === Compute errors ===
 	lock(io_lock) do
@@ -149,45 +162,45 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
 
 	# Process Julia results
 	for result in julia_results
-		if result.success
-			for order in orders
-				if haskey(result.predictions, order)
-					pred = result.predictions[order]
-					true_vals = truth[:obs][1][order]
+		# Process predictions per-order, regardless of overall success flag
+		# This allows partial results (e.g., when optimization fails but some predictions exist)
+		for order in orders
+			if haskey(result.predictions, order)
+				pred = result.predictions[order]
+				true_vals = truth[:obs][1][order]
 
-					# Compute RMSE excluding endpoints
-					valid = .!isnan.(pred) .& .!isinf.(pred)
-					if sum(valid) > 2
-						# Exclude first and last points
-						idxrng = 2:(length(pred)-1)
-						vmask = valid[idxrng]
-						if sum(vmask) > 0
-							rmse = sqrt(mean((pred[idxrng][vmask] .- true_vals[idxrng][vmask]) .^ 2))
-							mae = mean(abs.(pred[idxrng][vmask] .- true_vals[idxrng][vmask]))
+				# Compute RMSE excluding endpoints
+				valid = .!isnan.(pred) .& .!isinf.(pred)
+				if sum(valid) > 2
+					# Exclude first and last points
+					idxrng = 2:(length(pred)-1)
+					vmask = valid[idxrng]
+					if sum(vmask) > 0
+						rmse = sqrt(mean((pred[idxrng][vmask] .- true_vals[idxrng][vmask]) .^ 2))
+						mae = mean(abs.(pred[idxrng][vmask] .- true_vals[idxrng][vmask]))
 
-							# Compute normalized RMSE (nRMSE = RMSE / std(true))
-							true_std = std(true_vals[idxrng][vmask])
-							nrmse = rmse / max(true_std, 1e-12)  # Avoid division by near-zero
+						# Compute normalized RMSE (nRMSE = RMSE / std(true))
+						true_std = std(true_vals[idxrng][vmask])
+						nrmse = rmse / max(true_std, 1e-12)  # Avoid division by near-zero
 
-							push!(
-								config_results,
-								(
-									ode_system = ode_key,
-									noise_level = noise_level,
-									trial = trial,
-									method = result.name,
-									category = result.category,
-									language = "Julia",
-									deriv_order = order,
-									rmse = rmse,
-									mae = mae,
-									nrmse = nrmse,
-									timing = result.timing,
-									valid_points = sum(vmask),
-									total_points = length(idxrng),
-								),
-							)
-						end
+						push!(
+							config_results,
+							(
+								ode_system = ode_key,
+								noise_level = noise_level,
+								trial = trial,
+								method = result.name,
+								category = result.category,
+								language = "Julia",
+								deriv_order = order,
+								rmse = rmse,
+								mae = mae,
+								nrmse = nrmse,
+								timing = result.timing,
+								valid_points = sum(vmask),
+								total_points = length(idxrng),
+							),
+						)
 					end
 				end
 			end
@@ -199,60 +212,60 @@ println("\nRunning $total_configs configurations with $(Threads.nthreads()) thre
 		python_output = JSON3.read(read(output_json_path, String))
 
 		for (method_name, method_result) in python_output["methods"]
-			if method_result["success"]
-				for order in orders
-					if haskey(method_result["predictions"], string(order))
-						pred = method_result["predictions"][string(order)]
-						true_vals = truth[:obs][1][order]
+			# Process predictions per-order, regardless of overall success flag
+			# This allows partial results (e.g., orders 0-3 when 4-7 failed)
+			for order in orders
+				if haskey(method_result["predictions"], string(order))
+					pred = method_result["predictions"][string(order)]
+					true_vals = truth[:obs][1][order]
 
-						valid = .!isnan.(pred) .& .!isinf.(pred)
-						if sum(valid) > 2
-							# Exclude endpoints
-							idxrng = 2:(length(pred)-1)
-							vmask = valid[idxrng]
-							if sum(vmask) > 0
-								rmse = sqrt(mean((pred[idxrng][vmask] .- true_vals[idxrng][vmask]) .^ 2))
-								mae = mean(abs.(pred[idxrng][vmask] .- true_vals[idxrng][vmask]))
+					valid = .!isnan.(pred) .& .!isinf.(pred)
+					if sum(valid) > 2
+						# Exclude endpoints
+						idxrng = 2:(length(pred)-1)
+						vmask = valid[idxrng]
+						if sum(vmask) > 0
+							rmse = sqrt(mean((pred[idxrng][vmask] .- true_vals[idxrng][vmask]) .^ 2))
+							mae = mean(abs.(pred[idxrng][vmask] .- true_vals[idxrng][vmask]))
 
-								# Compute normalized RMSE (nRMSE = RMSE / std(true))
-								true_std = std(true_vals[idxrng][vmask])
-								nrmse = rmse / max(true_std, 1e-12)  # Avoid division by near-zero
+							# Compute normalized RMSE (nRMSE = RMSE / std(true))
+							true_std = std(true_vals[idxrng][vmask])
+							nrmse = rmse / max(true_std, 1e-12)  # Avoid division by near-zero
 
-								# Determine category
-								method_str = string(method_name)
-								category = if contains(method_str, "GP")
-									"Gaussian Process"
-								elseif contains(method_str, "RBF")
-									"RBF"
-								elseif contains(method_str, "Spline")
-									"Spline"
-								elseif contains(method_str, "FD")
-									"Finite Difference"
-								elseif contains(method_str, "Fourier") || contains(method_str, "Chebyshev")
-									"Spectral"
-								else
-									"Other"
-								end
-
-								push!(
-									config_results,
-									(
-										ode_system = ode_key,
-										noise_level = noise_level,
-										trial = trial,
-										method = method_str,
-										category = category,
-										language = "Python",
-										deriv_order = order,
-										rmse = rmse,
-										mae = mae,
-										nrmse = nrmse,
-										timing = method_result["timing"],
-										valid_points = sum(vmask),
-										total_points = length(idxrng),
-									),
-								)
+							# Determine category
+							method_str = string(method_name)
+							category = if contains(method_str, "GP")
+								"Gaussian Process"
+							elseif contains(method_str, "RBF")
+								"RBF"
+							elseif contains(method_str, "Spline")
+								"Spline"
+							elseif contains(method_str, "FD")
+								"Finite Difference"
+							elseif contains(method_str, "Fourier") || contains(method_str, "Chebyshev")
+								"Spectral"
+							else
+								"Other"
 							end
+
+							push!(
+								config_results,
+								(
+									ode_system = ode_key,
+									noise_level = noise_level,
+									trial = trial,
+									method = method_str,
+									category = category,
+									language = "Python",
+									deriv_order = order,
+									rmse = rmse,
+									mae = mae,
+									nrmse = nrmse,
+									timing = method_result["timing"],
+									valid_points = sum(vmask),
+									total_points = length(idxrng),
+								),
+							)
 						end
 					end
 				end
@@ -407,6 +420,10 @@ function _retry_config_once(ode_key::String,
 	# Ground-truth derivatives from JSON for error calc
 	gt_derivs = Dict(parse(Int, k) => Vector{Float64}(v) for (k, v) in input_data["ground_truth_derivatives"])
 
+	# Extract RNG seed for reproducibility (fallback to default if not present in older JSONs)
+	rng_seed = get(input_data["config"], "rng_seed", 98765 + trial)
+	rng = MersenneTwister(rng_seed)
+
 	# Re-run Python script
 	try
 		run(`$py_exe $py_script $input_json_path $output_json_path`)
@@ -414,8 +431,8 @@ function _retry_config_once(ode_key::String,
 		@warn "Retry: Python script failed" exception=(e,)
 	end
 
-	# Evaluate Julia methods
-	julia_results = evaluate_all_julia_methods(times, y_noisy, times, orders; params = Dict())
+	# Evaluate Julia methods with same RNG for reproducibility and logging metadata
+	julia_results = evaluate_all_julia_methods(times, y_noisy, times, orders; params = Dict(:rng => rng, :trial_id => trial_id, :rng_seed => rng_seed))
 
 	# Compute errors for Julia results
 	for result in julia_results
@@ -529,21 +546,21 @@ println("Creating failure report...")
 
 # Step 1: Collect all Julia methods that were attempted
 julia_methods_attempted = [
-	"AAA-LowPrec",
+	"AAA-LowTol",
 	"AAA-Adaptive-Diff2",
 	"AAA-Adaptive-Wavelet",
-	"GP-Julia-AD",
+	"GP-TaylorAD-Julia",
 	"Fourier-Interp",
-	"Fourier-FFT-Adaptive",
-	"Dierckx-5",
-	"GSS",
-	"Savitzky-Golay-Fixed",
-	"Savitzky-Golay-Adaptive",
-	"SG-Package-Fixed",
-	"SG-Package-Hybrid",
-	"SG-Package-Adaptive",
+	"Fourier-Adaptive-Julia",
+	"Spline-Dierckx-5",
+	"Spline-GSS",
+	"SavitzkyGolay-Fixed",
+	"SavitzkyGolay-Adaptive",
+	"SavitzkyGolay-Julia-Fixed",
+	"SavitzkyGolay-Julia-Hybrid",
+	"SavitzkyGolay-Julia-Adaptive",
 	"TVRegDiff-Julia",
-	"Central-FD",
+	"FiniteDiff-Central",
 ]
 
 # Step 2: Collect all Python methods that were attempted (from output JSON files)

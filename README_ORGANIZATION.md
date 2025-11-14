@@ -2,6 +2,24 @@
 
 This document describes the repository structure and file organization for the derivative estimation study.
 
+## ⚠️ CRITICAL: Python Environment
+
+**ALWAYS use `python/.venv/bin/python` or `./run_python.sh` for Python scripts in this project.**
+
+DO NOT use system python, python3, or uv run python - they will fail with numpy version conflicts.
+
+```bash
+# ✓ CORRECT:
+python/.venv/bin/python python/script.py
+./run_python.sh python/script.py
+
+# ✗ WRONG:
+python3 python/script.py           # System python - broken
+python python/script.py            # System python - broken
+uv run python python/script.py     # Broken - encodings error
+.venv/bin/python python/script.py  # Wrong venv location
+```
+
 ## Directory Structure
 
 ```
@@ -34,8 +52,11 @@ derivative_estimation_study/
 ├── python/              # Python infrastructure and build scripts
 │   ├── python_methods_integrated.py  # Wrapper to call Python methods
 │   ├── generate_comprehensive_plots.py  # Per-method and per-order visualizations
-│   ├── generate_paper_tables.py      # LaTeX table generation
+│   ├── generate_paper_tables.py      # LaTeX table generation and main heatmap
 │   ├── generate_additional_figures.py  # Supplemental figures
+│   ├── generate_supplemental_heatmaps.py  # Order-specific heatmaps (0-5, 6-7)
+│   ├── generate_high_order_heatmaps.py   # 3-panel high-order analysis
+│   ├── flatten_tex.py                # Flatten TeX for LLM parsing
 │   ├── hyperparameters.py            # Adaptive hyperparameter selection (shared)
 │   ├── baryrat_jax.py                # JAX wrapper for AAA (shared)
 │   ├── tvregdiff.py                  # TVRegDiff implementation (shared)
@@ -46,14 +67,13 @@ derivative_estimation_study/
 │   ├── paper.tex        # Main paper structure and abstract
 │   ├── sections/        # Paper content sections
 │   │   ├── section1_introduction.tex
-│   │   ├── section3_problem.tex
-│   │   ├── section4_methodology.tex
-│   │   ├── section5_methods.tex
-│   │   ├── section6_results.tex
-│   │   ├── section7_discussion.tex
-│   │   ├── section8_recommendations.tex
-│   │   ├── section9_limitations.tex
-│   │   └── section10_conclusion.tex
+│   │   ├── section2_related_work.tex
+│   │   ├── section3_methods.tex
+│   │   ├── section4_design.tex
+│   │   ├── section5_analysis.tex
+│   │   ├── section6_conclusion.tex
+│   │   ├── appendixA_method_catalog_complete.tex
+│   │   └── appendixB_high_order.tex
 │   └── references.bib   # Bibliography
 │
 ├── build/               # All generated outputs (git-ignored)
@@ -65,8 +85,11 @@ derivative_estimation_study/
 │   │   ├── publication/ # Main paper figures (PDF/PNG)
 │   │   └── supplemental/  # Supplemental figures
 │   ├── tables/          # Generated LaTeX tables
-│   │   ├── publication/ # Main paper tables
+│   │   ├── publication/tables/ # Main paper tables (*.tex)
 │   │   └── supplemental/  # Supplemental tables
+│   ├── flattened/       # Flattened paper for LLM parsing
+│   │   ├── paper_flattened.tex  # Full TeX with includes expanded
+│   │   └── paper_text.txt       # Simplified text version
 │   ├── tex/             # LaTeX build artifacts (.aux, .log, .out, .toc)
 │   └── paper/           # Final compiled paper
 │       └── paper.pdf    # 📄 FINAL OUTPUT
@@ -77,6 +100,7 @@ derivative_estimation_study/
 │   ├── 03_generate_figures.sh   # Step 3: Create all plots
 │   ├── 04_generate_tables.sh    # Step 4: Create LaTeX tables
 │   ├── 05_compile_paper.sh      # Step 5: Build PDF
+│   ├── 06_flatten_tex.sh        # Step 6: Flatten TeX for LLMs
 │   ├── build_all.sh             # Run entire pipeline
 │   └── clean.sh                 # Remove all build artifacts
 │
@@ -114,18 +138,34 @@ The repository follows a **single-source-of-truth** data flow:
    │       └─> build/figures/supplemental/*.pdf
    │
    ├─> python/generate_paper_tables.py
-   │   └─> Reads CSV → Generates LaTeX tables
-   │       └─> build/tables/publication/*.tex
+   │   └─> Reads CSV → Generates LaTeX tables + main heatmap
+   │       └─> build/tables/publication/tables/*.tex
+   │       └─> build/figures/publication/top_methods_heatmap.png
+   │
+   ├─> python/generate_supplemental_heatmaps.py
+   │   └─> Reads CSV → Generates order-specific heatmaps
+   │       └─> build/figures/supplemental/heatmap_orders_0to5.png
+   │       └─> build/figures/supplemental/heatmap_orders_6to7.png
+   │
+   ├─> python/generate_high_order_heatmaps.py
+   │   └─> Reads CSV → Generates 3-panel high-order analysis
+   │       └─> build/figures/publication/heatmap_orders_6to7_by_noise_regime.png
    │
    └─> python/generate_additional_figures.py
        └─> Reads CSV → Generates specialized figures
            └─> build/figures/publication/*.pdf
 
 4. LaTeX Compilation (report/paper.tex)
-   ├─> \input{build/tables/publication/*.tex}
+   ├─> \input{build/tables/publication/tables/*.tex}
    ├─> \includegraphics{build/figures/publication/*.pdf}
    └─> Build artifacts → build/tex/
    └─> Final PDF → build/paper/paper.pdf  📄
+
+5. TeX Flattening (python/flatten_tex.py)
+   ├─> Reads report/paper.tex + all included sections
+   └─> Generates flattened versions for LLM parsing
+       ├─> build/flattened/paper_flattened.tex (full TeX with includes expanded)
+       └─> build/flattened/paper_text.txt (simplified text version)
 ```
 
 ## Key Principles
@@ -158,7 +198,7 @@ The repository follows a **single-source-of-truth** data flow:
 ### To modify paper text:
 ```bash
 # Edit the relevant section file
-vim report/sections/section6_results.tex
+vim report/sections/section5_analysis.tex
 
 # Rebuild the paper
 ./scripts/05_compile_paper.sh
@@ -215,11 +255,16 @@ vim python/generate_comprehensive_plots.py
    - Summary tables (best methods per order)
    - Performance ranking tables
    - Method comparison matrices
-   - Output: `build/tables/publication/*.tex`
+   - Output: `build/tables/publication/tables/*.tex`
 
 5. **Compile Paper** (`05_compile_paper.sh`): Build final PDF (~20 seconds)
    - Includes auto-generated tables and figures
    - Output: `build/paper/paper.pdf` 📄
+
+6. **Flatten TeX** (`06_flatten_tex.sh`): Create LLM-parseable version (~5 seconds)
+   - Recursively expands all \input and \include commands
+   - Removes or simplifies figures, tables, and non-text elements
+   - Output: `build/flattened/paper_flattened.tex` and `build/flattened/paper_text.txt`
 
 ## Environment Setup
 
@@ -244,7 +289,7 @@ pip install -r requirements.lock
 
 ### Quick edit-compile-view cycle for paper
 ```bash
-vim report/sections/section6_results.tex
+vim report/sections/section5_analysis.tex
 ./scripts/05_compile_paper.sh
 xdg-open build/paper/paper.pdf  # Linux
 # open build/paper/paper.pdf    # macOS

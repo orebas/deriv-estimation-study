@@ -79,11 +79,11 @@ function evaluate_central_fd(
 		end
 
 		timing = time() - t_start
-		return MethodResult("Central-FD", "Finite Difference", predictions, failures, timing, true)
+		return MethodResult("FiniteDiff-Central", "Finite Difference", predictions, failures, timing, true)
 
 	catch e
 		@warn "Central-FD failed" exception=e
 		timing = time() - t_start
-		return MethodResult("Central-FD", "Error", Dict(), Dict(0 => string(e)), timing, false)
+		return MethodResult("FiniteDiff-Central", "Error", Dict(), Dict(0 => string(e)), timing, false)
 	end
 end

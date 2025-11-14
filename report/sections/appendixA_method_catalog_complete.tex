@@ -1,0 +1,226 @@
+\section{Complete Method Catalog}
+\label{sec:method_catalog_appendix}
+
+This appendix provides comprehensive documentation for the 26 contender methods that demonstrated full coverage across derivative orders 0--5. Methods are organized by algorithmic family, with standardized naming conventions and complete implementation details.
+
+\subsection{Method Summary Table}
+
+Table~\ref{tab:method_catalog_complete} presents all contender methods with their key characteristics. Methods are grouped by algorithmic category to facilitate comparison within families.
+
+\footnotesize
+\begin{longtable}{p{3.8cm}p{2.3cm}p{6.5cm}p{1.4cm}}
+\caption{Complete catalog of 26 contender methods evaluated in this study. All methods support derivative orders 0--5 across all noise levels tested.}
+\label{tab:method_catalog_complete}\\
+\toprule
+\textbf{Method} & \textbf{Category} & \textbf{Brief Description} & \textbf{Complexity} \\
+\midrule
+\endfirsthead
+
+\multicolumn{4}{c}{\tablename\ \thetable{} -- continued from previous page} \\
+\toprule
+\textbf{Method} & \textbf{Category} & \textbf{Brief Description} & \textbf{Complexity} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{Continued on next page...} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+\multicolumn{4}{l}{\textbf{Gaussian Process Methods (2)}} \\
+\midrule
+GP-Julia-AD & Gaussian Process & GP regression with Taylor-mode AD for efficient high-order derivatives; uses RBF kernel with MLE hyperparameter optimization & $O(n^3)$ \\
+\addlinespace
+GP-RBF-Python & Gaussian Process & Standard scikit-learn GP with RBF kernel; derivatives via finite differences of posterior mean & $O(n^3)$ \\
+\midrule
+\multicolumn{4}{l}{\textbf{Local Polynomial Methods (5)}} \\
+\midrule
+SavitzkyGolay-Fixed-Julia & Local Polynomial & Classic Savitzky-Golay filter with fixed window size (n/4); fast but may be suboptimal & $O(n)$ \\
+\addlinespace
+SavitzkyGolay-Adaptive-Julia & Local Polynomial & Adaptive window selection based on wavelet noise estimation; balances smoothing and preservation & $O(n)$ \\
+\addlinespace
+SavitzkyGolay-Pkg-Fixed & Local Polynomial & SavitzkyGolay.jl package implementation with fixed parameters & $O(n)$ \\
+\addlinespace
+SavitzkyGolay-Pkg-Hybrid & Local Polynomial & Hybrid approach combining fixed base window with adaptive adjustments & $O(n)$ \\
+\addlinespace
+SavitzkyGolay-Pkg-Adaptive & Local Polynomial & Fully adaptive using local signal characteristics and noise estimates & $O(n)$ \\
+\midrule
+\multicolumn{4}{l}{\textbf{Spectral Methods (9)}} \\
+\midrule
+Fourier-Interp-Julia & Spectral & FFT-based differentiation with fixed 40\% frequency cutoff; assumes periodicity & $O(n \log n)$ \\
+\addlinespace
+Fourier-Adaptive-Julia & Spectral & Adaptive frequency cutoff based on estimated SNR; robust to varying noise levels & $O(n \log n)$ \\
+\addlinespace
+Fourier-Adaptive-Python & Spectral & Python implementation with NumPy/SciPy; adaptive filtering based on noise & $O(n \log n)$ \\
+\addlinespace
+Fourier-GCV & Spectral & Uses Generalized Cross-Validation to select optimal number of Fourier harmonics & $O(n \log n)$ \\
+\addlinespace
+Fourier-Continuation-Adaptive & Spectral & Fourier continuation for non-periodic data; reduces edge artifacts via smooth extension & $O(n \log n)$ \\
+\addlinespace
+Fourier-Basic-Python & Spectral & Simple FFT differentiation with fixed cutoff; baseline spectral method & $O(n \log n)$ \\
+\addlinespace
+Fourier-Continuation-Python & Spectral & Standard Fourier continuation implementation; handles non-periodic signals & $O(n \log n)$ \\
+\addlinespace
+Chebyshev-AICc & Spectral & Chebyshev polynomial with AICc-based degree selection; prevents overfitting & $O(n^2)$ \\
+\addlinespace
+Chebyshev-Basic-Python & Spectral & Fixed-degree Chebyshev polynomial approximation and differentiation & $O(n^2)$ \\
+\midrule
+\multicolumn{4}{l}{\textbf{Spline Methods (2)}} \\
+\midrule
+Dierckx-5 & Spline & Degree-5 B-splines with GCV smoothing parameter selection; FORTRAN FITPACK & $O(n)$ \\
+\addlinespace
+GSS & Spline & Generalized smoothing splines with automatic smoothness selection & $O(n^3)$ \\
+\midrule
+\multicolumn{4}{l}{\textbf{Rational Approximation Methods (3)}} \\
+\midrule
+AAA-LowPrec & Rational & Adaptive Antoulas-Anderson with relaxed tolerance for speed; may exhibit instability & $O(n^2)$ \\
+\addlinespace
+AAA-Adaptive-Diff2 & Rational & AAA with tolerance based on second-order difference noise estimation & $O(n^2)$ \\
+\addlinespace
+AAA-Adaptive-Wavelet & Rational & AAA with wavelet MAD noise estimation for adaptive tolerance selection & $O(n^2)$ \\
+\midrule
+\multicolumn{4}{l}{\textbf{PyNumDiff Package Methods (3)}} \\
+\midrule
+PyNumDiff-SavGol-Tuned & PyNumDiff & Savitzky-Golay with manually tuned parameters optimized for test systems & $O(n)$ \\
+\addlinespace
+PyNumDiff-Spectral-Auto & PyNumDiff & Automatic spectral method with adaptive parameter selection & $O(n \log n)$ \\
+\addlinespace
+PyNumDiff-Spectral-Tuned & PyNumDiff & Spectral differentiation with pre-tuned cutoff frequencies & $O(n \log n)$ \\
+\midrule
+\multicolumn{4}{l}{\textbf{Filtering Methods (2)}} \\
+\midrule
+Kalman-Grad-Python & Filtering & Kalman filter formulation for derivative estimation; state-space approach & $O(n)$ \\
+\addlinespace
+TVRegDiff-Python & Filtering & Total variation regularization; preserves discontinuities while smoothing & $O(n^2)$ \\
+\end{longtable}
+
+\subsection{Implementation Details}
+
+\subsubsection{Package Dependencies}
+
+\textbf{Julia Packages:}
+\begin{itemize}
+    \item \texttt{GaussianProcesses.jl} (v0.12.5): GP-Julia-AD~\cite{Fairbrother_etal_2022}
+    \item \texttt{TaylorDiff.jl} (v0.2.1): Taylor-mode AD for GP-Julia-AD, AAA methods~\cite{TaylorDiff_jl}
+    \item \texttt{BaryRational.jl} (v0.3.0): AAA rational approximation~\cite{BaryRational_jl}
+    \item \texttt{Dierckx.jl} (v0.5.2): Wrapper for FORTRAN FITPACK splines~\cite{Dierckx_jl, Dierckx_1993}
+    \item \texttt{GeneralizedSmoothingSplines.jl} (v0.1.3): GSS implementation~\cite{Wahba_1990}
+    \item \texttt{FFTW.jl} (v1.5.0): Fast Fourier transforms
+    \item \texttt{SavitzkyGolay.jl} (v0.3.1): Savitzky-Golay filter implementations~\cite{Savitzky_Golay_1964}
+    \item \texttt{Wavelets.jl} (v0.9.5): Wavelet transforms for noise estimation~\cite{Wavelets_jl}
+\end{itemize}
+
+\textbf{Python Packages:}
+\begin{itemize}
+    \item \texttt{scikit-learn} (1.3.0): Gaussian Process regression~\cite{Pedregosa_etal_2011}
+    \item \texttt{numpy} (1.24.3): Core numerical operations, polynomial fitting~\cite{Harris_etal_2020}
+    \item \texttt{scipy} (1.11.1): Signal processing, optimization~\cite{Virtanen_etal_2020}
+    \item \texttt{PyNumDiff} (0.1.0): Comprehensive differentiation package~\cite{VanBreugel_etal_2022}
+\end{itemize}
+
+\subsubsection{Key Implementation Choices}
+
+\textbf{Gaussian Process Methods:}
+\begin{itemize}
+    \item All use RBF (squared exponential) kernel: $k(x, x') = \sigma^2_f \exp(-\|x - x'\|^2 / 2\ell^2)$
+    \item Hyperparameters ($\ell$, $\sigma_f$, $\sigma_n$) optimized via Maximum Likelihood Estimation
+    \item Julia implementation uses Taylor-mode AD for efficient high-order derivatives
+    \item Python implementation tested with isotropic/anisotropic kernels and mean subtraction preprocessing; all variants yielded identical performance
+    \item Python implementations limited by lack of Taylor-mode AD (explains 10× speed difference)
+\end{itemize}
+
+\textbf{Spectral Methods:}
+\begin{itemize}
+    \item Differentiation via frequency domain: $\mathcal{F}\{f^{(n)}\}(k) = (ik)^n \mathcal{F}\{f\}(k)$
+    \item Various strategies for frequency cutoff: fixed (40\%), adaptive (SNR-based), or GCV
+    \item Fourier continuation methods use smooth extension to handle non-periodic data
+    \item Chebyshev methods use domain scaling to $[-1, 1]$ before fitting
+\end{itemize}
+
+\textbf{Local Polynomial Methods:}
+\begin{itemize}
+    \item Savitzky-Golay filters use polynomial degree $d = \min(7, n + 2)$ for $n$-th derivative
+    \item Window size selection: fixed ($w = n/4$) or adaptive based on noise estimation
+    \item Boundary handling via asymmetric filters near endpoints
+\end{itemize}
+
+\textbf{Rational Approximation:}
+\begin{itemize}
+    \item AAA algorithm constructs barycentric rational interpolant: $r(z) = \sum_i w_i f_i / (z - z_i) / \sum_i w_i / (z - z_i)$
+    \item Support points selected greedily based on maximum residual
+    \item Tolerance setting critical: too tight causes overfitting, too loose underfits
+    \item Known instability at high derivative orders despite mathematical correctness
+\end{itemize}
+
+\subsubsection{Computational Complexity Notes}
+
+\begin{itemize}
+    \item \textbf{$O(n)$ methods:} Savitzky-Golay filters, finite differences, splines (excluding GSS)
+    \item \textbf{$O(n \log n)$ methods:} All Fourier/FFT-based spectral methods
+    \item \textbf{$O(n^2)$ methods:} Chebyshev polynomials, AAA rational approximation, TV regularization
+    \item \textbf{$O(n^3)$ methods:} Gaussian Processes (matrix inversion), GSS (dense linear systems)
+\end{itemize}
+
+The computational complexity is essentially independent of derivative order for all methods, as the dominant cost is in the smoothing/approximation step rather than the differentiation itself.
+
+\subsection{Parameter Selection and Tuning}
+
+\subsubsection{Adaptive Parameter Selection}
+
+Several methods employ adaptive strategies to automatically select parameters based on data characteristics:
+
+\textbf{Noise Estimation Methods:}
+\begin{itemize}
+    \item \textbf{Wavelet MAD:} $\hat{\sigma} = \text{MAD}(\text{HF}_{\text{wavelet}}) / 0.6745$ using Daubechies-4 wavelets~\cite{Donoho_Johnstone_1994}.
+    \item \textbf{Second-order differences:} $\hat{\sigma} = \sqrt{\sum (y_{i+1} - 2y_i + y_{i-1})^2 / 6(n-2)}$~\cite{Gasser_etal_1986}.
+\end{itemize}
+
+\textbf{Model Selection Criteria:}
+\begin{itemize}
+    \item \textbf{AICc:} $n \log(\text{RSS}/n) + 2p + 2p(p+1)/(n-p-1)$ for $p$ parameters
+    \item \textbf{GCV:} $n \cdot \text{RSS} / (n - \text{df})^2$ where df = effective degrees of freedom
+    \item \textbf{MLE:} Maximum likelihood for GP hyperparameters via L-BFGS-B optimization
+\end{itemize}
+
+\subsubsection{Fixed Parameters}
+
+Some methods use fixed parameters determined through preliminary experiments:
+\begin{itemize}
+    \item Fourier-Interp: 40\% frequency cutoff
+    \item AAA-LowPrec: tolerance = $10^{-13}$
+    \item Savitzky-Golay-Fixed: window = $n/4$
+\end{itemize}
+
+\subsection{Method Selection Guidelines}
+
+Based on our comprehensive evaluation, we provide the following guidance for method selection:
+
+\textbf{For highest accuracy (orders 0--5):}
+\begin{itemize}
+    \item \textbf{Low noise ($<$ 0.01\%):} Dierckx-5 or GP-Julia-AD
+    \item \textbf{High noise ($\geq$ 1\%):} GP-Julia-AD consistently best
+    \item \textbf{Unknown noise:} GP methods with automatic noise estimation
+\end{itemize}
+
+\textbf{For computational efficiency:}
+\begin{itemize}
+    \item \textbf{Real-time ($<$ 10ms):} Savitzky-Golay variants
+    \item \textbf{Interactive ($<$ 100ms):} Spectral methods (Fourier-GCV, Chebyshev-AICc)
+    \item \textbf{Batch processing:} GP-Julia-AD (2s) acceptable for highest accuracy
+\end{itemize}
+
+\textbf{For specific signal types:}
+\begin{itemize}
+    \item \textbf{Periodic/smooth:} Fourier methods excel
+    \item \textbf{Non-periodic:} Fourier-Continuation or splines
+    \item \textbf{Discontinuous:} TVRegDiff preserves edges (limited to order 1)
+\end{itemize}
+
+\textbf{Implementation recommendations:}
+\begin{itemize}
+    \item Compiled implementations generally faster than interpreted equivalents, and back-ends (for linear algebra, AD) matter
+    \item Taylor-mode AD critical for efficient high-order derivatives
+    \item Pre-compute smoothed approximant when multiple derivatives needed
+\end{itemize}

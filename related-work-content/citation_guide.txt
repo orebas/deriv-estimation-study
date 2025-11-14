@@ -1,0 +1,243 @@
+Citation Integration Guide
+
+This section provides a page-by-page, line-by-line guide for integrating the bibliography (from Part 3) into your manuscript.  
+
+Page 1 (Abstract)
+
+    No citations are recommended for the abstract.
+
+Page 3 (Section 1: Introduction)
+
+    Location: • Dynamical Systems Identification: Inferring governing equations from time-series...
+
+        Recommendation: This is a direct reference to methods like SINDy. Cite the foundational SINDy paper.
+
+        Cite: ...to identify differential equations.
+
+    Location: • Physics-Informed Machine Learning: Enforcing physical conservation laws...
+
+        Recommendation: This describes Physics-Informed Neural Networks (PINNs). Cite the foundational PINNs paper.
+
+        Cite: ...with respect to noisy inputs.
+
+    Location: Our previous work demonstrated the potential of certain methods, such as the AAA algorithm... for differentiating noiseless data from dynamical systems.
+
+        Recommendation: This is a critical two-part citation. You must cite (1) your own (placeholder) previous work and (2) the AAA algorithm paper itself. This anchors your new paper's narrative and justifies the inclusion/exclusion of AAA based on its known noise-free strengths.   
+
+        Cite: ...the AAA algorithm [Nakatsukasa_etal_2018]... noiseless data from dynamical systems.
+
+    Location: ...systematic comparative evaluation of numerical differentiation methods is conspicuously absent from the literature.
+
+        Recommendation: Here you must cite the limited-scope studies to prove this claim, as discussed in the Related Work draft.
+
+        Cite: ...absent from the literature.
+
+    Location: 1. Limited Scope: They typically evaluate only a handful of methods...
+
+        Recommendation: This is a good place for a reinforcing citation.
+
+        Cite: ...diverges dramatically (e.g., [Listmann_etal_2013, Knowles_2009]).
+
+Page 4 (Section 2: Related Work)
+
+    Location: ``
+
+        Recommendation: Delete this entire `` block and insert the complete Part 1 draft ("2 Related Work") from this report. All necessary citations are already embedded within that draft.
+
+Page 4 (Section 3.1: A Composable Framework: Approximation + Automatic Differentiation)
+
+    Location: ...differentiate via Automatic Differentiation (AD).
+
+        Recommendation: Cite a general AD survey paper.
+
+        Cite: ...via Automatic Differentiation (AD).
+
+Page 5 (Section 3.1: The Critical Role of Taylor-Mode AD for High Orders)
+
+    Location: ...exponential computational complexity, rendering it infeasible for orders beyond a handful.
+
+        Recommendation: This is your strongest claim about AD. You must cite the paper that demonstrates this exponential vs. polynomial scaling.
+
+        Cite: ...infeasible for orders beyond a handful [Frost_etal_2021].
+
+    Location: ...Taylor-mode AD propagates a full Taylor series expansion...
+
+        Recommendation: Cite the paper again for the concept, and the specific software package you use.
+
+        Cite: ...with polynomial complexity [Frost_etal_2021]....critically dependent on their use of Taylor-mode AD (e.g., via).
+
+Page 5 (Section 3.2.1: Local and Polynomial Methods)
+
+    Location: • Savitzky-Golay filtering...
+
+        Recommendation: Cite the seminal paper.
+
+        Cite: • Savitzky-Golay filtering
+
+    Location: • Polynomial spline interpolation... via Dierckx)
+
+        Recommendation: Cite the foundational library paper.
+
+        Cite: • Polynomial spline interpolation... via Dierckx)
+
+Page 5 (Section 3.2.2: Kernel and Probabilistic Methods)
+
+    Location: • Gaussian Process regression...
+
+        Recommendation: Cite the canonical textbook.
+
+        Cite: • Gaussian Process regression
+
+    Location: • Total Variation regularization methods
+
+        Recommendation: Cite the key paper on this method for differentiation.
+
+        Cite: • Total Variation regularization methods [Chartrand_2011]
+
+Page 6 (Section 3.2.3: Global Basis Function Methods)
+
+    Location: • Spectral methods (Fourier series...)
+
+        Recommendation: Cite the canonical text.
+
+        Cite: • Spectral methods... [Gottlieb_Orszag_1977]
+
+    Location: • Chebyshev polynomial expansions
+
+        Recommendation: Same canonical text.
+
+        Cite: • Chebyshev polynomial expansions [Gottlieb_Orszag_11977]
+
+    Location: • Rational approximation (AAA algorithm)
+
+        Recommendation: Cite the Trefethen et al. paper.
+
+        Cite: • Rational approximation (AAA algorithm) [Nakatsukasa_etal_2018]
+
+Page 6 (Section 3.3: Systematic Filtering and Final Selection)
+
+    Location: ...Adaptive Antoulas-Anderson (AAA) algorithm, while exceptionally powerful for rational approximation in noise-free contexts...
+
+        Recommendation: Re-cite the AAA paper and your placeholder previous work to reinforce this important narrative point.
+
+        Cite: ...in noise-free contexts
+
+Page 7 (Section 3.4: Implementation Considerations for High-Order Derivatives)
+
+    Location: ...Taylor-mode AD was used for efficient computation of high-order derivatives...
+
+        Recommendation: Re-cite the Taylor-mode AD papers.
+
+        Cite: ...efficient computation of high-order derivatives.
+
+    Location: ...noise estimation routines based on wavelet MAD (Median Absolute Deviation)...
+
+        Recommendation: Cite the foundational Donoho & Johnstone paper for wavelet-based noise estimation.
+
+        Cite: ...wavelet MAD (Median Absolute Deviation)
+
+    Location: ...or simple finite-difference variance estimation...
+
+        Recommendation: Cite the Gasser et al. paper that introduced the second-order difference estimator you use.
+
+        Cite: ...variance estimation [Gasser_etal_1986].
+
+Page 7 (Section 3.5: Gaussian Process Regression Implementation)
+
+    Location: Our GPR approach [Fairbrother_etal_2022] follows a standard...
+
+        Recommendation: Add a citation for the GaussianProcesses.jl package at the start of the section.
+
+        Cite: (As shown above)
+
+    Location: 1. Kernel Selection: We employ the squared exponential (RBF) kernel...
+
+        Recommendation: Cite the GPR book, which details this kernel and its properties.
+
+        Cite: ...the RBF kernel:...
+
+    Location: 2. Hyperparameter Optimization:...L-BFGS-B optimization...
+
+        Recommendation: Cite the paper for the L-BFGS-B algorithm.
+
+        Cite: ...L-BFGS-B optimization on the log marginal likelihood.
+
+    Location: 4. Taylor-mode AD: The Julia implementation leverages Taylor-mode automatic differentiation...
+
+        Recommendation: Cite the TaylorDiff.jl package.
+
+        Cite: ...automatic differentiation for efficient computation...
+
+Page 8 (Section 4.2: Testbed: Dynamical Systems)
+
+    Location: 3. Lorenz System: A three-variable system famous for its chaotic behavior...
+
+        Recommendation: This is an optional but highly scholarly citation to the original 1963 Lorenz paper.
+
+        Cite: ...chaotic behavior [Lorenz_1963], providing a more challenging test case.
+
+Page 19 (Appendix A.2.1: Package Dependencies)
+
+    Recommendation: This section is where your software citations must be placed for reproducibility.
+
+    Location: • GaussianProcesses.jl (v0.12.5):
+
+        Cite: ...GP-Julia-AD [Fairbrother_etal_2022]
+
+    Location: • TaylorDiff.jl (v0.2.1):
+
+        Cite: ...Taylor-mode AD for GP-Julia-AD, AAA methods
+
+    Location: • BaryRational.jl (v0.3.0):
+
+        Cite: ...AAA rational approximation
+
+    Location: • Dierckx.jl (v0.5.2):
+
+        Cite: ...FORTRAN FITPACK splines (Cite both the wrapper and the original library)
+
+    Location: • GeneralizedSmoothingSplines.jl (v0.1.3):
+
+        Cite: ...GSS implementation
+
+    Location: • SavitzkyGolay.jl (v0.3.1):
+
+        Cite: ...Savitzky-Golay filter implementations
+
+    Location: • Wavelets.jl (v0.9.5):
+
+        Cite: ...Wavelet transforms for noise estimation
+
+    Location: • scikit-learn (1.3.0):
+
+        Cite: ...Gaussian Process regression [Pedregosa_etal_2011]
+
+    Location: • numpy (1.24.3):
+
+        Cite: ...Core numerical operations [Harris_etal_2020], polynomial fitting
+
+    Location: • scipy (1.11.1):
+
+        Cite: ...Signal processing [Virtanen_etal_2020], optimization
+
+    Location: • PyNumDiff (0.1.0):
+
+        Cite: ...Comprehensive differentiation package
+
+Page 20 (Appendix A.3.1: Adaptive Parameter Selection)
+
+    Location: • Wavelet MAD: $\hat{\sigma}=MAD(HF_{wayelet})/0.6745...
+
+        Recommendation: This is the exact formula from Donoho & Johnstone.
+
+        Cite: ...using Daubechies-4 wavelets.
+
+    Location: • Second-order differences: $\hat{\sigma}=\sqrt{\sum(y_{i+1}-2y_{i}+y_{i-1})^{2}/6(n-2)}$
+
+        Recommendation: This is the Gasser et al. formula.   
+
+        Cite: ...second-order differences [Gasser_etal_1986].
+
+Page 21 (References)
+
+    Recommendation: This is where the formatted BibTeX entries from Part 3 will be rendered by your LaTeX compiler after you add them to your .bib file.
