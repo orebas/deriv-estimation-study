@@ -70,6 +70,10 @@ This benchmark, while comprehensive, is not exhaustive. Several avenues for futu
     \item \textbf{Larger-Scale Problems:} Our study was limited to a modest number of data points. Investigating how method performance, particularly computational cost, scales to much larger datasets ($N > 1000$) would be of great practical interest.
 \end{enumerate}
 
+\subsection{Limitations and Scope}
+
+Our benchmark is restricted to scalar time series on uniform grids with additive Gaussian noise, generated from a small set of ODE systems. We do not consider irregular sampling, multivariate outputs, non-Gaussian noise models, or signals with discontinuities. These remain important directions for future investigation. Additionally, our focus on high-order derivatives (up to order 7) reflects the needs of dynamical systems identification; applications requiring only first or second derivatives may find different trade-offs optimal.
+
 \subsection{Broader Implications: The Case for a Composable, Differentiable Ecosystem}
 
 Our findings also underscore a broader trend in scientific computing: the immense value of composable and differentiable software packages. The "Approximant-AD" framework is only possible when libraries for data modeling (e.g., Gaussian Processes) can seamlessly pass their results to libraries for automatic differentiation.

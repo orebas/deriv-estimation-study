@@ -5,7 +5,7 @@ The estimation of derivatives from discrete, noisy data is a classical and notor
 
 Despite this difficulty, robust derivative estimates are essential prerequisites for a vast array of scientific and engineering applications. In systems biology and physics, they form the basis for identifying governing equations from time-series data, a cornerstone of dynamical systems identification. Seminal methods in this area, such as the sparse identification of nonlinear dynamics (SINDy) framework, explicitly depend on accurate derivative data to build sparse regression models. In modern machine learning, the enforcement of physical laws within neural network models (e.g., Physics-Informed Neural Networks or PINNs) requires differentiating network outputs, often with respect to noisy or sparse inputs. Similar requirements are found in control systems, signal processing, and experimental data analysis.  
 
-Given the problem's ubiquity, a wide variety of algorithmic solutions have been proposed. However, as noted in the introduction, systematic, broad-scope comparative evaluation of these methods is conspicuously absent from the literature.  
+Given the problem's ubiquity, a wide variety of algorithmic solutions have been proposed. However, systematic, broad-scope comparative evaluation of these methods remains limited.  
 
 \subsection{Review of Prior Comparative Studies}
 
@@ -69,6 +69,6 @@ As our results demonstrate, this is not merely an optimization but an enabling t
 
 \subsection{Positioning the Present Study}
 
-The existing literature on numerical differentiation consists of fragmented, small-scale comparisons focused on low-order derivatives~\cite{Listmann_etal_2013, Knowles_2009}, and foundational work on individual method families. A large-scale, systematic benchmark evaluating these methods in concert, particularly in the challenging high-order regime ($k>3$), has been a conspicuous gap.
+The existing literature on numerical differentiation consists of fragmented, small-scale comparisons focused on low-order derivatives~\cite{Listmann_etal_2013, Knowles_2009}, and foundational work on individual method families. A large-scale, systematic benchmark evaluating these methods in concert, particularly in the challenging high-order regime ($k>3$), has been a significant gap.
 
 The present study addresses this gap by (1) providing a comprehensive benchmark of 28 methods across orders 0-7, (2) identifying the composable "Approximant-AD" framework as the key pattern for success, and (3) providing the first empirical demonstration that the fusion of Gaussian Process regression with Taylor-mode AD is the most robust and accurate solution to this long-standing problem.
