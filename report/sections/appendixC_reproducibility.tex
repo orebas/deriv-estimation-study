@@ -3,42 +3,6 @@
 
 This study was designed to be fully reproducible. All code, data, analysis scripts, and this manuscript's complete version history are available at the public Git repository: \url{https://github.com/orebas/deriv-estimation-study}.
 
-\subsection{Software Environment}
+The computational environment uses Julia 1.12.1 and Python 3.13.1, with all package dependencies managed by lock files to ensure exact package versions are preserved. All sources of randomness are deterministically seeded to ensure identical datasets are generated on each run.
 
-The computational environment uses Julia 1.12.1 and Python 3.13.1. All package dependencies are managed by lock files (\texttt{uv.lock} for Python, \texttt{Manifest.toml} for Julia) to ensure exact package versions are preserved. A complete catalog of all methods and their dependencies is available in Appendix~\ref{sec:method_catalog_appendix}.
-
-All sources of randomness are deterministically seeded to ensure identical datasets are generated on each run. Specifically:
-\begin{itemize}
-    \item Noise generation for each trial uses a fixed seed derived from the system name, noise level, and trial number
-    \item ODE integration uses deterministic solvers with fixed tolerances
-    \item Random parameter initializations (where applicable) use consistent seeds
-\end{itemize}
-
-\subsection{Computational Workflow}
-
-The entire workflow, from running the comprehensive benchmark to generating all figures, tables, and this PDF, is fully automated. The main script \texttt{scripts/build\_all.sh} executes the complete pipeline in the following stages:
-
-\begin{enumerate}
-    \item \texttt{01\_run\_pilot.sh}: Quick validation test ($\sim$1 minute)
-    \item \texttt{02\_run\_comprehensive.sh}: Full benchmark across all methods, systems, noise levels, and derivative orders ($\sim$7-10 minutes)
-    \item \texttt{03\_generate\_figures.sh}: Generate all plots and visualizations ($\sim$30 seconds)
-    \item \texttt{04\_generate\_tables.sh}: Generate LaTeX tables from results ($\sim$10 seconds)
-    \item \texttt{05\_compile\_paper.sh}: Compile this manuscript ($\sim$20 seconds)
-\end{enumerate}
-
-All intermediate results are stored in the \texttt{build/} directory with timestamps, allowing verification of the complete data pipeline.
-
-\subsection{Hardware Specifications}
-
-All benchmarks were run on an AMD Ryzen 7 2700 Eight-Core Processor with 64 GB RAM, running Ubuntu 24.04.3 LTS under WSL2.
-
-\subsection{Data Availability}
-
-The complete dataset including:
-\begin{itemize}
-    \item Raw prediction outputs for all 28 methods across all test configurations
-    \item Aggregated summary statistics (\texttt{comprehensive\_summary.csv})
-    \item All generated figures in publication-quality format
-    \item LaTeX table sources
-\end{itemize}
-is preserved in the \texttt{build/results/} directory and available in the repository.
+The entire workflow, from running the comprehensive benchmark to generating all figures, tables, and this PDF, is fully automated. Complete documentation of the build pipeline, hardware specifications, and data availability can be found in the project Git repository.
