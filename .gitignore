@@ -52,6 +52,7 @@ Thumbs.db
 # Temporary
 tmp/
 temp/
+build_backup_*/
 
 # Deprecated/archived files
 deprecated/
