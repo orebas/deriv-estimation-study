@@ -176,9 +176,9 @@ class FilteringMethods(MethodEvaluator):
             try:
                 if order <= poly:
                     yd = savgol_filter(y, window_length=win, polyorder=poly, deriv=order, delta=dt, mode='interp')
-                    # Spline to evaluation grid
+                    # Spline to evaluation grid - yd is already the derivative, just interpolate (order 0)!
                     res = self._quintic_spline_derivatives(t, yd)
-                    predictions[order] = res["predictions"].get(order, [float(v) for v in yd])
+                    predictions[order] = res["predictions"].get(0, [float(v) for v in yd])
                 else:
                     # Fallback: differentiate quintic spline fit to y0 further
                     res = self._quintic_spline_derivatives(t, y0)

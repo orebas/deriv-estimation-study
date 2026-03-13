@@ -15,6 +15,13 @@ import time
 from pathlib import Path
 from typing import Dict, List
 import numpy as np
+import random
+
+# Set random seeds for reproducibility
+# Changed from previous runs to generate different noise realizations in GP hyperparameter optimization
+RANDOM_SEED = 87654
+np.random.seed(RANDOM_SEED)
+random.seed(RANDOM_SEED)
 
 # Add methods directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "methods" / "python"))

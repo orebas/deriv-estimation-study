@@ -36,14 +36,36 @@ results_dir = Path(__file__).parent.parent / "build" / "results" / "comprehensiv
 summary = pd.read_csv(results_dir / "comprehensive_summary.csv")
 
 print(f"\nLoaded {len(summary)} rows")
+print(f"ODE systems: {sorted(summary['ode_system'].unique()) if 'ode_system' in summary.columns else ['(single system)']}")
 print(f"Unique methods: {summary['method'].nunique()}")
 print(f"Noise levels: {sorted(summary['noise_level'].unique())}")
 print(f"Derivative orders: {sorted(summary['deriv_order'].unique())}")
 
-# Extract info
-noise_levels = sorted(summary['noise_level'].unique())
-orders = sorted(summary['deriv_order'].unique())
-methods = sorted(summary['method'].unique())
+# Aggregate across ODE systems for main plots (average performance across all systems)
+print("\nAggregating across ODE systems for publication plots...")
+if 'ode_system' in summary.columns:
+    summary_agg = summary.groupby(['method', 'category', 'language', 'deriv_order', 'noise_level']).agg({
+        'mean_rmse': 'mean',
+        'std_rmse': 'mean',
+        'min_rmse': 'mean',
+        'max_rmse': 'mean',
+        'mean_mae': 'mean',
+        'mean_nrmse': 'mean',
+        'std_nrmse': 'mean',
+        'min_nrmse': 'mean',
+        'max_nrmse': 'mean',
+        'mean_timing': 'mean',
+        'trials': 'first'  # Should be same for all ODE systems
+    }).reset_index()
+    print(f"Aggregated to {len(summary_agg)} rows (averaged across {summary['ode_system'].nunique()} ODE systems)")
+else:
+    summary_agg = summary
+    print("No ode_system column found, using data as-is")
+
+# Extract info from aggregated data
+noise_levels = sorted(summary_agg['noise_level'].unique())
+orders = sorted(summary_agg['deriv_order'].unique())
+methods = sorted(summary_agg['method'].unique())
 
 # Create output directories
 per_method_dir = Path(__file__).parent.parent / "build" / "figures" / "supplemental" / "per_method"
@@ -65,8 +87,8 @@ print("=" * 80)
 for i, method in enumerate(methods, 1):
     print(f"[{i}/{len(methods)}] {method}...")
 
-    # Filter data for this method
-    method_data = summary[summary['method'] == method].copy()
+    # Filter data for this method (using aggregated data)
+    method_data = summary_agg[summary_agg['method'] == method].copy()
 
     if len(method_data) == 0:
         print(f"  WARNING: No data for {method}, skipping")
@@ -131,7 +153,7 @@ print("=" * 80)
 for i, method in enumerate(methods, 1):
     print(f"[{i}/{len(methods)}] {method}...")
 
-    method_data = summary[summary['method'] == method].copy()
+    method_data = summary_agg[summary_agg['method'] == method].copy()
 
     if len(method_data) == 0:
         continue
@@ -202,7 +224,7 @@ print("=" * 80)
 for order in orders:
     print(f"Order {order}...")
 
-    order_data = summary[summary['deriv_order'] == order].copy()
+    order_data = summary_agg[summary_agg['deriv_order'] == order].copy()
 
     # Create figure
     fig, ax = plt.subplots(figsize=(12, 8))

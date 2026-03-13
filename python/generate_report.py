@@ -21,8 +21,8 @@ plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.size'] = 10
 
 # Paths
-RESULTS_DIR = Path(__file__).parent.parent / "results" / "comprehensive"
-REPORT_DIR = Path(__file__).parent.parent / "report"
+RESULTS_DIR = Path(__file__).parent.parent / "build" / "results" / "comprehensive"
+REPORT_DIR = Path(__file__).parent.parent / "build" / "report"
 REPORT_DIR.mkdir(exist_ok=True)
 
 print("="*80)
@@ -107,6 +107,9 @@ print("Plots saved to:", REPORT_DIR)
 # === GENERATE LATEX REPORT ===
 print("\nGenerating LaTeX report...")
 
+# Get trials count from data
+trials_count = int(summary['trials'].iloc[0]) if 'trials' in summary.columns else 3
+
 latex_content = r'''\documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{booktabs}
@@ -155,7 +158,7 @@ with parameters $(\alpha, \beta, \gamma, \delta) = (1.5, 1.0, 3.0, 1.0)$ and ini
     \item \textbf{Other:} RBF, Kalman gradient, Butterworth filter
 \end{itemize}
 
-\textbf{Metrics:} We compute root mean squared error (RMSE) against ground truth derivatives, excluding endpoints to avoid boundary effects. Each configuration is tested with 3 independent trials.
+\textbf{Metrics:} We compute root mean squared error (RMSE) against ground truth derivatives, excluding endpoints to avoid boundary effects. Each configuration is tested with {trials} independent trials.
 
 \section{Results}
 
@@ -357,10 +360,10 @@ latex_content += r'''\end{longtable}
 \end{document}
 '''
 
-# Write LaTeX file
+# Write LaTeX file (substitute trials count)
 latex_file = REPORT_DIR / "comprehensive_report.tex"
 with open(latex_file, 'w') as f:
-    f.write(latex_content)
+    f.write(latex_content.replace('{trials}', str(trials_count)))
 
 print(f"\nLaTeX file written to: {latex_file}")
 

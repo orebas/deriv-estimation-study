@@ -164,6 +164,90 @@ print(f"Slowest method: {timing_data.iloc[-1]['method']} ({timing_data.iloc[-1][
 print(f"Median time: {timing_data['Average Time (s)'].median():.6f} s")
 
 # ============================================================================
+# TABLE 3: Per-ODE System Tables (for validation and sanity checking)
+# ============================================================================
+
+if 'ode_system' in summary.columns:
+    print("\n" + "=" * 80)
+    print("GENERATING PER-ODE SYSTEM TABLES")
+    print("=" * 80)
+
+    ode_systems = sorted(summary['ode_system'].unique())
+    print(f"\nODE systems: {ode_systems}")
+
+    # Create per-ODE subdirectory
+    per_ode_dir = tables_dir / "per_ode"
+    per_ode_dir.mkdir(exist_ok=True)
+
+    tables_generated = 0
+
+    for ode_system in ode_systems:
+        print(f"\n{ode_system}:")
+        ode_data = summary[summary['ode_system'] == ode_system].copy()
+
+        # Generate one table per order for this ODE system
+        for order in orders:
+            order_data = ode_data[ode_data['deriv_order'] == order].copy()
+
+            if len(order_data) == 0:
+                continue
+
+            # Pivot table: methods × noise levels
+            pivot = order_data.pivot_table(
+                index='method',
+                columns='noise_level',
+                values='mean_nrmse',
+                aggfunc='mean'
+            )
+
+            # Add average column
+            pivot['average'] = pivot.mean(axis=1, skipna=True)
+            pivot = pivot.sort_values('average')
+
+            # Format column names
+            col_rename = {nl: f"{nl:.0e}" for nl in noise_levels}
+            col_rename['average'] = 'Mean'
+            pivot_renamed = pivot.rename(columns=col_rename)
+
+            # Save as CSV
+            csv_file = per_ode_dir / f"{ode_system}_order_{order}.csv"
+            pivot.to_csv(csv_file, float_format='%.6f')
+
+            # Save as LaTeX
+            latex_file = per_ode_dir / f"{ode_system}_order_{order}.tex"
+
+            pivot_formatted = pivot_renamed.copy()
+            for col in pivot_formatted.columns:
+                pivot_formatted[col] = pivot_formatted[col].apply(
+                    lambda x: f'{x:.5f}' if pd.notna(x) else '—'
+                )
+
+            with open(latex_file, 'w') as f:
+                f.write(f"% NRMSE values for {ode_system}, derivative order {order}\n")
+                f.write(f"% For sanity checking per-ODE performance\n")
+                f.write("\\begin{table}[htbp]\n")
+                f.write("\\centering\n")
+                f.write(f"\\caption{{Normalized RMSE for {ode_system.replace('_', ' ')}, order {order}}}\n")
+                f.write(f"\\label{{tab:{ode_system}_order_{order}}}\n")
+                f.write("\\resizebox{\\textwidth}{!}{%\n")
+                f.write(pivot_formatted.to_latex(
+                    escape=False,
+                    column_format='l' + 'r' * len(pivot_formatted.columns),
+                    index=True
+                ))
+                f.write("}\n")
+                f.write("\\end{table}\n")
+
+            tables_generated += 1
+
+        print(f"  Generated {len(orders)} tables for {ode_system}")
+
+    print(f"\n✓ Generated {tables_generated} per-ODE tables total")
+    print(f"  Output: {per_ode_dir}")
+else:
+    print("\n⚠ No ode_system column found - skipping per-ODE tables")
+
+# ============================================================================
 # Summary
 # ============================================================================
 
@@ -173,5 +257,7 @@ print("=" * 80)
 print(f"\nGenerated:")
 print(f"  {len(orders)} NRMSE pivot tables (CSV + LaTeX)")
 print(f"  1 average timing table (CSV + LaTeX)")
+if 'ode_system' in summary.columns:
+    print(f"  {len(ode_systems)} × {len(orders)} per-ODE tables (CSV + LaTeX)")
 print(f"\nOutput directory: {tables_dir}")
 print("=" * 80)

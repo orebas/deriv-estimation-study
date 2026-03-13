@@ -35,6 +35,28 @@ summary = pd.read_csv(results_dir / "comprehensive_summary.csv")
 raw_results = pd.read_csv(results_dir / "comprehensive_results.csv")
 
 print(f"\nLoaded {len(summary)} summary rows, {len(raw_results)} raw result rows")
+print(f"ODE systems: {sorted(summary['ode_system'].unique()) if 'ode_system' in summary.columns else ['(single system)']}")
+
+# Aggregate across ODE systems for publication figures
+if 'ode_system' in summary.columns:
+    print("Aggregating across ODE systems...")
+    summary_agg = summary.groupby(['method', 'category', 'language', 'deriv_order', 'noise_level']).agg({
+        'mean_rmse': 'mean',
+        'std_rmse': 'mean',
+        'min_rmse': 'mean',
+        'max_rmse': 'mean',
+        'mean_mae': 'mean',
+        'mean_nrmse': 'mean',
+        'std_nrmse': 'mean',
+        'min_nrmse': 'mean',
+        'max_nrmse': 'mean',
+        'mean_timing': 'mean',
+        'trials': 'first'
+    }).reset_index()
+    print(f"Aggregated to {len(summary_agg)} rows (averaged across {summary['ode_system'].nunique()} ODE systems)")
+else:
+    summary_agg = summary
+    print("No ode_system column found, using data as-is")
 
 # Consolidate functionally equivalent GP-Python methods
 # These three methods have identical performance (confirmed by analysis)

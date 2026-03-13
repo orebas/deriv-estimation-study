@@ -32,6 +32,28 @@ results_dir = Path(__file__).parent.parent / "build" / "results" / "comprehensiv
 summary = pd.read_csv(results_dir / "comprehensive_summary.csv")
 
 print(f"\nLoaded {len(summary)} rows from summary data")
+print(f"ODE systems: {sorted(summary['ode_system'].unique()) if 'ode_system' in summary.columns else ['(single system)']}")
+
+# Aggregate across ODE systems for publication tables (average performance across all systems)
+if 'ode_system' in summary.columns:
+    print("Aggregating across ODE systems...")
+    summary_agg = summary.groupby(['method', 'category', 'language', 'deriv_order', 'noise_level']).agg({
+        'mean_rmse': 'mean',
+        'std_rmse': 'mean',
+        'min_rmse': 'mean',
+        'max_rmse': 'mean',
+        'mean_mae': 'mean',
+        'mean_nrmse': 'mean',
+        'std_nrmse': 'mean',
+        'min_nrmse': 'mean',
+        'max_nrmse': 'mean',
+        'mean_timing': 'mean',
+        'trials': 'first'
+    }).reset_index()
+    print(f"Aggregated to {len(summary_agg)} rows (averaged across {summary['ode_system'].nunique()} ODE systems)")
+else:
+    summary_agg = summary
+    print("No ode_system column found, using data as-is")
 
 # Consolidate functionally equivalent GP-Python methods
 # These three methods have identical performance (confirmed by analysis)
@@ -66,8 +88,8 @@ tables_dir.mkdir(exist_ok=True)
 for order in orders:
     print(f"\nProcessing order {order}...")
 
-    # Filter data for this order
-    order_data = summary[summary['deriv_order'] == order].copy()
+    # Filter data for this order (using aggregated data)
+    order_data = summary_agg[summary_agg['deriv_order'] == order].copy()
 
     # Pivot table: methods x noise levels
     pivot = order_data.pivot_table(
@@ -153,8 +175,8 @@ THRESHOLD = 1.0  # nRMSE threshold for plotting
 for order in orders:
     print(f"\nPlotting order {order}...")
 
-    # Filter data for this order
-    order_data = summary[summary['deriv_order'] == order].copy()
+    # Filter data for this order (using aggregated data)
+    order_data = summary_agg[summary_agg['deriv_order'] == order].copy()
 
     # Calculate average nRMSE per method
     method_avg = order_data.groupby('method')['mean_nrmse'].mean()
@@ -230,7 +252,7 @@ top_methods = overall_avg.head(15).index.tolist()
 print(f"Top 15 methods with full coverage: {top_methods[:5]}... (showing first 5)")
 
 # Create pivot for heatmap
-heatmap_data = summary[summary['method'].isin(top_methods)].pivot_table(
+heatmap_data = summary_agg[summary_agg['method'].isin(top_methods)].pivot_table(
     index='method',
     columns='deriv_order',
     values='mean_nrmse',
@@ -279,14 +301,14 @@ raw_results = pd.read_csv(results_dir / "comprehensive_results.csv")
 
 # Table 1: Full Coverage Ranking
 print("\nGenerating tab:full_coverage_ranking...")
-coverage = summary.groupby('method').size()
+coverage = summary_agg.groupby('method').size()
 full_coverage_methods = coverage[coverage == 56].index.tolist()  # 8 orders × 7 noise levels = 56
 
-# Get method categories (from summary data)
-method_category = summary.groupby('method')['category'].first()
+# Get method categories (from aggregated data)
+method_category = summary_agg.groupby('method')['category'].first()
 
 # Compute overall ranking for full-coverage methods
-full_coverage_data = summary[summary['method'].isin(full_coverage_methods)].copy()
+full_coverage_data = summary_agg[summary_agg['method'].isin(full_coverage_methods)].copy()
 overall_ranking = full_coverage_data.groupby('method').agg({
     'mean_nrmse': 'mean'
 }).reset_index()
@@ -335,7 +357,7 @@ representative_methods = [m for m in candidate_methods if m in available_methods
 
 perf_by_order = []
 for method in representative_methods:
-    method_data = summary[summary['method'] == method].copy()
+    method_data = summary_agg[summary_agg['method'] == method].copy()
     order_means = method_data.groupby('deriv_order')['mean_nrmse'].mean()
     perf_by_order.append({
         'method': method,
@@ -404,7 +426,7 @@ print(f"  Saved: {latex_timing.name}")
 
 # Table 4: Noise Sensitivity at Order 4
 print("\nGenerating tab:noise_sensitivity_order4...")
-order4_data = summary[summary['deriv_order'] == 4].copy()
+order4_data = summary_agg[summary_agg['deriv_order'] == 4].copy()
 order4_pivot = order4_data.pivot_table(
     index='method',
     columns='noise_level',
